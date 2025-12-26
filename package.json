@@ -1,0 +1,13 @@
+{
+  "name": "mc-texture-pack-site",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node scripts/extract-textures.js && node scripts/generate-index.js && node scripts/build.js",
+    "extract": "node scripts/extract-textures.js",
+    "index": "node scripts/generate-index.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "sharp": "^0.33.0"
+  }
+}

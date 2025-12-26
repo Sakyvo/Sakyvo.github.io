@@ -1,0 +1,16 @@
+{
+  "total": 1,
+  "pageSize": 50,
+  "pages": 1,
+  "items": [
+    {
+      "id": "!§bXenon §716x",
+      "name": "bXenon_716x",
+      "cover": "/thumbnails/bXenon_716x/cover.png",
+      "tags": [
+        "16x"
+      ],
+      "resolution": "16x"
+    }
+  ]
+}

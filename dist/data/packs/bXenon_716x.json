@@ -1,0 +1,43 @@
+{
+  "id": "!§bXenon §716x",
+  "name": "bXenon_716x",
+  "author": "Unknown",
+  "resolution": "16x",
+  "tags": [
+    "16x"
+  ],
+  "cover": "/thumbnails/bXenon_716x/cover.png",
+  "file": "resourcepacks/!§bXenon §716x.zip",
+  "fileSize": "19.0MB",
+  "uploadDate": "2025-12-26",
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "apple_golden.png",
+      "bow_standby.png",
+      "fishing_rod_uncast.png",
+      "potion_bottle_splash.png",
+      "iron_sword.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "wool_colored_white.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%C2%A7bXenon%20%C2%A7716x.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%C2%A7bXenon%20%C2%A7716x.zip"
+  }
+}

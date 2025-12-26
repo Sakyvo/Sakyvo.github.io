@@ -1,0 +1,33 @@
+[
+  {
+    "packId": "bXenon_716x",
+    "originalName": "!§bXenon §716x",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "apple_golden.png",
+        "bow_standby.png",
+        "fishing_rod_uncast.png",
+        "potion_bottle_splash.png",
+        "iron_sword.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "wool_colored_white.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "dist\\thumbnails\\bXenon_716x"
+  }
+]

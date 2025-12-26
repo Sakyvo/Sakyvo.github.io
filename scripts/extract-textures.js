@@ -1,0 +1,116 @@
+const AdmZip = require('adm-zip');
+const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
+
+const KEY_TEXTURES = {
+  items: [
+    'assets/minecraft/textures/items/diamond_sword.png',
+    'assets/minecraft/textures/items/ender_pearl.png',
+    'assets/minecraft/textures/items/golden_carrot.png',
+    'assets/minecraft/textures/items/apple_golden.png',
+    'assets/minecraft/textures/items/bow_standby.png',
+    'assets/minecraft/textures/items/fishing_rod_uncast.png',
+    'assets/minecraft/textures/items/potion_bottle_splash.png',
+    'assets/minecraft/textures/items/steak.png',
+    'assets/minecraft/textures/items/iron_sword.png',
+  ],
+  blocks: [
+    'assets/minecraft/textures/blocks/grass_side.png',
+    'assets/minecraft/textures/blocks/stone.png',
+    'assets/minecraft/textures/blocks/wool_colored_white.png',
+  ],
+  armor: [
+    'assets/minecraft/textures/models/armor/diamond_layer_1.png',
+    'assets/minecraft/textures/models/armor/diamond_layer_2.png',
+  ],
+  gui: ['assets/minecraft/textures/gui/icons.png'],
+  particle: ['assets/minecraft/textures/particle/particles.png'],
+};
+
+function sanitizeName(name) {
+  return name.replace(/[§!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').replace(/\s+/g, '_').trim();
+}
+
+async function extractPack(zipPath) {
+  const originalName = path.basename(zipPath, '.zip');
+  const packId = sanitizeName(originalName);
+  const zip = new AdmZip(zipPath);
+  const outputDir = path.join('dist', 'thumbnails', packId);
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  const extracted = { items: [], blocks: [], armor: [], gui: [], particle: [] };
+
+  // Try to extract pack.png
+  const packPng = zip.getEntry('pack.png');
+  if (packPng) {
+    fs.writeFileSync(path.join(outputDir, 'pack.png'), packPng.getData());
+  }
+
+  for (const [category, paths] of Object.entries(KEY_TEXTURES)) {
+    for (const texturePath of paths) {
+      const entry = zip.getEntry(texturePath);
+      if (entry) {
+        const filename = path.basename(texturePath);
+        fs.writeFileSync(path.join(outputDir, filename), entry.getData());
+        extracted[category].push(filename);
+      }
+    }
+  }
+
+  await generateCover(packId, extracted, outputDir);
+
+  return { packId, originalName, extracted, outputDir };
+}
+
+async function generateCover(packId, textures, outputDir) {
+  const itemTextures = textures.items.slice(0, 16);
+  if (itemTextures.length === 0) return;
+
+  const composites = [];
+  for (let i = 0; i < itemTextures.length; i++) {
+    const inputPath = path.join(outputDir, itemTextures[i]);
+    if (fs.existsSync(inputPath)) {
+      const resized = await sharp(inputPath).resize(64, 64, { kernel: 'nearest' }).toBuffer();
+      composites.push({
+        input: resized,
+        left: (i % 4) * 64,
+        top: Math.floor(i / 4) * 64,
+      });
+    }
+  }
+
+  if (composites.length > 0) {
+    await sharp({ create: { width: 256, height: 256, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+      .composite(composites)
+      .png()
+      .toFile(path.join(outputDir, 'cover.png'));
+  }
+}
+
+async function main() {
+  const packsDir = 'resourcepacks';
+  if (!fs.existsSync(packsDir)) {
+    console.log('No resourcepacks directory found');
+    return;
+  }
+
+  const files = fs.readdirSync(packsDir).filter(f => f.endsWith('.zip'));
+  const results = [];
+
+  for (const file of files) {
+    console.log(`Processing: ${file}`);
+    try {
+      const result = await extractPack(path.join(packsDir, file));
+      results.push(result);
+      console.log(`  Extracted: ${result.packId}`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+    }
+  }
+
+  fs.writeFileSync('dist/data/extracted.json', JSON.stringify(results, null, 2));
+  console.log(`Done. Processed ${results.length} packs.`);
+}
+
+main();
