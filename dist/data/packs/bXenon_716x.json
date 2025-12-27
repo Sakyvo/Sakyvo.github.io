@@ -1,15 +1,14 @@
 {
   "id": "!§bXenon §716x",
   "name": "bXenon_716x",
-  "author": "Unknown",
-  "resolution": "16x",
-  "tags": [
-    "16x"
-  ],
+  "displayName": "Xenon 16x",
+  "description": "",
   "cover": "/thumbnails/bXenon_716x/cover.png",
+  "packPng": "/thumbnails/bXenon_716x/pack.png",
+  "icon": null,
   "file": "resourcepacks/!§bXenon §716x.zip",
   "fileSize": "19.0MB",
-  "uploadDate": "2025-12-26",
+  "uploadDate": "2025-12-27",
   "textures": {
     "items": [
       "diamond_sword.png",

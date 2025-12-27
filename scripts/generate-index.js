@@ -3,8 +3,9 @@ const path = require('path');
 
 const PAGE_SIZE = 50;
 
-function sanitizeName(name) {
-  return name.replace(/[§!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').replace(/\s+/g, '_').trim();
+function cleanMinecraftText(text) {
+  if (!text) return '';
+  return text.replace(/^!\s*/, '').replace(/§[0-9a-fk-or]/gi, '').trim();
 }
 
 function getFileSize(filePath) {
@@ -28,13 +29,15 @@ function main() {
   // Generate pack details
   const packs = extracted.map(e => {
     const zipPath = path.join('resourcepacks', `${e.originalName}.zip`);
+    const cleanName = cleanMinecraftText(e.originalName);
     return {
       id: e.originalName,
       name: e.packId,
-      author: 'Unknown',
-      resolution: '16x',
-      tags: ['16x'],
+      displayName: cleanName || e.packId,
+      description: e.description || '',
       cover: `/thumbnails/${e.packId}/cover.png`,
+      packPng: `/thumbnails/${e.packId}/pack.png`,
+      icon: fs.existsSync(path.join(e.outputDir, 'icon.png')) ? `/thumbnails/${e.packId}/icon.png` : null,
       file: `resourcepacks/${e.originalName}.zip`,
       fileSize: getFileSize(zipPath),
       uploadDate: today,
@@ -56,9 +59,9 @@ function main() {
   const indexItems = packs.map(p => ({
     id: p.id,
     name: p.name,
+    displayName: p.displayName,
     cover: p.cover,
-    tags: p.tags,
-    resolution: p.resolution
+    packPng: p.packPng
   }));
 
   const index = {

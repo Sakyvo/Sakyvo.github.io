@@ -16,8 +16,8 @@ class PackSearch {
     }
 
     const results = this.loader.index.items.filter(pack =>
-      pack.name.toLowerCase().includes(query) ||
-      pack.tags.some(tag => tag.toLowerCase().includes(query))
+      pack.displayName.toLowerCase().includes(query) ||
+      pack.name.toLowerCase().includes(query)
     );
 
     this.renderResults(results);
@@ -26,15 +26,13 @@ class PackSearch {
   renderResults(results) {
     this.resultsContainer.innerHTML = results
       .map(pack => `
-        <div class="pack-card" onclick="location.href='/pack/${pack.name}/'">
-          <img src="${pack.cover}" alt="${pack.name}">
+        <a class="pack-card" href="/${pack.name}/">
+          <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
           <div class="info">
-            <div class="name">${pack.name}</div>
-            <div class="tags">
-              ${pack.tags.map(t => `<span class="tag">${t}</span>`).join('')}
-            </div>
+            <img class="pack-icon" src="${pack.packPng}" alt="">
+            <div class="name">${pack.displayName}</div>
           </div>
-        </div>
+        </a>
       `)
       .join('');
   }

@@ -3,7 +3,9 @@
     "allow": [
       "Bash(mkdir -p \"K:\\\\Sakyvo.github.io\\\\scripts\" \"K:\\\\Sakyvo.github.io\\\\src\\\\css\" \"K:\\\\Sakyvo.github.io\\\\src\\\\js\" \"K:\\\\Sakyvo.github.io\\\\pack-meta\" \"K:\\\\Sakyvo.github.io\\\\packs\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\data\\\\pages\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\data\\\\packs\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\thumbnails\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\assets\\\\css\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\assets\\\\js\")",
       "Bash(npm install)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(cat dist/data/index.json)",
+      "Bash(cat dist/data/packs/bXenon_716x.json)"
     ]
   }
 }

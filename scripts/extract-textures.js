@@ -28,6 +28,21 @@ const KEY_TEXTURES = {
   particle: ['assets/minecraft/textures/particle/particles.png'],
 };
 
+function cleanMinecraftText(text) {
+  if (!text) return '';
+  return text.replace(/^!\s*/, '').replace(/§[0-9a-fk-or]/gi, '').trim();
+}
+
+function parseDescription(desc) {
+  if (!desc) return '';
+  if (typeof desc === 'string') return cleanMinecraftText(desc);
+  if (Array.isArray(desc)) {
+    return desc.map(d => typeof d === 'string' ? cleanMinecraftText(d) : (d.text ? cleanMinecraftText(d.text) : '')).join(' ');
+  }
+  if (desc.text) return cleanMinecraftText(desc.text);
+  return '';
+}
+
 function sanitizeName(name) {
   return name.replace(/[§!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').replace(/\s+/g, '_').trim();
 }
@@ -40,11 +55,27 @@ async function extractPack(zipPath) {
   fs.mkdirSync(outputDir, { recursive: true });
 
   const extracted = { items: [], blocks: [], armor: [], gui: [], particle: [] };
+  let description = '';
 
-  // Try to extract pack.png
+  // Extract pack.png
   const packPng = zip.getEntry('pack.png');
   if (packPng) {
     fs.writeFileSync(path.join(outputDir, 'pack.png'), packPng.getData());
+  }
+
+  // Extract pack.mcmeta
+  const mcmeta = zip.getEntry('pack.mcmeta');
+  if (mcmeta) {
+    try {
+      const data = JSON.parse(mcmeta.getData().toString('utf-8'));
+      description = parseDescription(data.pack?.description);
+    } catch (e) {}
+  }
+
+  // Extract icon.png (some packs have this)
+  const iconPng = zip.getEntry('icon.png');
+  if (iconPng) {
+    fs.writeFileSync(path.join(outputDir, 'icon.png'), iconPng.getData());
   }
 
   for (const [category, paths] of Object.entries(KEY_TEXTURES)) {
@@ -60,7 +91,7 @@ async function extractPack(zipPath) {
 
   await generateCover(packId, extracted, outputDir);
 
-  return { packId, originalName, extracted, outputDir };
+  return { packId, originalName, extracted, outputDir, description };
 }
 
 async function generateCover(packId, textures, outputDir) {

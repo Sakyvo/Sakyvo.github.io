@@ -20,12 +20,12 @@ class PackLoader {
     const grid = document.querySelector('.pack-grid');
     grid.innerHTML = this.index.items
       .map((item, i) => `
-        <div class="pack-card" data-index="${i}" data-id="${item.id}" data-loaded="false">
+        <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="/${item.name}/">
           <div class="placeholder"></div>
           <div class="info">
-            <div class="name">${item.name}</div>
+            <div class="name">${item.displayName}</div>
           </div>
-        </div>
+        </a>
       `)
       .join('');
   }
@@ -69,15 +69,12 @@ class PackLoader {
 
   renderCard(el, pack) {
     el.innerHTML = `
-      <img src="${pack.cover}" alt="${pack.name}" loading="lazy">
+      <img class="cover" src="${pack.cover}" alt="${pack.displayName}" loading="lazy">
       <div class="info">
-        <div class="name">${pack.name}</div>
-        <div class="tags">
-          ${pack.tags.map(t => `<span class="tag">${t}</span>`).join('')}
-        </div>
+        <img class="pack-icon" src="${pack.packPng}" alt="">
+        <div class="name">${pack.displayName}</div>
       </div>
     `;
-    el.onclick = () => location.href = `/pack/${pack.name}/`;
   }
 }
 
