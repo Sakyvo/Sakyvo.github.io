@@ -1,0 +1,28 @@
+{
+  "total": 3,
+  "pageSize": 50,
+  "pages": 1,
+  "items": [
+    {
+      "id": "!§bXenon §716x",
+      "name": "bXenon_716x",
+      "displayName": "Xenon 16x",
+      "cover": "/thumbnails/bXenon_716x/cover.png",
+      "packPng": "/thumbnails/bXenon_716x/pack.png"
+    },
+    {
+      "id": "#CoolPvp",
+      "name": "CoolPvp",
+      "displayName": "#CoolPvp",
+      "cover": "/thumbnails/CoolPvp/cover.png",
+      "packPng": "/thumbnails/CoolPvp/pack.png"
+    },
+    {
+      "id": "#eum3edit",
+      "name": "eum3edit",
+      "displayName": "#eum3edit",
+      "cover": "/thumbnails/eum3edit/cover.png",
+      "packPng": "/thumbnails/eum3edit/pack.png"
+    }
+  ]
+}
