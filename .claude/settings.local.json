@@ -5,7 +5,8 @@
       "Bash(npm install)",
       "Bash(npm run build)",
       "Bash(cat dist/data/index.json)",
-      "Bash(cat dist/data/packs/bXenon_716x.json)"
+      "Bash(cat dist/data/packs/bXenon_716x.json)",
+      "Bash(npx serve . -l 3000)"
     ]
   }
 }
