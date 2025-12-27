@@ -11,7 +11,8 @@
       "Bash(unzip -l \"K:\\\\Sakyvo.github.io\\\\resourcepacks\\\\!§bXenon §716x.zip\")",
       "Bash(unzip -l \"K:\\\\Sakyvo.github.io\\\\resourcepacks\\\\#eum3edit.zip\")",
       "Bash(zip -j \"resourcepacks/#CoolPvp.zip\" pack.png)",
-      "Bash(powershell -Command \"Compress-Archive -Path ''K:\\\\Sakyvo.github.io\\\\pack.png'' -Update -DestinationPath ''K:\\\\Sakyvo.github.io\\\\resourcepacks\\\\#CoolPvp.zip''\")"
+      "Bash(powershell -Command \"Compress-Archive -Path ''K:\\\\Sakyvo.github.io\\\\pack.png'' -Update -DestinationPath ''K:\\\\Sakyvo.github.io\\\\resourcepacks\\\\#CoolPvp.zip''\")",
+      "Bash(node scripts/extract-textures.js)"
     ]
   }
 }

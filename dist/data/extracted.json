@@ -1,16 +1,77 @@
 [
   {
+    "packId": "_1Eum3Blue_9Revamp",
+    "originalName": "!     §1Eum3Blue §9Revamp",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "potion_bottle_splash.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "wool_colored_white.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "dist\\thumbnails\\_1Eum3Blue_9Revamp",
+    "description": "by Metar0X"
+  },
+  {
+    "packId": "_1Jewdah_9Private",
+    "originalName": "!     §1Jewdah §9Private",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "potion_bottle_splash.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "wool_colored_white.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "dist\\thumbnails\\_1Jewdah_9Private",
+    "description": "by Metar0X"
+  },
+  {
     "packId": "bXenon_716x",
     "originalName": "!§bXenon §716x",
     "extracted": {
       "items": [
         "diamond_sword.png",
         "ender_pearl.png",
-        "apple_golden.png",
-        "bow_standby.png",
-        "fishing_rod_uncast.png",
         "potion_bottle_splash.png",
-        "iron_sword.png"
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png"
       ],
       "blocks": [
         "grass_side.png",
@@ -38,11 +99,10 @@
       "items": [
         "diamond_sword.png",
         "ender_pearl.png",
-        "apple_golden.png",
-        "bow_standby.png",
-        "fishing_rod_uncast.png",
         "potion_bottle_splash.png",
-        "iron_sword.png"
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png"
       ],
       "blocks": [
         "grass_side.png",
@@ -67,11 +127,10 @@
       "items": [
         "diamond_sword.png",
         "ender_pearl.png",
-        "apple_golden.png",
-        "bow_standby.png",
-        "fishing_rod_uncast.png",
         "potion_bottle_splash.png",
-        "iron_sword.png"
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png"
       ],
       "blocks": [
         "grass_side.png",

@@ -7,13 +7,12 @@ const KEY_TEXTURES = {
   items: [
     'assets/minecraft/textures/items/diamond_sword.png',
     'assets/minecraft/textures/items/ender_pearl.png',
-    'assets/minecraft/textures/items/golden_carrot.png',
-    'assets/minecraft/textures/items/apple_golden.png',
-    'assets/minecraft/textures/items/bow_standby.png',
-    'assets/minecraft/textures/items/fishing_rod_uncast.png',
     'assets/minecraft/textures/items/potion_bottle_splash.png',
     'assets/minecraft/textures/items/steak.png',
     'assets/minecraft/textures/items/iron_sword.png',
+    'assets/minecraft/textures/items/fishing_rod_uncast.png',
+    'assets/minecraft/textures/items/apple_golden.png',
+    'assets/minecraft/textures/items/golden_carrot.png',
   ],
   blocks: [
     'assets/minecraft/textures/blocks/grass_side.png',
@@ -97,7 +96,7 @@ async function extractPack(zipPath) {
 }
 
 async function generateCover(packId, textures, outputDir) {
-  const itemTextures = textures.items.slice(0, 16);
+  const itemTextures = textures.items.slice(0, 8);
   if (itemTextures.length === 0) return;
 
   const composites = [];
@@ -114,7 +113,7 @@ async function generateCover(packId, textures, outputDir) {
   }
 
   if (composites.length > 0) {
-    await sharp({ create: { width: 256, height: 256, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    await sharp({ create: { width: 256, height: 128, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
       .composite(composites)
       .png()
       .toFile(path.join(outputDir, 'cover.png'));
