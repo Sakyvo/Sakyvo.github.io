@@ -11,7 +11,7 @@ class PackLoader {
   }
 
   async init() {
-    this.index = await fetch('/data/index.json').then(r => r.json());
+    this.index = await fetch('data/index.json').then(r => r.json());
     this.renderPlaceholders();
     this.observeItems();
   }
@@ -20,7 +20,7 @@ class PackLoader {
     const grid = document.querySelector('.pack-grid');
     grid.innerHTML = this.index.items
       .map((item, i) => `
-        <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="/${item.name}/">
+        <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="${item.name}/">
           <div class="placeholder"></div>
           <div class="info">
             <div class="name">${item.displayName}</div>
@@ -56,7 +56,7 @@ class PackLoader {
   }
 
   async loadPage(page) {
-    const data = await fetch(`/data/pages/page-${page}.json`).then(r => r.json());
+    const data = await fetch(`data/pages/page-${page}.json`).then(r => r.json());
     this.pagesData[page] = data.items;
     this.loadedPages.add(page);
   }

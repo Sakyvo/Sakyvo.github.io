@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const pack = await fetch(`/data/packs/${packName}.json`).then(r => r.json());
+    const pack = await fetch(`../data/packs/${packName}.json`).then(r => r.json());
     document.title = `${pack.displayName} - VALE`;
 
     const images = [
-      pack.cover && `<img src="${pack.cover}" alt="Cover">`,
-      pack.icon && `<img src="${pack.icon}" alt="Icon">`,
-      pack.packPng && `<img src="${pack.packPng}" alt="Pack">`
+      pack.cover && `<img src="..${pack.cover}" alt="Cover">`,
+      pack.icon && `<img src="..${pack.icon}" alt="Icon">`,
+      pack.packPng && `<img src="..${pack.packPng}" alt="Pack">`
     ].filter(Boolean).join('');
 
     const textures = Object.values(pack.textures || {}).flat();
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="texture-section">
         <h2>TEXTURES</h2>
         <div class="texture-grid">
-          ${textures.map(t => `<img src="/thumbnails/${pack.name}/${t}" alt="${t}">`).join('')}
+          ${textures.map(t => `<img src="../thumbnails/${pack.name}/${t}" alt="${t}">`).join('')}
         </div>
       </div>
     ` : '';

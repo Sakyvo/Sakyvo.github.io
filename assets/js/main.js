@@ -26,7 +26,7 @@ class PackSearch {
   renderResults(results) {
     this.resultsContainer.innerHTML = results
       .map(pack => `
-        <a class="pack-card" href="/${pack.name}/">
+        <a class="pack-card" href="${pack.name}/">
           <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
           <div class="info">
             <img class="pack-icon" src="${pack.packPng}" alt="">

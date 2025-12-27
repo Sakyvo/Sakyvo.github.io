@@ -61,7 +61,7 @@ class Admin {
 
   async loadPacks() {
     try {
-      const index = await fetch('/data/index.json').then(r => r.json());
+      const index = await fetch('data/index.json').then(r => r.json());
       const listEl = document.getElementById('pack-list');
       listEl.innerHTML = index.items.map(p => `
         <div class="pack-item">
