@@ -57,10 +57,12 @@ async function extractPack(zipPath) {
   const extracted = { items: [], blocks: [], armor: [], gui: [], particle: [] };
   let description = '';
 
-  // Extract pack.png
+  // Extract pack.png (use default if not found)
   const packPng = zip.getEntry('pack.png');
   if (packPng) {
     fs.writeFileSync(path.join(outputDir, 'pack.png'), packPng.getData());
+  } else {
+    fs.copyFileSync('pack.png', path.join(outputDir, 'pack.png'));
   }
 
   // Extract pack.mcmeta
