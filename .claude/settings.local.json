@@ -14,7 +14,9 @@
       "Bash(powershell -Command \"Compress-Archive -Path ''K:\\\\Sakyvo.github.io\\\\pack.png'' -Update -DestinationPath ''K:\\\\Sakyvo.github.io\\\\resourcepacks\\\\#CoolPvp.zip''\")",
       "Bash(node scripts/extract-textures.js)",
       "Bash(node scripts/generate-index.js)",
-      "Bash(node scripts/build.js)"
+      "Bash(node scripts/build.js)",
+      "Bash(cat .gitignore)",
+      "Bash(git add -A)"
     ]
   }
 }
