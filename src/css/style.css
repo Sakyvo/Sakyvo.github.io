@@ -106,7 +106,7 @@ nav { display: flex; gap: 12px; }
 
 .pack-card .cover {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 2;
   object-fit: cover;
   image-rendering: pixelated;
   display: block;
@@ -114,7 +114,7 @@ nav { display: flex; gap: 12px; }
 }
 
 .pack-card .placeholder {
-  aspect-ratio: 1;
+  aspect-ratio: 2;
   background: #eee;
   border-bottom: 2px solid #000;
 }
