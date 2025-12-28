@@ -26,7 +26,9 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nMove dist contents to root for GitHub Pages\n\n- Remove dist/ directory, output directly to root\n- Update all scripts to use root paths instead of dist/\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix pack.html paths: use absolute paths for /p/ subdirectory\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix card aspect ratio to match cover.png \\(2:1\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(unzip -l \"resourcepacks/#CoolPvp.zip\")"
+      "Bash(unzip -l \"resourcepacks/#CoolPvp.zip\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd steak and golden_carrot textures with fallback paths\n\n- Support alternative texture names \\(beef_cooked, carrot_golden\\)\n- Fix cover.png to show all 8 textures\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nUse Default_Texture as fallback for missing textures\n\n- Move pack.png reference to Default_Texture/pack.png\n- Fallback to Default_Texture for any missing item/block textures\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

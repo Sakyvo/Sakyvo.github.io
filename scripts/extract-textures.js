@@ -61,7 +61,7 @@ async function extractPack(zipPath) {
   if (packPng) {
     fs.writeFileSync(path.join(outputDir, 'pack.png'), packPng.getData());
   } else {
-    fs.copyFileSync('pack.png', path.join(outputDir, 'pack.png'));
+    fs.copyFileSync('Default_Texture/pack.png', path.join(outputDir, 'pack.png'));
   }
 
   // Extract pack.mcmeta
@@ -82,14 +82,24 @@ async function extractPack(zipPath) {
   for (const [category, pathsArray] of Object.entries(KEY_TEXTURES)) {
     for (const alternatives of pathsArray) {
       let entry = null;
-      let texturePath = null;
+      const filename = path.basename(alternatives[0]);
       for (const alt of alternatives) {
         entry = zip.getEntry(alt);
-        if (entry) { texturePath = alt; break; }
+        if (entry) break;
       }
       if (entry) {
-        const filename = path.basename(alternatives[0]);
         fs.writeFileSync(path.join(outputDir, filename), entry.getData());
+      } else {
+        // Fallback to Default_Texture
+        for (const alt of alternatives) {
+          const defaultPath = path.join('Default_Texture', alt);
+          if (fs.existsSync(defaultPath)) {
+            fs.copyFileSync(defaultPath, path.join(outputDir, filename));
+            break;
+          }
+        }
+      }
+      if (fs.existsSync(path.join(outputDir, filename))) {
         extracted[category].push(filename);
       }
     }

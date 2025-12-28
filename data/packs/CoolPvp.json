@@ -25,7 +25,10 @@
       "stone.png",
       "wool_colored_white.png"
     ],
-    "armor": [],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
     "gui": [
       "icons.png"
     ],

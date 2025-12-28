@@ -73,9 +73,11 @@
         "diamond_sword.png",
         "ender_pearl.png",
         "potion_bottle_splash.png",
+        "steak.png",
         "iron_sword.png",
         "fishing_rod_uncast.png",
-        "apple_golden.png"
+        "apple_golden.png",
+        "golden_carrot.png"
       ],
       "blocks": [
         "grass_side.png",
@@ -115,7 +117,10 @@
         "stone.png",
         "wool_colored_white.png"
       ],
-      "armor": [],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
       "gui": [
         "icons.png"
       ],
