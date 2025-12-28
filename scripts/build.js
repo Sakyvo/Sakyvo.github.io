@@ -31,8 +31,9 @@ if (fs.existsSync(indexPath)) {
   const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
   const packHtml = fs.readFileSync('src/pack.html', 'utf-8');
 
+  fs.mkdirSync(path.join('dist', 'p'), { recursive: true });
   for (const pack of index.items) {
-    const packDir = path.join('dist', pack.name);
+    const packDir = path.join('dist', 'p', pack.name);
     fs.mkdirSync(packDir, { recursive: true });
     fs.writeFileSync(path.join(packDir, 'index.html'), packHtml);
   }

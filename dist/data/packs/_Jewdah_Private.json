@@ -1,0 +1,41 @@
+{
+  "id": "!     §1Jewdah §9Private",
+  "name": "_Jewdah_Private",
+  "displayName": "Jewdah Private",
+  "description": "by Metar0X",
+  "cover": "/thumbnails/_Jewdah_Private/cover.png",
+  "packPng": "/thumbnails/_Jewdah_Private/pack.png",
+  "icon": null,
+  "file": "resourcepacks/!     §1Jewdah §9Private.zip",
+  "fileSize": "19.1MB",
+  "uploadDate": "2025-12-28",
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "potion_bottle_splash.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "wool_colored_white.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A71Jewdah%20%C2%A79Private.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A71Jewdah%20%C2%A79Private.zip"
+  }
+}

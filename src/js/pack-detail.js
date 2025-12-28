@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const pathParts = window.location.pathname.split('/').filter(Boolean);
-  const packName = pathParts[0];
+  const packName = pathParts[0] === 'p' ? pathParts[1] : pathParts[0];
 
   if (!packName) {
     document.getElementById('pack-content').innerHTML = 'Pack not found';

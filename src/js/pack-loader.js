@@ -20,7 +20,7 @@ class PackLoader {
     const grid = document.querySelector('.pack-grid');
     grid.innerHTML = this.index.items
       .map((item, i) => `
-        <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="${item.name}/">
+        <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="p/${item.name}/">
           <div class="placeholder"></div>
           <div class="info">
             <div class="name">${item.displayName}</div>

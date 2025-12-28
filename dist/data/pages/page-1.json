@@ -2,25 +2,106 @@
   "page": 1,
   "items": [
     {
-      "id": "!§bXenon §716x",
-      "name": "bXenon_716x",
-      "displayName": "Xenon 16x",
-      "description": "",
-      "cover": "/thumbnails/bXenon_716x/cover.png",
-      "packPng": "/thumbnails/bXenon_716x/pack.png",
+      "id": "!     §1Eum3Blue §9Revamp",
+      "name": "_Eum3Blue_Revamp",
+      "displayName": "Eum3Blue Revamp",
+      "description": "by Metar0X",
+      "cover": "/thumbnails/_Eum3Blue_Revamp/cover.png",
+      "packPng": "/thumbnails/_Eum3Blue_Revamp/pack.png",
       "icon": null,
-      "file": "resourcepacks/!§bXenon §716x.zip",
-      "fileSize": "19.0MB",
-      "uploadDate": "2025-12-27",
+      "file": "resourcepacks/!     §1Eum3Blue §9Revamp.zip",
+      "fileSize": "20.0MB",
+      "uploadDate": "2025-12-28",
       "textures": {
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "apple_golden.png",
-          "bow_standby.png",
-          "fishing_rod_uncast.png",
           "potion_bottle_splash.png",
-          "iron_sword.png"
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "wool_colored_white.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A71Eum3Blue%20%C2%A79Revamp.zip",
+        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A71Eum3Blue%20%C2%A79Revamp.zip"
+      }
+    },
+    {
+      "id": "!     §1Jewdah §9Private",
+      "name": "_Jewdah_Private",
+      "displayName": "Jewdah Private",
+      "description": "by Metar0X",
+      "cover": "/thumbnails/_Jewdah_Private/cover.png",
+      "packPng": "/thumbnails/_Jewdah_Private/pack.png",
+      "icon": null,
+      "file": "resourcepacks/!     §1Jewdah §9Private.zip",
+      "fileSize": "19.1MB",
+      "uploadDate": "2025-12-28",
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "potion_bottle_splash.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "wool_colored_white.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A71Jewdah%20%C2%A79Private.zip",
+        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A71Jewdah%20%C2%A79Private.zip"
+      }
+    },
+    {
+      "id": "!§bXenon §716x",
+      "name": "Xenon_16x",
+      "displayName": "Xenon 16x",
+      "description": "",
+      "cover": "/thumbnails/Xenon_16x/cover.png",
+      "packPng": "/thumbnails/Xenon_16x/pack.png",
+      "icon": null,
+      "file": "resourcepacks/!§bXenon §716x.zip",
+      "fileSize": "19.0MB",
+      "uploadDate": "2025-12-28",
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "potion_bottle_splash.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png"
         ],
         "blocks": [
           "grass_side.png",
@@ -53,16 +134,15 @@
       "icon": null,
       "file": "resourcepacks/#CoolPvp.zip",
       "fileSize": "15.5MB",
-      "uploadDate": "2025-12-27",
+      "uploadDate": "2025-12-28",
       "textures": {
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "apple_golden.png",
-          "bow_standby.png",
-          "fishing_rod_uncast.png",
           "potion_bottle_splash.png",
-          "iron_sword.png"
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png"
         ],
         "blocks": [
           "grass_side.png",
@@ -92,16 +172,15 @@
       "icon": null,
       "file": "resourcepacks/#eum3edit.zip",
       "fileSize": "16.7MB",
-      "uploadDate": "2025-12-27",
+      "uploadDate": "2025-12-28",
       "textures": {
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "apple_golden.png",
-          "bow_standby.png",
-          "fishing_rod_uncast.png",
           "potion_bottle_splash.png",
-          "iron_sword.png"
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png"
         ],
         "blocks": [
           "grass_side.png",

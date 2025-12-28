@@ -8,16 +8,15 @@
   "icon": null,
   "file": "resourcepacks/#eum3edit.zip",
   "fileSize": "16.7MB",
-  "uploadDate": "2025-12-27",
+  "uploadDate": "2025-12-28",
   "textures": {
     "items": [
       "diamond_sword.png",
       "ender_pearl.png",
-      "apple_golden.png",
-      "bow_standby.png",
-      "fishing_rod_uncast.png",
       "potion_bottle_splash.png",
-      "iron_sword.png"
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png"
     ],
     "blocks": [
       "grass_side.png",

@@ -1,6 +1,6 @@
 [
   {
-    "packId": "_1Eum3Blue_9Revamp",
+    "packId": "_Eum3Blue_Revamp",
     "originalName": "!     §1Eum3Blue §9Revamp",
     "extracted": {
       "items": [
@@ -27,11 +27,11 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\_1Eum3Blue_9Revamp",
+    "outputDir": "dist\\thumbnails\\_Eum3Blue_Revamp",
     "description": "by Metar0X"
   },
   {
-    "packId": "_1Jewdah_9Private",
+    "packId": "_Jewdah_Private",
     "originalName": "!     §1Jewdah §9Private",
     "extracted": {
       "items": [
@@ -58,11 +58,11 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\_1Jewdah_9Private",
+    "outputDir": "dist\\thumbnails\\_Jewdah_Private",
     "description": "by Metar0X"
   },
   {
-    "packId": "bXenon_716x",
+    "packId": "Xenon_16x",
     "originalName": "!§bXenon §716x",
     "extracted": {
       "items": [
@@ -89,7 +89,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\bXenon_716x",
+    "outputDir": "dist\\thumbnails\\Xenon_16x",
     "description": ""
   },
   {
