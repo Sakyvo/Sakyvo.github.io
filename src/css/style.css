@@ -153,7 +153,7 @@ footer {
 
 /* Detail page */
 .pack-detail {
-  max-width: 800px;
+  max-width: 900px;
   margin: 40px auto;
   padding: 0 24px;
 }
@@ -174,16 +174,12 @@ footer {
   margin-bottom: 32px;
   padding-bottom: 32px;
   border-bottom: 2px solid #000;
+  align-items: flex-start;
 }
 
-.detail-images {
-  display: flex;
-  gap: 16px;
-}
-
-.detail-images img {
-  width: 128px;
-  height: 128px;
+.pack-icon-large {
+  width: 96px;
+  height: 96px;
   image-rendering: pixelated;
   border: 2px solid #000;
 }
@@ -192,14 +188,13 @@ footer {
 
 .detail-info h1 {
   font-size: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
 }
 
-.detail-info .description {
-  font-size: 14px;
+.detail-info .original-name {
+  font-size: 12px;
   color: #666;
-  margin-bottom: 16px;
-  line-height: 1.6;
+  margin-bottom: 8px;
 }
 
 .detail-info .meta {
@@ -209,7 +204,7 @@ footer {
 
 .download-section { margin-bottom: 32px; }
 
-.download-section h2 {
+.download-section h2, .preview-section h2 {
   font-size: 14px;
   font-weight: bold;
   margin-bottom: 16px;
@@ -238,24 +233,39 @@ footer {
   border: 2px solid #000;
 }
 
-.texture-section h2 {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  letter-spacing: 2px;
+.preview-section { margin-bottom: 32px; }
+
+.preview-grid {
+  display: flex;
+  gap: 24px;
 }
 
-.texture-grid {
+.preview-left, .preview-right {
+  flex: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
-.texture-grid img {
-  width: 64px;
-  height: 64px;
+.preview-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.preview-row img {
+  width: 100%;
+  aspect-ratio: 1;
   image-rendering: pixelated;
   border: 1px solid #000;
+  object-fit: contain;
+  background: #f5f5f5;
+}
+
+@media (max-width: 700px) {
+  .preview-grid {
+    flex-direction: column;
+  }
 }
 
 /* Admin page */

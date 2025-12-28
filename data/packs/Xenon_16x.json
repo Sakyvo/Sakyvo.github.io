@@ -23,6 +23,7 @@
     "blocks": [
       "grass_side.png",
       "stone.png",
+      "cobblestone.png",
       "wool_colored_white.png"
     ],
     "armor": [

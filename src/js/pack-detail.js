@@ -11,28 +11,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pack = await fetch(`/data/packs/${packName}.json`).then(r => r.json());
     document.title = `${pack.displayName} - VALE`;
 
-    const images = [
-      pack.cover && `<img src="${pack.cover}" alt="Cover">`,
-      pack.icon && `<img src="${pack.icon}" alt="Icon">`,
-      pack.packPng && `<img src="${pack.packPng}" alt="Pack">`
-    ].filter(Boolean).join('');
+    const t = pack.textures || {};
+    const items = t.items || [];
+    const blocks = t.blocks || [];
+    const armor = t.armor || [];
+    const gui = t.gui || [];
+    const particle = t.particle || [];
 
-    const textures = Object.values(pack.textures || {}).flat();
-    const textureHtml = textures.length ? `
-      <div class="texture-section">
-        <h2>TEXTURES</h2>
-        <div class="texture-grid">
-          ${textures.map(t => `<img src="/thumbnails/${pack.name}/${t}" alt="${t}">`).join('')}
-        </div>
-      </div>
-    ` : '';
+    const img = (name) => `<img src="/thumbnails/${pack.name}/${name}" alt="${name}">`;
 
     document.getElementById('pack-content').innerHTML = `
       <div class="detail-header">
-        <div class="detail-images">${images}</div>
+        <img class="pack-icon-large" src="${pack.packPng}" alt="Pack">
         <div class="detail-info">
           <h1>${pack.displayName}</h1>
-          ${pack.description ? `<p class="description">${pack.description}</p>` : ''}
+          <p class="original-name">${pack.id}</p>
           <p class="meta">${pack.fileSize}</p>
         </div>
       </div>
@@ -41,7 +34,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         <a class="btn btn-primary" href="${pack.downloads.github}" download>GitHub</a>
         <a class="btn btn-secondary" href="${pack.downloads.mirror}" download>Mirror</a>
       </div>
-      ${textureHtml}
+      <div class="preview-section">
+        <h2>Preview</h2>
+        <div class="preview-grid">
+          <div class="preview-left">
+            <div class="preview-row">${items.slice(0,4).map(img).join('')}</div>
+            <div class="preview-row">${items.slice(4,8).map(img).join('')}</div>
+            <div class="preview-row">${blocks.map(img).join('')}</div>
+          </div>
+          <div class="preview-right">
+            <div class="preview-row">${armor.map(img).join('')}</div>
+            <div class="preview-row">${gui.map(img).join('')}</div>
+            <div class="preview-row">${particle.map(img).join('')}</div>
+          </div>
+        </div>
+      </div>
     `;
   } catch (e) {
     document.getElementById('pack-content').innerHTML = 'Pack not found';

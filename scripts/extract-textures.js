@@ -17,6 +17,7 @@ const KEY_TEXTURES = {
   blocks: [
     ['assets/minecraft/textures/blocks/grass_side.png'],
     ['assets/minecraft/textures/blocks/stone.png'],
+    ['assets/minecraft/textures/blocks/cobblestone.png'],
     ['assets/minecraft/textures/blocks/wool_colored_white.png'],
   ],
   armor: [
