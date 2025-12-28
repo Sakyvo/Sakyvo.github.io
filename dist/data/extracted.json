@@ -1,6 +1,6 @@
 [
   {
-    "packId": "_Eum3Blue_Revamp",
+    "packId": "Eum3Blue_Revamp",
     "originalName": "!     §1Eum3Blue §9Revamp",
     "extracted": {
       "items": [
@@ -27,11 +27,11 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\_Eum3Blue_Revamp",
+    "outputDir": "dist\\thumbnails\\Eum3Blue_Revamp",
     "description": "by Metar0X"
   },
   {
-    "packId": "_Jewdah_Private",
+    "packId": "Jewdah_Private",
     "originalName": "!     §1Jewdah §9Private",
     "extracted": {
       "items": [
@@ -58,7 +58,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\_Jewdah_Private",
+    "outputDir": "dist\\thumbnails\\Jewdah_Private",
     "description": "by Metar0X"
   },
   {

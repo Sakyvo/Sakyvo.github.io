@@ -16,7 +16,12 @@
       "Bash(node scripts/generate-index.js)",
       "Bash(node scripts/build.js)",
       "Bash(cat .gitignore)",
-      "Bash(git add -A)"
+      "Bash(git add -A)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix pack page routing: add /p/ prefix and fix name sanitization\n\n- Route changed from /packId/ to /p/packId/\n- sanitizeName now properly removes Minecraft color codes \\(§b -> removed, not b\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)",
+      "Bash(git add dist/p/ dist/data/ dist/thumbnails/ dist/assets/ src/ scripts/)",
+      "Bash(git check-ignore -v dist/p/)",
+      "Bash(ls -la \"K:\\\\Sakyvo.github.io\\\\dist\\\\p\"\" 2>/dev/null || dir \"K:Sakyvo.github.iodistp\" 2>/dev/null || echo \"dist/p directory does not exist \")"
     ]
   }
 }

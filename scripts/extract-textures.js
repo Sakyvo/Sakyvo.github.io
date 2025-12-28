@@ -43,7 +43,7 @@ function parseDescription(desc) {
 }
 
 function sanitizeName(name) {
-  return name.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').replace(/\s+/g, '_').trim();
+  return name.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
 }
 
 async function extractPack(zipPath) {
