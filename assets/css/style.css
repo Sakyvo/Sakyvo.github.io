@@ -275,6 +275,18 @@ footer {
   grid-column: span 2;
 }
 
+.armor-row {
+  grid-template-columns: 1fr;
+}
+
+.armor-container {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #000;
+  background: #f5f5f5;
+  grid-column: span 2;
+}
+
 @media (max-width: 700px) {
   .preview-grid {
     flex-direction: column;

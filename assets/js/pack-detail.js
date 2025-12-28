@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const t = pack.textures || {};
     const items = t.items || [];
     const blocks = t.blocks || [];
-    const armor = t.armor || [];
     const gui = t.gui || [];
     const particle = t.particle || [];
 
@@ -43,13 +42,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="preview-row">${blocks.map(img).join('')}</div>
           </div>
           <div class="preview-right">
-            <div class="preview-row">${armor.map(img).join('')}</div>
+            <div class="preview-row armor-row"><div id="armor-viewer" class="armor-container"></div></div>
             <div class="preview-row">${gui.map(img).join('')}</div>
             <div class="preview-row">${particle.map(img).join('')}</div>
           </div>
         </div>
       </div>
     `;
+
+    // Initialize 3D armor viewer
+    const container = document.getElementById('armor-viewer');
+    if (container && window.ArmorViewer) {
+      new ArmorViewer(
+        container,
+        '/Default_Texture/Steve.png',
+        `/thumbnails/${pack.name}/diamond_layer_1.png`,
+        `/thumbnails/${pack.name}/diamond_layer_2.png`
+      );
+    }
   } catch (e) {
     document.getElementById('pack-content').innerHTML = 'Pack not found';
   }
