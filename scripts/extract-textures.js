@@ -50,7 +50,7 @@ async function extractPack(zipPath) {
   const originalName = path.basename(zipPath, '.zip');
   const packId = sanitizeName(originalName);
   const zip = new AdmZip(zipPath);
-  const outputDir = path.join('dist', 'thumbnails', packId);
+  const outputDir = path.join('thumbnails', packId);
   fs.mkdirSync(outputDir, { recursive: true });
 
   const extracted = { items: [], blocks: [], armor: [], gui: [], particle: [] };
@@ -141,7 +141,7 @@ async function main() {
     }
   }
 
-  fs.writeFileSync('dist/data/extracted.json', JSON.stringify(results, null, 2));
+  fs.writeFileSync('data/extracted.json', JSON.stringify(results, null, 2));
   console.log(`Done. Processed ${results.length} packs.`);
 }
 

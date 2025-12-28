@@ -14,26 +14,21 @@ function copyDir(src, dest) {
   }
 }
 
-// Copy src files to dist
-copyDir('src/css', 'dist/assets/css');
-copyDir('src/js', 'dist/assets/js');
-fs.copyFileSync('src/index.html', 'dist/index.html');
-fs.copyFileSync('src/admin.html', 'dist/admin.html');
-
-// Copy resourcepacks to dist for download
-if (fs.existsSync('resourcepacks')) {
-  copyDir('resourcepacks', 'dist/resourcepacks');
-}
+// Copy src files to root
+copyDir('src/css', 'assets/css');
+copyDir('src/js', 'assets/js');
+fs.copyFileSync('src/index.html', 'index.html');
+fs.copyFileSync('src/admin.html', 'admin.html');
 
 // Generate pack subdirectories
-const indexPath = 'dist/data/index.json';
+const indexPath = 'data/index.json';
 if (fs.existsSync(indexPath)) {
   const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
   const packHtml = fs.readFileSync('src/pack.html', 'utf-8');
 
-  fs.mkdirSync(path.join('dist', 'p'), { recursive: true });
+  fs.mkdirSync('p', { recursive: true });
   for (const pack of index.items) {
-    const packDir = path.join('dist', 'p', pack.name);
+    const packDir = path.join('p', pack.name);
     fs.mkdirSync(packDir, { recursive: true });
     fs.writeFileSync(path.join(packDir, 'index.html'), packHtml);
   }

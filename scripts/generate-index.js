@@ -17,7 +17,7 @@ function getFileSize(filePath) {
 }
 
 function main() {
-  const extractedPath = 'dist/data/extracted.json';
+  const extractedPath = 'data/extracted.json';
   if (!fs.existsSync(extractedPath)) {
     console.log('No extracted.json found. Run extract-textures.js first.');
     return;
@@ -50,9 +50,9 @@ function main() {
   });
 
   // Write individual pack JSON
-  fs.mkdirSync('dist/data/packs', { recursive: true });
+  fs.mkdirSync('data/packs', { recursive: true });
   packs.forEach(p => {
-    fs.writeFileSync(`dist/data/packs/${p.name}.json`, JSON.stringify(p, null, 2));
+    fs.writeFileSync(`data/packs/${p.name}.json`, JSON.stringify(p, null, 2));
   });
 
   // Generate index.json (lightweight)
@@ -70,13 +70,13 @@ function main() {
     pages: Math.ceil(packs.length / PAGE_SIZE),
     items: indexItems
   };
-  fs.writeFileSync('dist/data/index.json', JSON.stringify(index, null, 2));
+  fs.writeFileSync('data/index.json', JSON.stringify(index, null, 2));
 
   // Generate paginated data
-  fs.mkdirSync('dist/data/pages', { recursive: true });
+  fs.mkdirSync('data/pages', { recursive: true });
   for (let i = 0; i < index.pages; i++) {
     const pageItems = packs.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
-    fs.writeFileSync(`dist/data/pages/page-${i + 1}.json`, JSON.stringify({ page: i + 1, items: pageItems }, null, 2));
+    fs.writeFileSync(`data/pages/page-${i + 1}.json`, JSON.stringify({ page: i + 1, items: pageItems }, null, 2));
   }
 
   console.log(`Generated index with ${packs.length} packs, ${index.pages} pages.`);

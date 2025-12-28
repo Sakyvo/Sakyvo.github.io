@@ -21,7 +21,9 @@
       "Bash(git push)",
       "Bash(git add dist/p/ dist/data/ dist/thumbnails/ dist/assets/ src/ scripts/)",
       "Bash(git check-ignore -v dist/p/)",
-      "Bash(ls -la \"K:\\\\Sakyvo.github.io\\\\dist\\\\p\"\" 2>/dev/null || dir \"K:Sakyvo.github.iodistp\" 2>/dev/null || echo \"dist/p directory does not exist \")"
+      "Bash(ls -la \"K:\\\\Sakyvo.github.io\\\\dist\\\\p\"\" 2>/dev/null || dir \"K:Sakyvo.github.iodistp\" 2>/dev/null || echo \"dist/p directory does not exist \")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix pack page routing and name sanitization\n\n- Use absolute paths in pack-detail.js for /p/ subdirectory\n- Fix sanitizeName\\(\\) to trim before replacing spaces \\(removes leading underscores\\)\n- Clean up old data files\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMove dist contents to root for GitHub Pages\n\n- Remove dist/ directory, output directly to root\n- Update all scripts to use root paths instead of dist/\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

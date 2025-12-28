@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const pathParts = window.location.pathname.split('/').filter(Boolean);
-  const packName = pathParts[0];
+  const packName = pathParts[0] === 'p' ? pathParts[1] : pathParts[0];
 
   if (!packName) {
     document.getElementById('pack-content').innerHTML = 'Pack not found';
@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const pack = await fetch(`../data/packs/${packName}.json`).then(r => r.json());
+    const pack = await fetch(`/data/packs/${packName}.json`).then(r => r.json());
     document.title = `${pack.displayName} - VALE`;
 
     const images = [
-      pack.cover && `<img src="..${pack.cover}" alt="Cover">`,
-      pack.icon && `<img src="..${pack.icon}" alt="Icon">`,
-      pack.packPng && `<img src="..${pack.packPng}" alt="Pack">`
+      pack.cover && `<img src="${pack.cover}" alt="Cover">`,
+      pack.icon && `<img src="${pack.icon}" alt="Icon">`,
+      pack.packPng && `<img src="${pack.packPng}" alt="Pack">`
     ].filter(Boolean).join('');
 
     const textures = Object.values(pack.textures || {}).flat();
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="texture-section">
         <h2>TEXTURES</h2>
         <div class="texture-grid">
-          ${textures.map(t => `<img src="../thumbnails/${pack.name}/${t}" alt="${t}">`).join('')}
+          ${textures.map(t => `<img src="/thumbnails/${pack.name}/${t}" alt="${t}">`).join('')}
         </div>
       </div>
     ` : '';
