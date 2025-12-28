@@ -5,26 +5,26 @@ const path = require('path');
 
 const KEY_TEXTURES = {
   items: [
-    'assets/minecraft/textures/items/diamond_sword.png',
-    'assets/minecraft/textures/items/ender_pearl.png',
-    'assets/minecraft/textures/items/potion_bottle_splash.png',
-    'assets/minecraft/textures/items/steak.png',
-    'assets/minecraft/textures/items/iron_sword.png',
-    'assets/minecraft/textures/items/fishing_rod_uncast.png',
-    'assets/minecraft/textures/items/apple_golden.png',
-    'assets/minecraft/textures/items/golden_carrot.png',
+    ['assets/minecraft/textures/items/diamond_sword.png'],
+    ['assets/minecraft/textures/items/ender_pearl.png'],
+    ['assets/minecraft/textures/items/potion_bottle_splash.png'],
+    ['assets/minecraft/textures/items/steak.png', 'assets/minecraft/textures/items/beef_cooked.png'],
+    ['assets/minecraft/textures/items/iron_sword.png'],
+    ['assets/minecraft/textures/items/fishing_rod_uncast.png'],
+    ['assets/minecraft/textures/items/apple_golden.png'],
+    ['assets/minecraft/textures/items/golden_carrot.png', 'assets/minecraft/textures/items/carrot_golden.png'],
   ],
   blocks: [
-    'assets/minecraft/textures/blocks/grass_side.png',
-    'assets/minecraft/textures/blocks/stone.png',
-    'assets/minecraft/textures/blocks/wool_colored_white.png',
+    ['assets/minecraft/textures/blocks/grass_side.png'],
+    ['assets/minecraft/textures/blocks/stone.png'],
+    ['assets/minecraft/textures/blocks/wool_colored_white.png'],
   ],
   armor: [
-    'assets/minecraft/textures/models/armor/diamond_layer_1.png',
-    'assets/minecraft/textures/models/armor/diamond_layer_2.png',
+    ['assets/minecraft/textures/models/armor/diamond_layer_1.png'],
+    ['assets/minecraft/textures/models/armor/diamond_layer_2.png'],
   ],
-  gui: ['assets/minecraft/textures/gui/icons.png'],
-  particle: ['assets/minecraft/textures/particle/particles.png'],
+  gui: [['assets/minecraft/textures/gui/icons.png']],
+  particle: [['assets/minecraft/textures/particle/particles.png']],
 };
 
 function cleanMinecraftText(text) {
@@ -79,11 +79,16 @@ async function extractPack(zipPath) {
     fs.writeFileSync(path.join(outputDir, 'icon.png'), iconPng.getData());
   }
 
-  for (const [category, paths] of Object.entries(KEY_TEXTURES)) {
-    for (const texturePath of paths) {
-      const entry = zip.getEntry(texturePath);
+  for (const [category, pathsArray] of Object.entries(KEY_TEXTURES)) {
+    for (const alternatives of pathsArray) {
+      let entry = null;
+      let texturePath = null;
+      for (const alt of alternatives) {
+        entry = zip.getEntry(alt);
+        if (entry) { texturePath = alt; break; }
+      }
       if (entry) {
-        const filename = path.basename(texturePath);
+        const filename = path.basename(alternatives[0]);
         fs.writeFileSync(path.join(outputDir, filename), entry.getData());
         extracted[category].push(filename);
       }

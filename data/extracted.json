@@ -7,9 +7,11 @@
         "diamond_sword.png",
         "ender_pearl.png",
         "potion_bottle_splash.png",
+        "steak.png",
         "iron_sword.png",
         "fishing_rod_uncast.png",
-        "apple_golden.png"
+        "apple_golden.png",
+        "golden_carrot.png"
       ],
       "blocks": [
         "grass_side.png",
@@ -27,7 +29,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\Eum3Blue_Revamp",
+    "outputDir": "thumbnails\\Eum3Blue_Revamp",
     "description": "by Metar0X"
   },
   {
@@ -38,9 +40,11 @@
         "diamond_sword.png",
         "ender_pearl.png",
         "potion_bottle_splash.png",
+        "steak.png",
         "iron_sword.png",
         "fishing_rod_uncast.png",
-        "apple_golden.png"
+        "apple_golden.png",
+        "golden_carrot.png"
       ],
       "blocks": [
         "grass_side.png",
@@ -58,7 +62,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\Jewdah_Private",
+    "outputDir": "thumbnails\\Jewdah_Private",
     "description": "by Metar0X"
   },
   {
@@ -89,7 +93,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\Xenon_16x",
+    "outputDir": "thumbnails\\Xenon_16x",
     "description": ""
   },
   {
@@ -100,9 +104,11 @@
         "diamond_sword.png",
         "ender_pearl.png",
         "potion_bottle_splash.png",
+        "steak.png",
         "iron_sword.png",
         "fishing_rod_uncast.png",
-        "apple_golden.png"
+        "apple_golden.png",
+        "golden_carrot.png"
       ],
       "blocks": [
         "grass_side.png",
@@ -117,7 +123,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\CoolPvp",
+    "outputDir": "thumbnails\\CoolPvp",
     "description": "1K Special! Sectioned MC"
   },
   {
@@ -128,9 +134,11 @@
         "diamond_sword.png",
         "ender_pearl.png",
         "potion_bottle_splash.png",
+        "steak.png",
         "iron_sword.png",
         "fishing_rod_uncast.png",
-        "apple_golden.png"
+        "apple_golden.png",
+        "golden_carrot.png"
       ],
       "blocks": [
         "grass_side.png",
@@ -148,7 +156,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "dist\\thumbnails\\eum3edit",
+    "outputDir": "thumbnails\\eum3edit",
     "description": "Eum3's PvP Faithful 32x Edit"
   }
 ]

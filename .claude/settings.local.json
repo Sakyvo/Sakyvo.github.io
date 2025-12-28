@@ -25,7 +25,8 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix pack page routing and name sanitization\n\n- Use absolute paths in pack-detail.js for /p/ subdirectory\n- Fix sanitizeName\\(\\) to trim before replacing spaces \\(removes leading underscores\\)\n- Clean up old data files\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nMove dist contents to root for GitHub Pages\n\n- Remove dist/ directory, output directly to root\n- Update all scripts to use root paths instead of dist/\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix pack.html paths: use absolute paths for /p/ subdirectory\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix card aspect ratio to match cover.png \\(2:1\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix card aspect ratio to match cover.png \\(2:1\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(unzip -l \"resourcepacks/#CoolPvp.zip\")"
     ]
   }
 }
