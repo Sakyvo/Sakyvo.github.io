@@ -54,18 +54,25 @@ class ArmorViewer {
     return new Promise(r => loader.load(url, r));
   }
 
-  uvMap(geo, x, y, w, h, tw, th) {
+  uvMap(geo, x, y, w, h, d, tw, th) {
     const uv = geo.attributes.uv;
-    const coords = [
-      [x+w, y+h], [x, y+h], [x+w, y], [x, y], // front
-      [x+w*2, y+h], [x+w, y+h], [x+w*2, y], [x+w, y], // back
-      [x, y], [x, y+h], [x+w, y], [x+w, y+h], // top
-      [x+w, y], [x+w, y+h], [x+w*2, y], [x+w*2, y+h], // bottom
-      [x, y+h], [x-w, y+h], [x, y], [x-w, y], // right
-      [x+w*2, y+h], [x+w, y+h], [x+w*2, y], [x+w, y] // left
+    // Minecraft UV layout: top/bottom above, then right/front/left/back in a row
+    // BoxGeometry face order: +X(right), -X(left), +Y(top), -Y(bottom), +Z(front), -Z(back)
+    const faces = [
+      [x, y+d, d, h],           // right (+X)
+      [x+w+d, y+d, d, h],       // left (-X)
+      [x+d, y, w, d],           // top (+Y)
+      [x+d+w, y, w, d],         // bottom (-Y)
+      [x+d, y+d, w, h],         // front (+Z)
+      [x+d+w+d, y+d, w, h]      // back (-Z)
     ];
-    for (let i = 0; i < 24; i++) {
-      uv.setXY(i, coords[i][0]/tw, 1 - coords[i][1]/th);
+    for (let f = 0; f < 6; f++) {
+      const [fx, fy, fw, fh] = faces[f];
+      const i = f * 4;
+      uv.setXY(i,   (fx+fw)/tw, 1-(fy)/th);
+      uv.setXY(i+1, (fx)/tw,    1-(fy)/th);
+      uv.setXY(i+2, (fx+fw)/tw, 1-(fy+fh)/th);
+      uv.setXY(i+3, (fx)/tw,    1-(fy+fh)/th);
     }
   }
 
@@ -74,14 +81,14 @@ class ArmorViewer {
 
     // Skin layer
     const skinGeo = new THREE.BoxGeometry(w, h, d);
-    this.uvMap(skinGeo, skinUV[0], skinUV[1], skinUV[2], skinUV[3], tw, th);
+    this.uvMap(skinGeo, skinUV[0], skinUV[1], w, h, d, tw, th);
     const skinMat = new THREE.MeshLambertMaterial({ map: skin, transparent: true });
     group.add(new THREE.Mesh(skinGeo, skinMat));
 
     // Armor layer
     if (armor && armorUV) {
       const armorGeo = new THREE.BoxGeometry(w * armorScale, h * armorScale, d * armorScale);
-      this.uvMap(armorGeo, armorUV[0], armorUV[1], armorUV[2], armorUV[3], atw, ath);
+      this.uvMap(armorGeo, armorUV[0], armorUV[1], w, h, d, atw, ath);
       const armorMat = new THREE.MeshLambertMaterial({ map: armor, transparent: true });
       group.add(new THREE.Mesh(armorGeo, armorMat));
     }
@@ -93,33 +100,33 @@ class ArmorViewer {
     // Steve skin: 64x64, Armor: 64x32
     const tw = 64, th = 64, atw = 64, ath = 32;
 
-    // Head (8x8x8) - skin at (8,8), armor at (8,8) in layer1
-    const head = this.createPart(8, 8, 8, skin, armor1, [8, 8, 8, 8], [8, 8, 8, 8], tw, th, atw, ath);
+    // Head (8x8x8) - skin UV at (0,0), armor UV at (0,0)
+    const head = this.createPart(8, 8, 8, skin, armor1, [0, 0], [0, 0], tw, th, atw, ath);
     head.position.y = 12;
     this.group.add(head);
 
-    // Body (8x12x4) - skin at (20,20), armor at (20,20) in layer1
-    const body = this.createPart(8, 12, 4, skin, armor1, [20, 20, 8, 12], [20, 20, 8, 12], tw, th, atw, ath);
+    // Body (8x12x4) - skin UV at (16,16), armor UV at (16,16)
+    const body = this.createPart(8, 12, 4, skin, armor1, [16, 16], [16, 16], tw, th, atw, ath);
     body.position.y = 2;
     this.group.add(body);
 
-    // Right Arm (4x12x4) - skin at (44,20)
-    const rArm = this.createPart(4, 12, 4, skin, null, [44, 20, 4, 12], null, tw, th, atw, ath);
+    // Right Arm (4x12x4) - skin UV at (40,16)
+    const rArm = this.createPart(4, 12, 4, skin, null, [40, 16], null, tw, th, atw, ath);
     rArm.position.set(-6, 2, 0);
     this.group.add(rArm);
 
-    // Left Arm (4x12x4) - skin at (36,52)
-    const lArm = this.createPart(4, 12, 4, skin, null, [36, 52, 4, 12], null, tw, th, atw, ath);
+    // Left Arm (4x12x4) - skin UV at (32,48)
+    const lArm = this.createPart(4, 12, 4, skin, null, [32, 48], null, tw, th, atw, ath);
     lArm.position.set(6, 2, 0);
     this.group.add(lArm);
 
-    // Right Leg (4x12x4) - skin at (4,20), armor at (4,20) in layer2
-    const rLeg = this.createPart(4, 12, 4, skin, armor2, [4, 20, 4, 12], [4, 20, 4, 12], tw, th, atw, ath);
+    // Right Leg (4x12x4) - skin UV at (0,16), armor UV at (0,16)
+    const rLeg = this.createPart(4, 12, 4, skin, armor2, [0, 16], [0, 16], tw, th, atw, ath);
     rLeg.position.set(-2, -10, 0);
     this.group.add(rLeg);
 
-    // Left Leg (4x12x4) - skin at (20,52), armor at (4,20) in layer2
-    const lLeg = this.createPart(4, 12, 4, skin, armor2, [20, 52, 4, 12], [4, 20, 4, 12], tw, th, atw, ath);
+    // Left Leg (4x12x4) - skin UV at (16,48), armor UV at (0,16)
+    const lLeg = this.createPart(4, 12, 4, skin, armor2, [16, 48], [0, 16], tw, th, atw, ath);
     lLeg.position.set(2, -10, 0);
     this.group.add(lLeg);
 
