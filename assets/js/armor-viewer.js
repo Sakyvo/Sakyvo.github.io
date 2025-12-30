@@ -120,13 +120,13 @@ class ArmorViewer {
     lArm.position.set(6, 2, 0);
     this.group.add(lArm);
 
-    // Right Leg (4x12x4) - skin UV at (0,16), armor UV at (0,16)
-    const rLeg = this.createPart(4, 12, 4, skin, armor2, [0, 16], [0, 16], tw, th, atw, ath);
+    // Right Leg (4x12x4) - skin UV at (0,16), armor UV at (0,0) on layer2
+    const rLeg = this.createPart(4, 12, 4, skin, armor2, [0, 16], [0, 0], tw, th, atw, ath);
     rLeg.position.set(-2, -10, 0);
     this.group.add(rLeg);
 
-    // Left Leg (4x12x4) - skin UV at (16,48), armor UV at (0,16)
-    const lLeg = this.createPart(4, 12, 4, skin, armor2, [16, 48], [0, 16], tw, th, atw, ath);
+    // Left Leg (4x12x4) - skin UV at (16,48), armor UV at (0,0) on layer2
+    const lLeg = this.createPart(4, 12, 4, skin, armor2, [16, 48], [0, 0], tw, th, atw, ath);
     lLeg.position.set(2, -10, 0);
     this.group.add(lLeg);
 
