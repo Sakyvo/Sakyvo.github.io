@@ -110,25 +110,33 @@ class ArmorViewer {
     body.position.y = 2;
     this.group.add(body);
 
-    // Right Arm (4x12x4) - skin UV at (40,16)
-    const rArm = this.createPart(4, 12, 4, skin, null, [40, 16], null, tw, th, atw, ath);
+    // Right Arm (4x12x4) - skin UV at (40,16), armor sleeve at (40,16)
+    const rArm = this.createPart(4, 12, 4, skin, armor1, [40, 16], [40, 16], tw, th, atw, ath);
     rArm.position.set(-6, 2, 0);
     this.group.add(rArm);
 
-    // Left Arm (4x12x4) - skin UV at (32,48)
-    const lArm = this.createPart(4, 12, 4, skin, null, [32, 48], null, tw, th, atw, ath);
+    // Left Arm (4x12x4) - skin UV at (32,48), armor sleeve at (40,16)
+    const lArm = this.createPart(4, 12, 4, skin, armor1, [32, 48], [40, 16], tw, th, atw, ath);
     lArm.position.set(6, 2, 0);
     this.group.add(lArm);
 
-    // Right Leg (4x12x4) - skin UV at (0,16), armor UV at (0,0) on layer2
+    // Right Leg (4x12x4) - skin UV at (0,16), leggings at (0,0), boots at (0,16)
     const rLeg = this.createPart(4, 12, 4, skin, armor2, [0, 16], [0, 0], tw, th, atw, ath);
     rLeg.position.set(-2, -10, 0);
     this.group.add(rLeg);
+    // Right Boot
+    const rBoot = this.createPart(4, 6, 4, skin, armor1, [0, 22], [0, 22], tw, th, atw, ath);
+    rBoot.position.set(-2, -13, 0);
+    this.group.add(rBoot);
 
-    // Left Leg (4x12x4) - skin UV at (16,48), armor UV at (0,0) on layer2
+    // Left Leg (4x12x4) - skin UV at (16,48), leggings at (0,0), boots at (0,16)
     const lLeg = this.createPart(4, 12, 4, skin, armor2, [16, 48], [0, 0], tw, th, atw, ath);
     lLeg.position.set(2, -10, 0);
     this.group.add(lLeg);
+    // Left Boot
+    const lBoot = this.createPart(4, 6, 4, skin, armor1, [16, 54], [0, 22], tw, th, atw, ath);
+    lBoot.position.set(2, -13, 0);
+    this.group.add(lBoot);
 
     this.group.rotation.x = 0.1;
   }
