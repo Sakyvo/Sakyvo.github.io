@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir -p \"K:\\\\Sakyvo.github.io\\\\scripts\" \"K:\\\\Sakyvo.github.io\\\\src\\\\css\" \"K:\\\\Sakyvo.github.io\\\\src\\\\js\" \"K:\\\\Sakyvo.github.io\\\\pack-meta\" \"K:\\\\Sakyvo.github.io\\\\packs\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\data\\\\pages\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\data\\\\packs\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\thumbnails\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\assets\\\\css\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\assets\\\\js\")",
+      "Bash(mkdir -p \"K:\\\\Sakyvo.github.io\\\\scripts\" \"K:\\\\Sakyvo.github.io\\\\src\\\\css\" \"K:\\\\Sakyvo.github.io\\\\src\\\\js\" \"K:\\\\Sakyvo.github.io\\\\pack-meta\" \"K:\\\\Sakyvo.github.io\\\\packs\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\data\\\\pages\" \"K:\\\\Sakyvo.github.io\\\\data\\\\packs\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\thumbnails\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\assets\\\\css\" \"K:\\\\Sakyvo.github.io\\\\dist\\\\assets\\\\js\")",
       "Bash(npm install)",
       "Bash(npm run build)",
       "Bash(cat dist/data/index.json)",
@@ -31,7 +31,15 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nUse Default_Texture as fallback for missing textures\n\n- Move pack.png reference to Default_Texture/pack.png\n- Fallback to Default_Texture for any missing item/block textures\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate pack detail page layout and preview grid\n\n- Pack.png on left, display name + original name + file size on right\n- Replace TEXTURES with Preview section\n- Two-column layout for desktop, single column for mobile\n- Add cobblestone.png to extracted textures\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nEnlarge armor/icons/particles images in preview grid\n\n- Armor images span 1 column each \\(2 per row\\)\n- Icons and particles span full width \\(2 columns\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd 3D armor viewer using three.js\n\n- Replace armor texture images with interactive 3D model\n- Use Steve.png as base skin with diamond armor overlay\n- Model rotates automatically for preview\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd 3D armor viewer using three.js\n\n- Replace armor texture images with interactive 3D model\n- Use Steve.png as base skin with diamond armor overlay\n- Model rotates automatically for preview\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebSearch",
+      "WebFetch(domain:bs-community.github.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(for f in p/eum3edit/index.html p/Jewdah_Private/index.html p/Eum3Blue_Revamp/index.html p/Xenon_16x/index.html)",
+      "Bash(do sed -i 's|<script src=\"\"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js\"\"></script>|<script src=\"\"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js\"\"></script>\\\\n  <script src=\"\"https://bs-community.github.io/skinview3d/js/skinview3d.bundle.js\"\"></script>|' \"$f\")",
+      "Bash(done)",
+      "Bash(git commit -m \"Use skinview3d for armor viewer\")"
     ]
   }
 }
