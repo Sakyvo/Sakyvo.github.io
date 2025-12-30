@@ -124,24 +124,24 @@ class ArmorViewer {
     const rLeg = this.createPart(4, 12, 4, skin, armor2, [0, 16], [0, 0], tw, th, atw, ath);
     rLeg.position.set(-2, -10, 0);
     this.group.add(rLeg);
-    // Right Boot (4x12x4) - armor UV at (0,16) on layer1
-    const rBootGeo = new THREE.BoxGeometry(4 * 1.12, 12 * 1.12, 4 * 1.12);
-    this.uvMap(rBootGeo, 0, 16, 4, 12, 4, atw, ath);
+    // Right Boot (4x6x4) - armor UV at (0,16) on layer1, only bottom half
+    const rBootGeo = new THREE.BoxGeometry(4 * 1.12, 6 * 1.12, 4 * 1.12);
+    this.uvMap(rBootGeo, 0, 16, 4, 6, 4, atw, ath);
     const rBootMat = new THREE.MeshLambertMaterial({ map: armor1, transparent: true });
     const rBoot = new THREE.Mesh(rBootGeo, rBootMat);
-    rBoot.position.set(-2, -10, 0);
+    rBoot.position.set(-2, -13, 0);
     this.group.add(rBoot);
 
     // Left Leg (4x12x4) - skin UV at (16,48), leggings at (0,0)
     const lLeg = this.createPart(4, 12, 4, skin, armor2, [16, 48], [0, 0], tw, th, atw, ath);
     lLeg.position.set(2, -10, 0);
     this.group.add(lLeg);
-    // Left Boot (4x12x4) - armor UV at (0,16) on layer1
-    const lBootGeo = new THREE.BoxGeometry(4 * 1.12, 12 * 1.12, 4 * 1.12);
-    this.uvMap(lBootGeo, 0, 16, 4, 12, 4, atw, ath);
+    // Left Boot (4x6x4) - armor UV at (0,16) on layer1, only bottom half
+    const lBootGeo = new THREE.BoxGeometry(4 * 1.12, 6 * 1.12, 4 * 1.12);
+    this.uvMap(lBootGeo, 0, 16, 4, 6, 4, atw, ath);
     const lBootMat = new THREE.MeshLambertMaterial({ map: armor1, transparent: true });
     const lBoot = new THREE.Mesh(lBootGeo, lBootMat);
-    lBoot.position.set(2, -10, 0);
+    lBoot.position.set(2, -13, 0);
     this.group.add(lBoot);
 
     this.group.rotation.x = 0.1;
