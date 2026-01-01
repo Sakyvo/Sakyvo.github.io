@@ -51,6 +51,7 @@ class ArmorViewer {
       btn.textContent = this.autoRotate ? '⏸️' : '▶️';
     };
 
+    // Mouse events
     el.addEventListener('mousedown', e => {
       this.isDragging = true;
       this.prevX = e.clientX;
@@ -72,6 +73,27 @@ class ArmorViewer {
         this.prevY = e.clientY;
       }
     });
+
+    // Touch events
+    el.addEventListener('touchstart', e => {
+      this.isDragging = true;
+      this.prevX = e.touches[0].clientX;
+      this.prevY = e.touches[0].clientY;
+    }, { passive: true });
+
+    el.addEventListener('touchend', () => {
+      this.isDragging = false;
+    });
+
+    el.addEventListener('touchmove', e => {
+      if (this.isDragging) {
+        this.group.rotation.y += (e.touches[0].clientX - this.prevX) * 0.01;
+        this.group.rotation.x += (e.touches[0].clientY - this.prevY) * 0.01;
+        this.group.rotation.x = Math.max(-1, Math.min(1, this.group.rotation.x));
+        this.prevX = e.touches[0].clientX;
+        this.prevY = e.touches[0].clientY;
+      }
+    }, { passive: true });
   }
 
   loadTextures() {
