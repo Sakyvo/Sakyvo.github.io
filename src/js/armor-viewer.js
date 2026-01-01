@@ -1,8 +1,9 @@
 class ArmorViewer {
-  constructor(container, skinUrl, armorUrl) {
+  constructor(container, skinUrl, armorUrl, leggingsUrl) {
     this.container = container;
     this.skinUrl = skinUrl;
     this.armorUrl = armorUrl;
+    this.leggingsUrl = leggingsUrl;
     this.autoRotate = true;
     this.isDragging = false;
     this.prevX = 0;
@@ -79,15 +80,20 @@ class ArmorViewer {
 
     Promise.all([
       new Promise(r => loader.load(this.skinUrl, r)),
-      new Promise(r => loader.load(this.armorUrl, t => r(t), undefined, () => r(null)))
-    ]).then(([skin, armor]) => {
+      new Promise(r => loader.load(this.armorUrl, t => r(t), undefined, () => r(null))),
+      new Promise(r => loader.load(this.leggingsUrl, t => r(t), undefined, () => r(null)))
+    ]).then(([skin, armor, leggings]) => {
       skin.magFilter = THREE.NearestFilter;
       skin.minFilter = THREE.NearestFilter;
       if (armor) {
         armor.magFilter = THREE.NearestFilter;
         armor.minFilter = THREE.NearestFilter;
       }
-      this.buildModel(skin, armor);
+      if (leggings) {
+        leggings.magFilter = THREE.NearestFilter;
+        leggings.minFilter = THREE.NearestFilter;
+      }
+      this.buildModel(skin, armor, leggings);
       this.animate();
     });
   }
@@ -118,7 +124,7 @@ class ArmorViewer {
     return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex, transparent: true, alphaTest: 0.1 }));
   }
 
-  buildModel(skin, armor) {
+  buildModel(skin, armor, leggings) {
     const tw = 64, th = 64, atw = 64, ath = 32;
     const s = 1.1; // armor scale
 
@@ -166,8 +172,13 @@ class ArmorViewer {
     const rLeg = this.createPart(4, 12, 4, skin, 0, 16, tw, th);
     rLeg.position.set(-2, -10, 0);
     this.group.add(rLeg);
+    if (leggings) {
+      const rLegging = this.createPart(4, 12, 4, leggings, 0, 16, atw, ath, s);
+      rLegging.position.set(-2, -10, 0);
+      this.group.add(rLegging);
+    }
     if (armor) {
-      const rBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, s);
+      const rBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, 1.15);
       rBoot.position.set(-2, -10, 0);
       this.group.add(rBoot);
     }
@@ -176,8 +187,13 @@ class ArmorViewer {
     const lLeg = this.createPart(4, 12, 4, skin, 16, 48, tw, th);
     lLeg.position.set(2, -10, 0);
     this.group.add(lLeg);
+    if (leggings) {
+      const lLegging = this.createPart(4, 12, 4, leggings, 0, 16, atw, ath, s);
+      lLegging.position.set(2, -10, 0);
+      this.group.add(lLegging);
+    }
     if (armor) {
-      const lBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, s);
+      const lBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, 1.15);
       lBoot.position.set(2, -10, 0);
       this.group.add(lBoot);
     }
