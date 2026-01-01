@@ -38,6 +38,17 @@ class ArmorViewer {
     const el = this.renderer.domElement;
     el.style.cursor = 'grab';
 
+    // Toggle button
+    const btn = document.createElement('button');
+    btn.textContent = '⏸️';
+    btn.style.cssText = 'position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);border:none;padding:4px 8px;cursor:pointer;font-size:16px;border-radius:4px;';
+    this.container.style.position = 'relative';
+    this.container.appendChild(btn);
+    btn.onclick = () => {
+      this.autoRotate = !this.autoRotate;
+      btn.textContent = this.autoRotate ? '⏸️' : '▶️';
+    };
+
     el.addEventListener('mousedown', e => {
       this.isDragging = true;
       this.prevX = e.clientX;
@@ -54,10 +65,6 @@ class ArmorViewer {
         this.group.rotation.y += (e.clientX - this.prevX) * 0.01;
         this.prevX = e.clientX;
       }
-    });
-
-    el.addEventListener('dblclick', () => {
-      this.autoRotate = !this.autoRotate;
     });
   }
 
