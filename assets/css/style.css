@@ -235,61 +235,59 @@ footer {
 
 .preview-section { margin-bottom: 32px; }
 
-.preview-grid {
-  display: flex;
+.preview-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
 
-.preview-left, .preview-right {
-  flex: 1;
+.preview-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
 }
 
-.preview-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.preview-row img {
-  width: 100%;
-  aspect-ratio: 1;
-  image-rendering: pixelated;
-  border: 1px solid #000;
-  object-fit: contain;
+.preview-card {
+  border: 2px solid #000;
   background: #f5f5f5;
 }
 
-.preview-right .preview-row {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.preview-right .preview-row img {
-  grid-column: span 1;
-}
-
-.preview-right .preview-row:nth-child(2) img,
-.preview-right .preview-row:nth-child(3) img {
-  grid-column: span 2;
-}
-
-.armor-row {
+.texture-grid {
+  display: grid;
   grid-template-columns: 1fr;
 }
 
-.armor-container {
+.grid-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.grid-row img {
   width: 100%;
   aspect-ratio: 1;
-  border: 1px solid #000;
-  background: #f5f5f5;
-  grid-column: span 2;
+  image-rendering: pixelated;
+  object-fit: contain;
+  border: 1px solid #ddd;
+}
+
+.icons-card img, .particles-card img {
+  width: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.armor-card {
+  aspect-ratio: 1;
+}
+
+#armor-viewer {
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 700px) {
-  .preview-grid {
-    flex-direction: column;
+  .preview-columns {
+    grid-template-columns: 1fr;
   }
 }
 

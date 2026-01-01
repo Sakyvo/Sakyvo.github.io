@@ -11,13 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pack = await fetch(`/data/packs/${packName}.json`).then(r => r.json());
     document.title = `${pack.displayName} - VALE`;
 
-    const t = pack.textures || {};
-    const items = t.items || [];
-    const blocks = t.blocks || [];
-    const gui = t.gui || [];
-    const particle = t.particle || [];
-
-    const img = (name) => `<img src="/thumbnails/${pack.name}/${name}" alt="${name}">`;
+    const base = `/thumbnails/${pack.name}/`;
+    const img = (name) => `<img src="${base}${name}" alt="${name}">`;
 
     document.getElementById('pack-content').innerHTML = `
       <div class="detail-header">
@@ -35,29 +30,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
       <div class="preview-section">
         <h2>Preview</h2>
-        <div class="preview-grid">
-          <div class="preview-left">
-            <div class="preview-row">${items.slice(0,4).map(img).join('')}</div>
-            <div class="preview-row">${items.slice(4,8).map(img).join('')}</div>
-            <div class="preview-row">${blocks.map(img).join('')}</div>
+        <div class="preview-columns">
+          <div class="preview-col">
+            <div class="preview-card texture-grid">
+              <div class="grid-row">${img('diamond_sword.png')}${img('ender_pearl.png')}${img('potion_bottle_splash.png')}${img('steak.png')}</div>
+              <div class="grid-row">${img('iron_sword.png')}${img('fishing_rod_uncast.png')}${img('golden_carrot.png')}${img('apple_golden.png')}</div>
+              <div class="grid-row">${img('grass_side.png')}${img('stone.png')}${img('cobblestone.png')}${img('wool_colored_white.png')}</div>
+              <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
+            </div>
+            <div class="preview-card icons-card">${img('icons.png')}</div>
           </div>
-          <div class="preview-right">
-            <div class="preview-row armor-row"><div id="armor-viewer" class="armor-container"></div></div>
-            <div class="preview-row">${gui.map(img).join('')}</div>
-            <div class="preview-row">${particle.map(img).join('')}</div>
+          <div class="preview-col">
+            <div class="preview-card armor-card"><div id="armor-viewer"></div></div>
+            <div class="preview-card particles-card">${img('particles.png')}</div>
           </div>
         </div>
       </div>
     `;
 
-    // Initialize 3D armor viewer
     const container = document.getElementById('armor-viewer');
     if (container && window.ArmorViewer) {
       new ArmorViewer(
         container,
         '/Default_Texture/Steve.png',
-        `/thumbnails/${pack.name}/diamond_layer_1.png`,
-        `/thumbnails/${pack.name}/diamond_layer_2.png`
+        `${base}diamond_layer_1.png`,
+        `${base}diamond_layer_2.png`
       );
     }
   } catch (e) {
