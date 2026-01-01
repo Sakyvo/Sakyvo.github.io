@@ -94,6 +94,11 @@ async function extractPack(zipPath) {
       }
       if (entry) {
         fs.writeFileSync(path.join(outputDir, filename), entry.getData());
+        // Also extract .mcmeta if exists
+        const mcmetaEntry = zip.getEntry(alternatives[0] + '.mcmeta');
+        if (mcmetaEntry) {
+          fs.writeFileSync(path.join(outputDir, filename + '.mcmeta'), mcmetaEntry.getData());
+        }
       } else {
         // Fallback to Default_Texture
         for (const alt of alternatives) {

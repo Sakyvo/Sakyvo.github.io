@@ -50,14 +50,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Setup animated textures
     document.querySelectorAll('.texture-grid img').forEach(img => {
-      img.onload = function() {
+      img.onload = async function() {
         if (this.naturalHeight > this.naturalWidth) {
           const frames = this.naturalHeight / this.naturalWidth;
           if (Number.isInteger(frames) && frames > 1) {
             const wrapper = document.createElement('div');
             wrapper.className = 'animated-texture';
-            wrapper.style.setProperty('--frames', frames);
-            wrapper.style.setProperty('--bg', `url(${this.src})`);
+            wrapper.style.backgroundImage = `url(${this.src})`;
+            wrapper.style.backgroundSize = `100% ${frames * 100}%`;
+
+            // Try to load mcmeta
+            let frameTime = 2; // default 2 ticks = 100ms
+            try {
+              const mcmeta = await fetch(this.src + '.mcmeta').then(r => r.json());
+              if (mcmeta.animation?.frametime) frameTime = mcmeta.animation.frametime;
+            } catch(e) {}
+
+            let currentFrame = 0;
+            setInterval(() => {
+              currentFrame = (currentFrame + 1) % frames;
+              wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
+            }, frameTime * 50); // 1 tick = 50ms
+
             this.parentNode.replaceChild(wrapper, this);
           }
         }
