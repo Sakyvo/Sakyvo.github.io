@@ -4,123 +4,130 @@ class ArmorViewer {
     this.skinUrl = skinUrl;
     this.armorLayer1Url = armorLayer1Url;
     this.armorLayer2Url = armorLayer2Url;
-    console.log('ArmorViewer init:', armorLayer1Url, armorLayer2Url);
     this.init();
   }
 
-  async init() {
-    const canvas = document.createElement('canvas');
-    this.container.appendChild(canvas);
+  init() {
+    const w = this.container.clientWidth || 200;
+    const h = this.container.clientHeight || 280;
 
-    this.skinViewer = new skinview3d.SkinViewer({
-      canvas: canvas,
-      width: 200,
-      height: 280,
-      renderPaused: false
-    });
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+    this.camera.position.set(0, 0, 40);
 
-    this.skinViewer.camera.position.set(0, 0, 50);
-    this.skinViewer.camera.lookAt(0, 0, 0);
+    this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    this.renderer.setSize(w, h);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.container.appendChild(this.renderer.domElement);
 
-    this.skinViewer.autoRotate = true;
-    this.skinViewer.autoRotateSpeed = 0.5;
-    this.skinViewer.animation = new skinview3d.WalkingAnimation();
-    this.skinViewer.animation.speed = 0.5;
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    this.scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(5, 10, 7);
+    this.scene.add(dir);
 
-    await this.skinViewer.loadSkin(this.skinUrl);
-    this.addArmorLayers();
+    this.group = new THREE.Group();
+    this.scene.add(this.group);
+
+    this.loadTextures();
   }
 
-  async addArmorLayers() {
-    const player = this.skinViewer.playerObject;
-    if (!player) {
-      console.error('No player object');
-      return;
-    }
-
+  loadTextures() {
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
 
-    try {
-      console.log('Loading armor textures...');
-      const [armor1, armor2] = await Promise.all([
-        this.loadTexture(loader, this.armorLayer1Url),
-        this.loadTexture(loader, this.armorLayer2Url)
-      ]);
-
-      console.log('Armor1:', armor1, 'Armor2:', armor2);
-
-      if (!armor1 || !armor2) {
-        console.error('Failed to load armor textures');
-        return;
-      }
-
-      [armor1, armor2].forEach(t => {
-        t.magFilter = THREE.NearestFilter;
-        t.minFilter = THREE.NearestFilter;
+    Promise.all([
+      this.loadTex(loader, this.skinUrl),
+      this.loadTex(loader, this.armorLayer1Url),
+      this.loadTex(loader, this.armorLayer2Url)
+    ]).then(([skin, armor1, armor2]) => {
+      [skin, armor1, armor2].forEach(t => {
+        if (t) {
+          t.magFilter = THREE.NearestFilter;
+          t.minFilter = THREE.NearestFilter;
+        }
       });
-
-      const tw = 64, th = 32;
-
-      // Layer 2: Leggings only (scale 1.04)
-      this.addPart(player.skin.rightLeg, 4, 12, 4, 0, 0, armor2, tw, th, 1.04);
-      this.addPart(player.skin.leftLeg, 4, 12, 4, 0, 0, armor2, tw, th, 1.04);
-
-      // Layer 1: Helmet, Chestplate, Boots (scale 1.08)
-      this.addPart(player.skin.head, 8, 8, 8, 0, 0, armor1, tw, th, 1.08);
-      this.addPart(player.skin.body, 8, 12, 4, 16, 16, armor1, tw, th, 1.08);
-      this.addPart(player.skin.rightArm, 4, 12, 4, 40, 16, armor1, tw, th, 1.08);
-      this.addPart(player.skin.leftArm, 4, 12, 4, 40, 16, armor1, tw, th, 1.08);
-
-      // Boots (scale 1.1 to be outside leggings)
-      this.addPart(player.skin.rightLeg, 4, 12, 4, 0, 16, armor1, tw, th, 1.1);
-      this.addPart(player.skin.leftLeg, 4, 12, 4, 0, 16, armor1, tw, th, 1.1);
-
-      console.log('Armor layers added successfully');
-
-    } catch (e) {
-      console.error('Armor load error:', e);
-    }
-  }
-
-  loadTexture(loader, url) {
-    return new Promise(resolve => {
-      loader.load(url, resolve, undefined, () => resolve(null));
+      this.buildModel(skin, armor1, armor2);
+      this.animate();
     });
   }
 
-  addPart(parent, w, h, d, uvX, uvY, texture, tw, th, scale) {
-    const geo = new THREE.BoxGeometry(w * scale, h * scale, d * scale);
-    this.mapUV(geo, uvX, uvY, w, h, d, tw, th);
-    const mat = new THREE.MeshStandardMaterial({
-      map: texture,
-      transparent: true,
-      alphaTest: 0.1,
-      side: THREE.DoubleSide
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    parent.add(mesh);
+  loadTex(loader, url) {
+    return new Promise(r => loader.load(url, r, undefined, () => r(null)));
   }
 
-  mapUV(geo, x, y, w, h, d, tw, th) {
+  uvMap(geo, x, y, w, h, d, tw, th) {
     const uv = geo.attributes.uv;
-    // Box faces: right, left, top, bottom, front, back
     const faces = [
-      [x, y + d, d, h],           // right
-      [x + w + d, y + d, d, h],   // left
-      [x + d, y, w, d],           // top
-      [x + d + w, y, w, d],       // bottom
-      [x + d, y + d, w, h],       // front
-      [x + d + w + d, y + d, w, h] // back
+      [x, y + d, d, h],
+      [x + w + d, y + d, d, h],
+      [x + d, y, w, d],
+      [x + d + w, y, w, d],
+      [x + d, y + d, w, h],
+      [x + d + w + d, y + d, w, h]
     ];
     for (let f = 0; f < 6; f++) {
       const [fx, fy, fw, fh] = faces[f];
       const i = f * 4;
-      uv.setXY(i,     (fx + fw) / tw, 1 - fy / th);
-      uv.setXY(i + 1, fx / tw,        1 - fy / th);
+      uv.setXY(i, (fx + fw) / tw, 1 - fy / th);
+      uv.setXY(i + 1, fx / tw, 1 - fy / th);
       uv.setXY(i + 2, (fx + fw) / tw, 1 - (fy + fh) / th);
-      uv.setXY(i + 3, fx / tw,        1 - (fy + fh) / th);
+      uv.setXY(i + 3, fx / tw, 1 - (fy + fh) / th);
     }
+  }
+
+  createPart(w, h, d, skin, armor, skinUV, armorUV, tw, th, atw, ath, armorScale = 1.1) {
+    const group = new THREE.Group();
+
+    const skinGeo = new THREE.BoxGeometry(w, h, d);
+    this.uvMap(skinGeo, skinUV[0], skinUV[1], w, h, d, tw, th);
+    const skinMat = new THREE.MeshLambertMaterial({ map: skin, transparent: true });
+    group.add(new THREE.Mesh(skinGeo, skinMat));
+
+    if (armor && armorUV) {
+      const armorGeo = new THREE.BoxGeometry(w * armorScale, h * armorScale, d * armorScale);
+      this.uvMap(armorGeo, armorUV[0], armorUV[1], w, h, d, atw, ath);
+      const armorMat = new THREE.MeshLambertMaterial({ map: armor, transparent: true, alphaTest: 0.1 });
+      group.add(new THREE.Mesh(armorGeo, armorMat));
+    }
+
+    return group;
+  }
+
+  buildModel(skin, armor1, armor2) {
+    const tw = 64, th = 64, atw = 64, ath = 32;
+
+    const head = this.createPart(8, 8, 8, skin, armor1, [0, 0], [0, 0], tw, th, atw, ath);
+    head.position.y = 12;
+    this.group.add(head);
+
+    const body = this.createPart(8, 12, 4, skin, armor1, [16, 16], [16, 16], tw, th, atw, ath);
+    body.position.y = 2;
+    this.group.add(body);
+
+    const rArm = this.createPart(4, 12, 4, skin, null, [40, 16], null, tw, th, atw, ath);
+    rArm.position.set(-6, 2, 0);
+    this.group.add(rArm);
+
+    const lArm = this.createPart(4, 12, 4, skin, null, [32, 48], null, tw, th, atw, ath);
+    lArm.position.set(6, 2, 0);
+    this.group.add(lArm);
+
+    const rLeg = this.createPart(4, 12, 4, skin, armor2, [0, 16], [0, 16], tw, th, atw, ath);
+    rLeg.position.set(-2, -10, 0);
+    this.group.add(rLeg);
+
+    const lLeg = this.createPart(4, 12, 4, skin, armor2, [16, 48], [0, 16], tw, th, atw, ath);
+    lLeg.position.set(2, -10, 0);
+    this.group.add(lLeg);
+
+    this.group.rotation.x = 0.1;
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    this.group.rotation.y += 0.01;
+    this.renderer.render(this.scene, this.camera);
   }
 }
 
