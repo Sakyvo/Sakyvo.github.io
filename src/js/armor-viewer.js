@@ -4,6 +4,7 @@ class ArmorViewer {
     this.skinUrl = skinUrl;
     this.armorLayer1Url = armorLayer1Url;
     this.armorLayer2Url = armorLayer2Url;
+    console.log('ArmorViewer init:', armorLayer1Url, armorLayer2Url);
     this.init();
   }
 
@@ -14,38 +15,45 @@ class ArmorViewer {
     this.skinViewer = new skinview3d.SkinViewer({
       canvas: canvas,
       width: 200,
-      height: 280
+      height: 280,
+      renderPaused: false
     });
 
-    this.skinViewer.zoom = 0.9;
+    this.skinViewer.camera.position.set(0, 0, 50);
+    this.skinViewer.camera.lookAt(0, 0, 0);
+
     this.skinViewer.autoRotate = true;
     this.skinViewer.autoRotateSpeed = 0.5;
-
-    // Use walk animation for continuous movement
     this.skinViewer.animation = new skinview3d.WalkingAnimation();
     this.skinViewer.animation.speed = 0.5;
 
     await this.skinViewer.loadSkin(this.skinUrl);
-
-    // Load armor using skinview3d's built-in cape layer approach
-    // We'll add armor as additional layers on the model
     this.addArmorLayers();
   }
 
   async addArmorLayers() {
     const player = this.skinViewer.playerObject;
-    if (!player) return;
+    if (!player) {
+      console.error('No player object');
+      return;
+    }
 
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
 
     try {
+      console.log('Loading armor textures...');
       const [armor1, armor2] = await Promise.all([
         this.loadTexture(loader, this.armorLayer1Url),
         this.loadTexture(loader, this.armorLayer2Url)
       ]);
 
-      if (!armor1 || !armor2) return;
+      console.log('Armor1:', armor1, 'Armor2:', armor2);
+
+      if (!armor1 || !armor2) {
+        console.error('Failed to load armor textures');
+        return;
+      }
 
       [armor1, armor2].forEach(t => {
         t.magFilter = THREE.NearestFilter;
@@ -67,6 +75,8 @@ class ArmorViewer {
       // Boots (scale 1.1 to be outside leggings)
       this.addPart(player.skin.rightLeg, 4, 12, 4, 0, 16, armor1, tw, th, 1.1);
       this.addPart(player.skin.leftLeg, 4, 12, 4, 0, 16, armor1, tw, th, 1.1);
+
+      console.log('Armor layers added successfully');
 
     } catch (e) {
       console.error('Armor load error:', e);
