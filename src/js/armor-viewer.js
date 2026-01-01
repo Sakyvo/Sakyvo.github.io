@@ -177,6 +177,11 @@ class ArmorViewer {
       rLegging.position.set(-2, -10, 0);
       this.group.add(rLegging);
     }
+    if (armor) {
+      const rBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, 1.15);
+      rBoot.position.set(-2, -10, 0);
+      this.group.add(rBoot);
+    }
 
     // Left Leg
     const lLeg = this.createPart(4, 12, 4, skin, 16, 48, tw, th);
@@ -186,6 +191,11 @@ class ArmorViewer {
       const lLegging = this.createPart(4, 12, 4, leggings, 0, 16, atw, ath, s);
       lLegging.position.set(2, -10, 0);
       this.group.add(lLegging);
+    }
+    if (armor) {
+      const lBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, 1.15);
+      lBoot.position.set(2, -10, 0);
+      this.group.add(lBoot);
     }
 
     this.group.rotation.x = 0.1;
