@@ -19,6 +19,10 @@ const KEY_TEXTURES = {
     ['assets/minecraft/textures/blocks/stone.png'],
     ['assets/minecraft/textures/blocks/cobblestone.png'],
     ['assets/minecraft/textures/blocks/wool_colored_white.png'],
+    ['assets/minecraft/textures/blocks/dirt.png'],
+    ['assets/minecraft/textures/blocks/planks_oak.png'],
+    ['assets/minecraft/textures/blocks/log_oak.png'],
+    ['assets/minecraft/textures/blocks/diamond_ore.png'],
   ],
   armor: [
     ['assets/minecraft/textures/models/armor/diamond_layer_1.png'],

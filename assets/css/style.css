@@ -250,11 +250,13 @@ footer {
 .preview-card {
   border: 2px solid #000;
   background: #f5f5f5;
+  aspect-ratio: 1;
+  overflow: hidden;
 }
 
 .texture-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-rows: repeat(4, 1fr);
 }
 
 .grid-row {
@@ -272,12 +274,9 @@ footer {
 
 .icons-card img, .particles-card img {
   width: 100%;
-  display: block;
+  height: 100%;
+  object-fit: contain;
   image-rendering: pixelated;
-}
-
-.armor-card {
-  aspect-ratio: 1;
 }
 
 #armor-viewer {
