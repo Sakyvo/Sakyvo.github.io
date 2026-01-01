@@ -7,21 +7,23 @@ class ArmorViewer {
     this.init();
   }
 
-  init() {
-    const w = this.container.clientWidth || 300;
-    const h = this.container.clientHeight || 400;
+  async init() {
+    const canvas = this.createCanvas();
+    const w = 200;
+    const h = 280;
 
     this.skinViewer = new skinview3d.SkinViewer({
-      canvas: this.container.querySelector('canvas') || this.createCanvas(),
+      canvas: canvas,
       width: w,
-      height: h,
-      skin: this.skinUrl
+      height: h
     });
 
+    this.skinViewer.animation = new skinview3d.IdleAnimation();
     this.skinViewer.autoRotate = true;
     this.skinViewer.autoRotateSpeed = 1;
     this.skinViewer.zoom = 0.9;
 
+    await this.skinViewer.loadSkin(this.skinUrl);
     this.loadArmorTextures();
   }
 
@@ -33,20 +35,22 @@ class ArmorViewer {
 
   loadArmorTextures() {
     const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
     Promise.all([
       this.loadTex(loader, this.armorLayer1Url),
       this.loadTex(loader, this.armorLayer2Url)
     ]).then(([armor1, armor2]) => {
+      if (!armor1 || !armor2) return;
       [armor1, armor2].forEach(t => {
         t.magFilter = THREE.NearestFilter;
         t.minFilter = THREE.NearestFilter;
       });
       this.addArmorLayers(armor1, armor2);
-    });
+    }).catch(() => {});
   }
 
   loadTex(loader, url) {
-    return new Promise(r => loader.load(url, r));
+    return new Promise(r => loader.load(url, r, undefined, () => r(null)));
   }
 
   uvMap(geo, x, y, w, h, d, tw, th) {
