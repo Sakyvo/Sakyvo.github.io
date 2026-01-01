@@ -53,12 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize 3D armor viewer
     const container = document.getElementById('armor-viewer');
     if (container && window.ArmorViewer) {
-      new ArmorViewer(
-        container,
-        '/Default_Texture/Steve.png',
-        `/thumbnails/${pack.name}/diamond_layer_1.png`,
-        `/thumbnails/${pack.name}/diamond_layer_2.png`
-      );
+      new ArmorViewer(container, '/Default_Texture/Steve.png');
     }
   } catch (e) {
     document.getElementById('pack-content').innerHTML = 'Pack not found';
