@@ -5,6 +5,7 @@ class ArmorViewer {
     this.autoRotate = true;
     this.isDragging = false;
     this.prevX = 0;
+    this.prevY = 0;
     this.init();
   }
 
@@ -52,6 +53,7 @@ class ArmorViewer {
     el.addEventListener('mousedown', e => {
       this.isDragging = true;
       this.prevX = e.clientX;
+      this.prevY = e.clientY;
       el.style.cursor = 'grabbing';
     });
 
@@ -63,7 +65,10 @@ class ArmorViewer {
     window.addEventListener('mousemove', e => {
       if (this.isDragging) {
         this.group.rotation.y += (e.clientX - this.prevX) * 0.01;
+        this.group.rotation.x += (e.clientY - this.prevY) * 0.01;
+        this.group.rotation.x = Math.max(-1, Math.min(1, this.group.rotation.x));
         this.prevX = e.clientX;
+        this.prevY = e.clientY;
       }
     });
   }
