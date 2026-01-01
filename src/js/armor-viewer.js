@@ -1,7 +1,8 @@
 class ArmorViewer {
-  constructor(container, skinUrl) {
+  constructor(container, skinUrl, armorUrl) {
     this.container = container;
     this.skinUrl = skinUrl;
+    this.armorUrl = armorUrl;
     this.autoRotate = true;
     this.isDragging = false;
     this.prevX = 0;
@@ -39,7 +40,6 @@ class ArmorViewer {
     const el = this.renderer.domElement;
     el.style.cursor = 'grab';
 
-    // Toggle button
     const btn = document.createElement('button');
     btn.textContent = '⏸️';
     btn.style.cssText = 'position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);border:none;padding:4px 8px;cursor:pointer;font-size:16px;border-radius:4px;';
@@ -76,10 +76,18 @@ class ArmorViewer {
   loadTextures() {
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
-    loader.load(this.skinUrl, skin => {
+
+    Promise.all([
+      new Promise(r => loader.load(this.skinUrl, r)),
+      new Promise(r => loader.load(this.armorUrl, t => r(t), undefined, () => r(null)))
+    ]).then(([skin, armor]) => {
       skin.magFilter = THREE.NearestFilter;
       skin.minFilter = THREE.NearestFilter;
-      this.buildModel(skin);
+      if (armor) {
+        armor.magFilter = THREE.NearestFilter;
+        armor.minFilter = THREE.NearestFilter;
+      }
+      this.buildModel(skin, armor);
       this.animate();
     });
   }
@@ -104,38 +112,75 @@ class ArmorViewer {
     }
   }
 
-  createPart(w, h, d, skin, uvX, uvY, tw, th) {
-    const geo = new THREE.BoxGeometry(w, h, d);
+  createPart(w, h, d, tex, uvX, uvY, tw, th, scale = 1) {
+    const geo = new THREE.BoxGeometry(w * scale, h * scale, d * scale);
     this.uvMap(geo, uvX, uvY, w, h, d, tw, th);
-    return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: skin, transparent: true }));
+    return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex, transparent: true, alphaTest: 0.1 }));
   }
 
-  buildModel(skin) {
-    const tw = 64, th = 64;
+  buildModel(skin, armor) {
+    const tw = 64, th = 64, atw = 64, ath = 32;
+    const s = 1.1; // armor scale
 
+    // Head
     const head = this.createPart(8, 8, 8, skin, 0, 0, tw, th);
     head.position.y = 12;
     this.group.add(head);
+    if (armor) {
+      const helmet = this.createPart(8, 8, 8, armor, 0, 0, atw, ath, s);
+      helmet.position.y = 12;
+      this.group.add(helmet);
+    }
 
+    // Body
     const body = this.createPart(8, 12, 4, skin, 16, 16, tw, th);
     body.position.y = 2;
     this.group.add(body);
+    if (armor) {
+      const chest = this.createPart(8, 12, 4, armor, 16, 16, atw, ath, s);
+      chest.position.y = 2;
+      this.group.add(chest);
+    }
 
+    // Right Arm
     const rArm = this.createPart(4, 12, 4, skin, 40, 16, tw, th);
     rArm.position.set(-6, 2, 0);
     this.group.add(rArm);
+    if (armor) {
+      const rArmor = this.createPart(4, 12, 4, armor, 40, 16, atw, ath, s);
+      rArmor.position.set(-6, 2, 0);
+      this.group.add(rArmor);
+    }
 
+    // Left Arm
     const lArm = this.createPart(4, 12, 4, skin, 32, 48, tw, th);
     lArm.position.set(6, 2, 0);
     this.group.add(lArm);
+    if (armor) {
+      const lArmor = this.createPart(4, 12, 4, armor, 40, 16, atw, ath, s);
+      lArmor.position.set(6, 2, 0);
+      this.group.add(lArmor);
+    }
 
+    // Right Leg
     const rLeg = this.createPart(4, 12, 4, skin, 0, 16, tw, th);
     rLeg.position.set(-2, -10, 0);
     this.group.add(rLeg);
+    if (armor) {
+      const rBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, s);
+      rBoot.position.set(-2, -10, 0);
+      this.group.add(rBoot);
+    }
 
+    // Left Leg
     const lLeg = this.createPart(4, 12, 4, skin, 16, 48, tw, th);
     lLeg.position.set(2, -10, 0);
     this.group.add(lLeg);
+    if (armor) {
+      const lBoot = this.createPart(4, 12, 4, armor, 0, 16, atw, ath, s);
+      lBoot.position.set(2, -10, 0);
+      this.group.add(lBoot);
+    }
 
     this.group.rotation.x = 0.1;
   }
