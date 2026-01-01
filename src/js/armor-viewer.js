@@ -8,113 +8,109 @@ class ArmorViewer {
   }
 
   async init() {
-    const canvas = this.createCanvas();
-    const w = 200;
-    const h = 280;
+    const canvas = document.createElement('canvas');
+    this.container.appendChild(canvas);
 
     this.skinViewer = new skinview3d.SkinViewer({
       canvas: canvas,
-      width: w,
-      height: h
+      width: 200,
+      height: 280
     });
 
-    this.skinViewer.animation = new skinview3d.IdleAnimation();
-    this.skinViewer.autoRotate = true;
-    this.skinViewer.autoRotateSpeed = 1;
     this.skinViewer.zoom = 0.9;
+    this.skinViewer.autoRotate = true;
+    this.skinViewer.autoRotateSpeed = 0.5;
+
+    // Use walk animation for continuous movement
+    this.skinViewer.animation = new skinview3d.WalkingAnimation();
+    this.skinViewer.animation.speed = 0.5;
 
     await this.skinViewer.loadSkin(this.skinUrl);
-    this.loadArmorTextures();
+
+    // Load armor using skinview3d's built-in cape layer approach
+    // We'll add armor as additional layers on the model
+    this.addArmorLayers();
   }
 
-  createCanvas() {
-    const canvas = document.createElement('canvas');
-    this.container.appendChild(canvas);
-    return canvas;
-  }
+  async addArmorLayers() {
+    const player = this.skinViewer.playerObject;
+    if (!player) return;
 
-  loadArmorTextures() {
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
-    Promise.all([
-      this.loadTex(loader, this.armorLayer1Url),
-      this.loadTex(loader, this.armorLayer2Url)
-    ]).then(([armor1, armor2]) => {
+
+    try {
+      const [armor1, armor2] = await Promise.all([
+        this.loadTexture(loader, this.armorLayer1Url),
+        this.loadTexture(loader, this.armorLayer2Url)
+      ]);
+
       if (!armor1 || !armor2) return;
+
       [armor1, armor2].forEach(t => {
         t.magFilter = THREE.NearestFilter;
         t.minFilter = THREE.NearestFilter;
       });
-      this.addArmorLayers(armor1, armor2);
-    }).catch(() => {});
+
+      const tw = 64, th = 32;
+
+      // Layer 2: Leggings only (scale 1.04)
+      this.addPart(player.skin.rightLeg, 4, 12, 4, 0, 0, armor2, tw, th, 1.04);
+      this.addPart(player.skin.leftLeg, 4, 12, 4, 0, 0, armor2, tw, th, 1.04);
+
+      // Layer 1: Helmet, Chestplate, Boots (scale 1.08)
+      this.addPart(player.skin.head, 8, 8, 8, 0, 0, armor1, tw, th, 1.08);
+      this.addPart(player.skin.body, 8, 12, 4, 16, 16, armor1, tw, th, 1.08);
+      this.addPart(player.skin.rightArm, 4, 12, 4, 40, 16, armor1, tw, th, 1.08);
+      this.addPart(player.skin.leftArm, 4, 12, 4, 40, 16, armor1, tw, th, 1.08);
+
+      // Boots (scale 1.1 to be outside leggings)
+      this.addPart(player.skin.rightLeg, 4, 12, 4, 0, 16, armor1, tw, th, 1.1);
+      this.addPart(player.skin.leftLeg, 4, 12, 4, 0, 16, armor1, tw, th, 1.1);
+
+    } catch (e) {
+      console.error('Armor load error:', e);
+    }
   }
 
-  loadTex(loader, url) {
-    return new Promise(r => loader.load(url, r, undefined, () => r(null)));
+  loadTexture(loader, url) {
+    return new Promise(resolve => {
+      loader.load(url, resolve, undefined, () => resolve(null));
+    });
   }
 
-  uvMap(geo, x, y, w, h, d, tw, th) {
+  addPart(parent, w, h, d, uvX, uvY, texture, tw, th, scale) {
+    const geo = new THREE.BoxGeometry(w * scale, h * scale, d * scale);
+    this.mapUV(geo, uvX, uvY, w, h, d, tw, th);
+    const mat = new THREE.MeshStandardMaterial({
+      map: texture,
+      transparent: true,
+      alphaTest: 0.1,
+      side: THREE.DoubleSide
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    parent.add(mesh);
+  }
+
+  mapUV(geo, x, y, w, h, d, tw, th) {
     const uv = geo.attributes.uv;
+    // Box faces: right, left, top, bottom, front, back
     const faces = [
-      [x, y+d, d, h],
-      [x+w+d, y+d, d, h],
-      [x+d, y, w, d],
-      [x+d+w, y, w, d],
-      [x+d, y+d, w, h],
-      [x+d+w+d, y+d, w, h]
+      [x, y + d, d, h],           // right
+      [x + w + d, y + d, d, h],   // left
+      [x + d, y, w, d],           // top
+      [x + d + w, y, w, d],       // bottom
+      [x + d, y + d, w, h],       // front
+      [x + d + w + d, y + d, w, h] // back
     ];
     for (let f = 0; f < 6; f++) {
       const [fx, fy, fw, fh] = faces[f];
       const i = f * 4;
-      uv.setXY(i,   (fx+fw)/tw, 1-(fy)/th);
-      uv.setXY(i+1, (fx)/tw,    1-(fy)/th);
-      uv.setXY(i+2, (fx+fw)/tw, 1-(fy+fh)/th);
-      uv.setXY(i+3, (fx)/tw,    1-(fy+fh)/th);
+      uv.setXY(i,     (fx + fw) / tw, 1 - fy / th);
+      uv.setXY(i + 1, fx / tw,        1 - fy / th);
+      uv.setXY(i + 2, (fx + fw) / tw, 1 - (fy + fh) / th);
+      uv.setXY(i + 3, fx / tw,        1 - (fy + fh) / th);
     }
-  }
-
-  createArmorPart(w, h, d, uvX, uvY, texture, tw, th, scale = 1.1) {
-    const geo = new THREE.BoxGeometry(w * scale, h * scale, d * scale);
-    this.uvMap(geo, uvX, uvY, w, h, d, tw, th);
-    const mat = new THREE.MeshStandardMaterial({ map: texture, transparent: true, alphaTest: 0.1 });
-    return new THREE.Mesh(geo, mat);
-  }
-
-  addArmorLayers(armor1, armor2) {
-    const player = this.skinViewer.playerObject;
-    const atw = 64, ath = 32;
-
-    // Helmet (0,0) on layer1
-    const helmet = this.createArmorPart(8, 8, 8, 0, 0, armor1, atw, ath, 1.1);
-    player.skin.head.add(helmet);
-
-    // Chestplate body (16,16) on layer1
-    const chest = this.createArmorPart(8, 12, 4, 16, 16, armor1, atw, ath, 1.1);
-    player.skin.body.add(chest);
-
-    // Chestplate right arm (40,16) on layer1
-    const rArmArmor = this.createArmorPart(4, 12, 4, 40, 16, armor1, atw, ath, 1.1);
-    player.skin.rightArm.add(rArmArmor);
-
-    // Chestplate left arm (40,16) on layer1
-    const lArmArmor = this.createArmorPart(4, 12, 4, 40, 16, armor1, atw, ath, 1.1);
-    player.skin.leftArm.add(lArmArmor);
-
-    // Leggings right leg (0,0) on layer2
-    const rLegArmor = this.createArmorPart(4, 12, 4, 0, 0, armor2, atw, ath, 1.08);
-    player.skin.rightLeg.add(rLegArmor);
-
-    // Leggings left leg (0,0) on layer2
-    const lLegArmor = this.createArmorPart(4, 12, 4, 0, 0, armor2, atw, ath, 1.08);
-    player.skin.leftLeg.add(lLegArmor);
-
-    // Boots right leg (0,16) on layer1
-    const rBoot = this.createArmorPart(4, 12, 4, 0, 16, armor1, atw, ath, 1.12);
-    player.skin.rightLeg.add(rBoot);
-
-    // Boots left leg (0,16) on layer1
-    const lBoot = this.createArmorPart(4, 12, 4, 0, 16, armor1, atw, ath, 1.12);
-    player.skin.leftLeg.add(lBoot);
   }
 }
 
