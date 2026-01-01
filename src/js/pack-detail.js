@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.title = `${pack.displayName} - VALE`;
 
     const base = `/thumbnails/${pack.name}/`;
-    const img = (name) => `<img src="${base}${name}" alt="${name}">`;
+    const img = (name) => `<img src="${base}${name}" alt="${name}" data-texture="${name}">`;
 
     document.getElementById('pack-content').innerHTML = `
       <div class="detail-header">
@@ -47,6 +47,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       </div>
     `;
+
+    // Setup animated textures
+    document.querySelectorAll('.texture-grid img').forEach(img => {
+      img.onload = function() {
+        if (this.naturalHeight > this.naturalWidth) {
+          const frames = this.naturalHeight / this.naturalWidth;
+          if (Number.isInteger(frames) && frames > 1) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'animated-texture';
+            wrapper.style.setProperty('--frames', frames);
+            wrapper.style.setProperty('--bg', `url(${this.src})`);
+            this.parentNode.replaceChild(wrapper, this);
+          }
+        }
+      };
+    });
 
     const container = document.getElementById('armor-viewer');
     if (container && window.ArmorViewer) {

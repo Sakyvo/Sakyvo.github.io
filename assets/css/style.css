@@ -272,6 +272,20 @@ footer {
   border: 1px solid #ddd;
 }
 
+.animated-texture {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #ddd;
+  background: var(--bg) no-repeat;
+  background-size: 100% calc(100% * var(--frames));
+  image-rendering: pixelated;
+  animation: texture-anim calc(var(--frames) * 0.1s) steps(var(--frames)) infinite;
+}
+
+@keyframes texture-anim {
+  to { background-position: 0 100%; }
+}
+
 .icons-card img, .particles-card img {
   width: 100%;
   height: 100%;
