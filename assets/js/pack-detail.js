@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="preview-col">
             <div class="preview-card texture-grid">
               <div class="grid-row">${img('diamond_sword.png')}${img('ender_pearl.png')}${img('potion_bottle_splash.png')}${img('steak.png')}</div>
-              <div class="grid-row">${img('iron_sword.png')}${img('fishing_rod_uncast.png')}${img('golden_carrot.png')}${img('apple_golden.png')}</div>
+              <div class="grid-row">${img('iron_sword.png')}${img('fishing_rod_uncast.png')}${img('apple_golden.png')}${img('golden_carrot.png')}</div>
               <div class="grid-row">${img('grass_side.png')}${img('stone.png')}${img('cobblestone.png')}${img('wool_colored_white.png')}</div>
               <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
             </div>
