@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           <h1>${pack.displayName}</h1>
           <p class="original-name">${pack.id}</p>
           <p class="meta">${pack.fileSize}</p>
-          <div class="tag-list" id="pack-tags"></div>
         </div>
       </div>
       <div class="download-section">
@@ -49,34 +48,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
       <div class="admin-actions" id="admin-actions" style="display:none;">
         <h3>ADMIN</h3>
-        <div class="tag-input-group">
-          <input type="text" id="tag-input" placeholder="Add to list...">
-          <button class="btn btn-primary" id="add-tag-btn">ADD</button>
-        </div>
+        <button class="btn btn-primary" id="add-to-list-btn">ADD TO LIST</button>
         <button class="btn btn-secondary" id="delete-pack-btn">DELETE PACK</button>
       </div>
     `;
-
-    // Load and display tags
-    const packTags = JSON.parse(localStorage.getItem(`pack_tags_${packName}`) || '[]');
-    renderTags(packTags);
-
-    function renderTags(tags) {
-      const isAdmin = window.AUTH?.isLoggedIn();
-      document.getElementById('pack-tags').innerHTML = tags.map(tag =>
-        `<span class="tag">${tag}${isAdmin ? `<span class="remove-tag" data-tag="${tag}">×</span>` : ''}</span>`
-      ).join('');
-
-      if (isAdmin) {
-        document.querySelectorAll('.remove-tag').forEach(btn => {
-          btn.onclick = () => {
-            const newTags = tags.filter(t => t !== btn.dataset.tag);
-            localStorage.setItem(`pack_tags_${packName}`, JSON.stringify(newTags));
-            renderTags(newTags);
-          };
-        });
-      }
-    }
 
     // Admin actions
     function updateAdminUI() {
@@ -86,24 +61,88 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         adminSection.style.display = 'none';
       }
-      renderTags(JSON.parse(localStorage.getItem(`pack_tags_${packName}`) || '[]'));
     }
 
     window.addEventListener('auth-change', updateAdminUI);
     updateAdminUI();
 
-    document.getElementById('add-tag-btn').onclick = () => {
-      const input = document.getElementById('tag-input');
-      const tag = input.value.trim();
-      if (!tag) return;
+    // Add to list modal
+    document.getElementById('add-to-list-btn').onclick = () => {
+      const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
 
-      const tags = JSON.parse(localStorage.getItem(`pack_tags_${packName}`) || '[]');
-      if (!tags.includes(tag)) {
-        tags.push(tag);
-        localStorage.setItem(`pack_tags_${packName}`, JSON.stringify(tags));
-        renderTags(tags);
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:400px;">
+          <h2>Add to List</h2>
+          <input type="text" id="list-search" placeholder="Search or create list..." style="width:100%;padding:12px;border:2px solid #000;margin-bottom:16px;">
+          <div id="list-options" style="max-height:250px;overflow-y:auto;"></div>
+          <div class="modal-buttons">
+            <button class="btn btn-primary" id="confirm-add-list">ADD</button>
+            <button class="btn btn-secondary" id="cancel-add-list">CANCEL</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      const selected = new Set();
+      const searchInput = modal.querySelector('#list-search');
+      const optionsDiv = modal.querySelector('#list-options');
+
+      function renderOptions(query = '') {
+        const q = query.toLowerCase();
+        const filtered = lists.filter(l => l.name.toLowerCase().includes(q));
+        const alreadyIn = lists.filter(l => l.packs.includes(packName)).map(l => l.name);
+
+        let html = filtered.map(l => `
+          <label style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #eee;cursor:pointer;">
+            <input type="checkbox" value="${l.name}" ${selected.has(l.name) ? 'checked' : ''} ${alreadyIn.includes(l.name) ? 'disabled checked' : ''}>
+            <span>${l.name}</span>
+            ${alreadyIn.includes(l.name) ? '<span style="color:#999;font-size:12px;">(already added)</span>' : ''}
+          </label>
+        `).join('');
+
+        if (query && !lists.find(l => l.name.toLowerCase() === q)) {
+          html += `
+            <label style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #eee;cursor:pointer;background:#f0f0f0;">
+              <input type="checkbox" value="__new__${query}" ${selected.has('__new__' + query) ? 'checked' : ''}>
+              <span>Create "${query}"</span>
+            </label>
+          `;
+        }
+
+        optionsDiv.innerHTML = html || '<p style="padding:8px;color:#666;">No lists found</p>';
+
+        optionsDiv.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach(cb => {
+          cb.onchange = () => {
+            if (cb.checked) selected.add(cb.value);
+            else selected.delete(cb.value);
+          };
+        });
       }
-      input.value = '';
+
+      searchInput.oninput = () => renderOptions(searchInput.value.trim());
+      renderOptions();
+
+      modal.querySelector('#cancel-add-list').onclick = () => modal.remove();
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+      modal.querySelector('#confirm-add-list').onclick = () => {
+        selected.forEach(val => {
+          if (val.startsWith('__new__')) {
+            const name = val.replace('__new__', '');
+            lists.push({ name, cover: '', packs: [packName] });
+          } else {
+            const list = lists.find(l => l.name === val);
+            if (list && !list.packs.includes(packName)) {
+              list.packs.push(packName);
+            }
+          }
+        });
+        localStorage.setItem('vale_lists', JSON.stringify(lists));
+        modal.remove();
+        alert('Added to list(s)!');
+      };
     };
 
     document.getElementById('delete-pack-btn').onclick = async () => {

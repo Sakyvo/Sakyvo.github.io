@@ -35,4 +35,13 @@ if (fs.existsSync(indexPath)) {
   console.log(`Generated ${index.items.length} pack pages.`);
 }
 
+// Generate list pages
+fs.mkdirSync('l', { recursive: true });
+fs.copyFileSync('src/list.html', 'l/index.html');
+
+// Copy 404 for GitHub Pages routing
+fs.copyFileSync('src/404.html', '404.html');
+
+console.log('Generated list pages.');
+
 console.log('Build complete.');
