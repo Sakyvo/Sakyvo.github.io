@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <h1>${pack.displayName}</h1>
           <p class="original-name">${pack.id}</p>
           <p class="meta">${pack.fileSize}</p>
+          <div class="tag-list" id="pack-tags"></div>
         </div>
       </div>
       <div class="download-section">
@@ -46,7 +47,97 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
         </div>
       </div>
+      <div class="admin-actions" id="admin-actions" style="display:none;">
+        <h3>ADMIN</h3>
+        <div class="tag-input-group">
+          <input type="text" id="tag-input" placeholder="Add to list...">
+          <button class="btn btn-primary" id="add-tag-btn">ADD</button>
+        </div>
+        <button class="btn btn-secondary" id="delete-pack-btn">DELETE PACK</button>
+      </div>
     `;
+
+    // Load and display tags
+    const packTags = JSON.parse(localStorage.getItem(`pack_tags_${packName}`) || '[]');
+    renderTags(packTags);
+
+    function renderTags(tags) {
+      const isAdmin = window.AUTH?.isLoggedIn();
+      document.getElementById('pack-tags').innerHTML = tags.map(tag =>
+        `<span class="tag">${tag}${isAdmin ? `<span class="remove-tag" data-tag="${tag}">×</span>` : ''}</span>`
+      ).join('');
+
+      if (isAdmin) {
+        document.querySelectorAll('.remove-tag').forEach(btn => {
+          btn.onclick = () => {
+            const newTags = tags.filter(t => t !== btn.dataset.tag);
+            localStorage.setItem(`pack_tags_${packName}`, JSON.stringify(newTags));
+            renderTags(newTags);
+          };
+        });
+      }
+    }
+
+    // Admin actions
+    function updateAdminUI() {
+      const adminSection = document.getElementById('admin-actions');
+      if (window.AUTH?.isLoggedIn()) {
+        adminSection.style.display = 'block';
+      } else {
+        adminSection.style.display = 'none';
+      }
+      renderTags(JSON.parse(localStorage.getItem(`pack_tags_${packName}`) || '[]'));
+    }
+
+    window.addEventListener('auth-change', updateAdminUI);
+    updateAdminUI();
+
+    document.getElementById('add-tag-btn').onclick = () => {
+      const input = document.getElementById('tag-input');
+      const tag = input.value.trim();
+      if (!tag) return;
+
+      const tags = JSON.parse(localStorage.getItem(`pack_tags_${packName}`) || '[]');
+      if (!tags.includes(tag)) {
+        tags.push(tag);
+        localStorage.setItem(`pack_tags_${packName}`, JSON.stringify(tags));
+        renderTags(tags);
+      }
+      input.value = '';
+    };
+
+    document.getElementById('delete-pack-btn').onclick = async () => {
+      if (!confirm(`Delete ${pack.displayName}?`)) return;
+
+      const token = window.AUTH?.getToken();
+      if (!token) return alert('Please login first');
+
+      try {
+        const path = `resourcepacks/${pack.id}.zip`;
+        const fileRes = await fetch(`https://api.github.com/repos/Sakyvo/Sakyvo.github.io/contents/${path}`, {
+          headers: { Authorization: `token ${token}` }
+        });
+
+        if (!fileRes.ok) return alert('File not found');
+
+        const fileData = await fileRes.json();
+        const res = await fetch(`https://api.github.com/repos/Sakyvo/Sakyvo.github.io/contents/${path}`, {
+          method: 'DELETE',
+          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Delete ${pack.id}`, sha: fileData.sha })
+        });
+
+        if (res.ok) {
+          alert('Deleted! Run build to update site.');
+          window.location.href = '/';
+        } else {
+          const err = await res.json();
+          alert(`Delete failed: ${err.message}`);
+        }
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    };
 
     // Setup animated textures
     document.querySelectorAll('.texture-grid img').forEach(img => {

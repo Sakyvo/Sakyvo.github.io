@@ -370,3 +370,141 @@ footer {
 
 .message.error { background: #fee; }
 .message.success { background: #efe; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border: 2px solid #000;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.modal-content h2 {
+  font-size: 18px;
+  margin-bottom: 24px;
+  letter-spacing: 2px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.login-error {
+  color: #c00;
+  font-size: 14px;
+  margin-bottom: 16px;
+  min-height: 20px;
+}
+
+/* Section tabs */
+.section-tabs {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.tab-btn {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-btn.active {
+  border-bottom-color: #f00;
+}
+
+.tab-btn:hover {
+  color: #666;
+}
+
+/* Admin actions on pack detail */
+.admin-actions {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #ddd;
+}
+
+.admin-actions h3 {
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.tag-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tag-input-group input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #000;
+  font-size: 14px;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: #f0f0f0;
+  border: 1px solid #000;
+  font-size: 12px;
+}
+
+.tag .remove-tag {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* List management */
+.list-card {
+  border: 2px solid #000;
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.list-card .list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.list-card .list-name {
+  font-weight: bold;
+}
+
+.list-card .list-count {
+  font-size: 12px;
+  color: #666;
+}
