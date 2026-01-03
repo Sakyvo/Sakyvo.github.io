@@ -422,16 +422,17 @@ footer {
 .tab-btn {
   font-size: 14px;
   font-weight: bold;
-  letter-spacing: 4px;
+  letter-spacing: 2px;
   background: none;
   border: none;
   cursor: pointer;
   padding: 4px 0;
-  border-bottom: 3px solid transparent;
+  text-decoration: none;
+  color: #000;
 }
 
 .tab-btn.active {
-  border-bottom-color: #f00;
+  border-bottom: 3px solid #000;
 }
 
 .tab-btn:hover {
