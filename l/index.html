@@ -14,17 +14,19 @@
     </nav>
   </header>
 
+  <section class="hero" style="padding:40px 0;">
+    <div class="search-box">
+      <input type="text" id="list-search" placeholder="Search lists...">
+      <button class="search-btn">🔍</button>
+    </div>
+    <button class="btn btn-primary" id="manage-btn" style="display:none;margin-top:16px;">MANAGE</button>
+  </section>
+
   <section class="explore-section">
     <div class="section-header">
       <div class="section-tabs">
         <a href="/" class="tab-btn">EXPLORE</a>
         <a href="/l/" class="tab-btn active">LISTS</a>
-      </div>
-    </div>
-    <div id="create-list-section" style="display:none;margin-bottom:24px;">
-      <div class="tag-input-group">
-        <input type="text" id="new-list-name" placeholder="New list name">
-        <button class="btn btn-primary" id="create-list-btn">CREATE</button>
       </div>
     </div>
     <div class="list-grid" id="list-grid"></div>

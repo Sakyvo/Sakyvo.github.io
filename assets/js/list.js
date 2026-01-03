@@ -1,19 +1,36 @@
-const LISTS_KEY = 'vale_lists';
+let listsData = [];
+let allPacks = [];
 
-function getLists() {
-  return JSON.parse(localStorage.getItem(LISTS_KEY) || '[]');
+async function loadLists() {
+  try {
+    const res = await fetch('/data/lists.json?t=' + Date.now());
+    listsData = await res.json();
+  } catch (e) {
+    listsData = [];
+  }
+  return listsData;
 }
 
-function saveLists(lists) {
-  localStorage.setItem(LISTS_KEY, JSON.stringify(lists));
-}
+async function saveLists() {
+  const token = AUTH.getToken();
+  if (!token) return false;
 
-function createList(name) {
-  const lists = getLists();
-  if (lists.find(l => l.name === name)) return false;
-  lists.push({ name, cover: '', packs: [] });
-  saveLists(lists);
-  return true;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(listsData, null, 2))));
+
+  let sha;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/data/lists.json`, {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (res.ok) sha = (await res.json()).sha;
+  } catch (e) {}
+
+  const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/data/lists.json`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Update lists', content, sha })
+  });
+  return res.ok;
 }
 
 function sanitizeName(name) {
@@ -21,46 +38,38 @@ function sanitizeName(name) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check for redirect from 404
-  const redirectPath = sessionStorage.getItem('listPath');
-  if (redirectPath) {
-    sessionStorage.removeItem('listPath');
-    const listId = redirectPath.split('/').filter(Boolean)[1];
-    if (listId) {
-      window.location.replace('/l/#' + listId);
-      return;
-    }
-  }
-
-  // Check hash for list detail
   const hash = window.location.hash.slice(1);
   if (hash) {
+    await loadLists();
+    try {
+      const index = await fetch('/data/index.json').then(r => r.json());
+      allPacks = index.items;
+    } catch (e) {}
     loadListDetail(hash);
     return;
   }
 
+  await loadLists();
+
   const grid = document.getElementById('list-grid');
-  const createSection = document.getElementById('create-list-section');
+  const searchInput = document.getElementById('list-search');
 
-  function updateUI() {
-    const isAdmin = window.AUTH?.isLoggedIn();
-    createSection.style.display = isAdmin ? 'block' : 'none';
-    renderLists();
-  }
+  function renderLists(query = '') {
+    const filtered = listsData.filter(l =>
+      l.name.toLowerCase().includes(query.toLowerCase())
+    );
 
-  function renderLists() {
-    const lists = getLists();
-    if (lists.length === 0) {
-      grid.innerHTML = '<p>No lists yet.</p>';
+    if (filtered.length === 0) {
+      grid.innerHTML = query ? '<p>No lists found.</p>' : '<p>No lists yet.</p>';
       return;
     }
 
-    grid.innerHTML = lists.map(list => {
+    grid.innerHTML = filtered.map(list => {
       const safeName = sanitizeName(list.name);
       return `
-        <a class="pack-card" href="/l/#${safeName}" onclick="loadListDetail('${safeName}'); return false;">
+        <a class="pack-card" href="/l/#${safeName}">
           <div class="cover" style="background:#f0f0f0;aspect-ratio:2;display:flex;align-items:center;justify-content:center;border-bottom:2px solid #000;">
-            <span style="font-size:24px;font-weight:bold;">${list.name}</span>
+            ${list.cover ? `<img src="${list.cover}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:24px;font-weight:bold;">${list.name}</span>`}
           </div>
           <div class="info">
             <div class="name">${list.name}</div>
@@ -71,22 +80,84 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
+  function updateUI() {
+    const isAdmin = window.AUTH?.isLoggedIn();
+    document.getElementById('manage-btn').style.display = isAdmin ? 'inline-block' : 'none';
+    renderLists(searchInput.value);
+  }
+
+  searchInput.oninput = () => renderLists(searchInput.value);
+
+  document.getElementById('manage-btn').onclick = showManageModal;
+
   window.addEventListener('auth-change', updateUI);
   updateUI();
-
-  document.getElementById('create-list-btn').onclick = () => {
-    const input = document.getElementById('new-list-name');
-    const name = input.value.trim();
-    if (name && createList(name)) {
-      input.value = '';
-      renderLists();
-    }
-  };
 });
 
+function showManageModal() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:500px;">
+      <h2>MANAGE LISTS</h2>
+      <div class="tag-input-group" style="margin-bottom:16px;">
+        <input type="text" id="new-list-name" placeholder="New list name">
+        <button class="btn btn-primary" id="create-list-btn">CREATE</button>
+      </div>
+      <div id="manage-list" style="max-height:300px;overflow-y:auto;"></div>
+      <div class="modal-buttons" style="margin-top:16px;">
+        <button class="btn btn-secondary" id="close-manage">CLOSE</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  function renderManageList() {
+    const listEl = modal.querySelector('#manage-list');
+    listEl.innerHTML = listsData.map((l, i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #eee;">
+        <span style="flex:1;">${l.name}</span>
+        <button class="btn btn-secondary delete-list-btn" data-index="${i}" style="padding:4px 8px;">DELETE</button>
+      </div>
+    `).join('') || '<p style="color:#666;">No lists</p>';
+
+    listEl.querySelectorAll('.delete-list-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const idx = parseInt(btn.dataset.index);
+        const name = listsData[idx].name;
+        if (await showConfirm(`Delete list "${name}"?`)) {
+          listsData.splice(idx, 1);
+          await saveLists();
+          renderManageList();
+          document.getElementById('list-grid').innerHTML = '';
+          location.reload();
+        }
+      };
+    });
+  }
+
+  modal.querySelector('#create-list-btn').onclick = async () => {
+    const input = modal.querySelector('#new-list-name');
+    const name = input.value.trim();
+    if (!name) return;
+    if (listsData.find(l => l.name === name)) {
+      alert('List already exists');
+      return;
+    }
+    listsData.push({ name, cover: '', description: '', packs: [] });
+    await saveLists();
+    input.value = '';
+    renderManageList();
+    location.reload();
+  };
+
+  modal.querySelector('#close-manage').onclick = () => modal.remove();
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  renderManageList();
+}
+
 async function loadListDetail(listId) {
-  const lists = getLists();
-  const list = lists.find(l => sanitizeName(l.name) === listId);
+  const list = listsData.find(l => sanitizeName(l.name) === listId);
 
   if (!list) {
     document.querySelector('.explore-section').innerHTML = '<p>List not found. <a href="/l/">Back to Lists</a></p>';
@@ -94,13 +165,13 @@ async function loadListDetail(listId) {
   }
 
   document.title = `${list.name} - VALE`;
-  window.history.pushState({}, '', '/l/#' + listId);
 
-  let allPacks = [];
-  try {
-    const index = await fetch('/data/index.json').then(r => r.json());
-    allPacks = index.items;
-  } catch (e) {}
+  if (allPacks.length === 0) {
+    try {
+      const index = await fetch('/data/index.json').then(r => r.json());
+      allPacks = index.items;
+    } catch (e) {}
+  }
 
   function render() {
     const isAdmin = window.AUTH?.isLoggedIn();
@@ -115,7 +186,11 @@ async function loadListDetail(listId) {
       </div>
       <div style="margin-bottom:24px;">
         <a href="/l/" class="back-link">← Back to Lists</a>
-        <h1 style="margin:16px 0 8px;">${list.name}</h1>
+        <div style="display:flex;align-items:center;gap:12px;margin:16px 0 8px;">
+          <h1 style="margin:0;">${list.name}</h1>
+          ${isAdmin ? `<button class="btn btn-secondary" id="edit-list-btn" style="padding:4px 12px;">EDIT</button>` : ''}
+        </div>
+        ${list.description ? `<p style="color:#666;margin-bottom:8px;">${list.description}</p>` : ''}
         <p class="meta">${list.packs.length} packs</p>
       </div>
       ${isAdmin ? `
@@ -141,23 +216,26 @@ async function loadListDetail(listId) {
     `;
 
     if (isAdmin) {
-      document.getElementById('add-packs-btn')?.addEventListener('click', () => showAddPackModal(list, allPacks, render));
-      document.getElementById('delete-list-btn')?.addEventListener('click', () => {
-        if (confirm(`Delete list "${list.name}"?`)) {
-          const newLists = lists.filter(l => l.name !== list.name);
-          saveLists(newLists);
+      document.getElementById('edit-list-btn')?.addEventListener('click', () => showEditModal(list, render));
+      document.getElementById('add-packs-btn')?.addEventListener('click', () => showAddPackModal(list, render));
+      document.getElementById('delete-list-btn')?.addEventListener('click', async () => {
+        if (await showConfirm(`Delete list "${list.name}"?`)) {
+          listsData = listsData.filter(l => l.name !== list.name);
+          await saveLists();
           window.location.href = '/l/';
         }
       });
 
       document.querySelectorAll('.remove-pack-btn').forEach(btn => {
-        btn.onclick = (e) => {
+        btn.onclick = async (e) => {
           e.preventDefault();
           e.stopPropagation();
           const packName = btn.dataset.pack;
-          list.packs = list.packs.filter(p => p !== packName);
-          saveLists(lists);
-          render();
+          if (await showConfirm(`Remove "${packName}" from list?`)) {
+            list.packs = list.packs.filter(p => p !== packName);
+            await saveLists();
+            render();
+          }
         };
       });
     }
@@ -167,8 +245,49 @@ async function loadListDetail(listId) {
   render();
 }
 
-function showAddPackModal(list, allPacks, onDone) {
-  const lists = getLists();
+function showEditModal(list, onDone) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:400px;">
+      <h2>EDIT LIST</h2>
+      <div class="form-group">
+        <label>NAME</label>
+        <input type="text" id="edit-name" value="${list.name}">
+      </div>
+      <div class="form-group">
+        <label>COVER URL</label>
+        <input type="text" id="edit-cover" value="${list.cover || ''}" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>DESCRIPTION</label>
+        <textarea id="edit-desc" rows="3" style="width:100%;padding:8px;border:2px solid #000;">${list.description || ''}</textarea>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary" id="save-edit">SAVE</button>
+        <button class="btn btn-secondary" id="cancel-edit">CANCEL</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('#save-edit').onclick = async () => {
+    const newName = modal.querySelector('#edit-name').value.trim();
+    if (!newName) return;
+    list.name = newName;
+    list.cover = modal.querySelector('#edit-cover').value.trim();
+    list.description = modal.querySelector('#edit-desc').value.trim();
+    await saveLists();
+    modal.remove();
+    window.history.replaceState({}, '', '/l/#' + sanitizeName(newName));
+    onDone();
+  };
+
+  modal.querySelector('#cancel-edit').onclick = () => modal.remove();
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+}
+
+function showAddPackModal(list, onDone) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.innerHTML = `
@@ -216,12 +335,33 @@ function showAddPackModal(list, allPacks, onDone) {
   modal.querySelector('#cancel-add-packs').onclick = () => modal.remove();
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 
-  modal.querySelector('#confirm-add-packs').onclick = () => {
+  modal.querySelector('#confirm-add-packs').onclick = async () => {
     selected.forEach(name => {
       if (!list.packs.includes(name)) list.packs.push(name);
     });
-    saveLists(lists);
+    await saveLists();
     modal.remove();
     onDone();
   };
+}
+
+function showConfirm(message) {
+  return new Promise(resolve => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:350px;text-align:center;">
+        <p style="margin-bottom:24px;">${message}</p>
+        <div class="modal-buttons">
+          <button class="btn btn-primary" id="confirm-yes">CONFIRM</button>
+          <button class="btn btn-secondary" id="confirm-no">CANCEL</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('#confirm-yes').onclick = () => { modal.remove(); resolve(true); };
+    modal.querySelector('#confirm-no').onclick = () => { modal.remove(); resolve(false); };
+    modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(false); } };
+  });
 }

@@ -39,7 +39,8 @@
       "Bash(do sed -i 's|<script src=\"\"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js\"\"></script>|<script src=\"\"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js\"\"></script>\\\\n  <script src=\"\"https://bs-community.github.io/skinview3d/js/skinview3d.bundle.js\"\"></script>|' \"$f\")",
       "Bash(done)",
       "Bash(git commit -m \"Use skinview3d for armor viewer\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
