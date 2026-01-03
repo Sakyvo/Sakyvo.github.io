@@ -22,6 +22,8 @@ header {
 .logo {
   font-size: 24px;
   font-weight: bold;
+  text-decoration: none;
+  color: inherit;
 }
 
 nav { display: flex; gap: 12px; }
