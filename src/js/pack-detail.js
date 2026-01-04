@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const base = `/thumbnails/${pack.name}/`;
     const img = (name) => `<img src="${base}${name}" alt="${name}" data-texture="${name}">`;
 
+    const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+    const inLists = lists.filter(l => l.packs.includes(packName)).map(l => l.name);
+
     document.getElementById('pack-content').innerHTML = `
       <div class="detail-header">
         <img class="pack-icon-large" src="${pack.packPng}" alt="Pack">
@@ -21,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <h1>${pack.displayName}</h1>
           <p class="original-name">${pack.id}</p>
           <p class="meta">${pack.fileSize}</p>
+          ${inLists.length ? `<p style="color:#888;font-style:italic;margin-top:4px;">${inLists.join(', ')}</p>` : ''}
         </div>
       </div>
       <div class="download-section">
@@ -68,7 +72,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Add to list modal
     document.getElementById('add-to-list-btn').onclick = () => {
-      const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+      const modalLists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+      const alreadyIn = modalLists.filter(l => l.packs.includes(packName)).map(l => l.name);
 
       const modal = document.createElement('div');
       modal.className = 'modal-overlay';
@@ -85,24 +90,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
       document.body.appendChild(modal);
 
-      const selected = new Set();
+      const selected = new Set(alreadyIn);
       const searchInput = modal.querySelector('#list-search');
       const optionsDiv = modal.querySelector('#list-options');
 
       function renderOptions(query = '') {
         const q = query.toLowerCase();
-        const filtered = lists.filter(l => l.name.toLowerCase().includes(q));
-        const alreadyIn = lists.filter(l => l.packs.includes(packName)).map(l => l.name);
+        const filtered = modalLists.filter(l => l.name.toLowerCase().includes(q));
 
         let html = filtered.map(l => `
           <label style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #eee;cursor:pointer;">
-            <input type="checkbox" value="${l.name}" ${selected.has(l.name) ? 'checked' : ''} ${alreadyIn.includes(l.name) ? 'disabled checked' : ''}>
+            <input type="checkbox" value="${l.name}" ${selected.has(l.name) ? 'checked' : ''} ${alreadyIn.includes(l.name) ? 'disabled' : ''}>
             <span>${l.name}</span>
             ${alreadyIn.includes(l.name) ? '<span style="color:#999;font-size:12px;">(already added)</span>' : ''}
           </label>
         `).join('');
 
-        if (query && !lists.find(l => l.name.toLowerCase() === q)) {
+        if (query && !modalLists.find(l => l.name.toLowerCase() === q)) {
           html += `
             <label style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #eee;cursor:pointer;background:#f0f0f0;">
               <input type="checkbox" value="__new__${query}" ${selected.has('__new__' + query) ? 'checked' : ''}>
@@ -131,15 +135,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         selected.forEach(val => {
           if (val.startsWith('__new__')) {
             const name = val.replace('__new__', '');
-            lists.push({ name, cover: '', packs: [packName] });
+            modalLists.push({ name, cover: '', packs: [packName] });
           } else {
-            const list = lists.find(l => l.name === val);
+            const list = modalLists.find(l => l.name === val);
             if (list && !list.packs.includes(packName)) {
               list.packs.push(packName);
             }
           }
         });
-        localStorage.setItem('vale_lists', JSON.stringify(lists));
+        localStorage.setItem('vale_lists', JSON.stringify(modalLists));
         modal.remove();
         alert('Added to list(s)!');
       };
