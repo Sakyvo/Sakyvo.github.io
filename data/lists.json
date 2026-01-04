@@ -3,6 +3,8 @@
     "name": "test",
     "cover": "",
     "description": "",
-    "packs": []
+    "packs": [
+      "CoolPvp"
+    ]
   }
 ]
