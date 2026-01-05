@@ -39,13 +39,16 @@ async function loadLists() {
   try {
     const res = await fetch('/l/lists.json?t=' + Date.now());
     listsData = await res.json();
+    localStorage.setItem('vale_lists', JSON.stringify(listsData));
   } catch (e) {
-    listsData = [];
+    const cached = localStorage.getItem('vale_lists');
+    listsData = cached ? JSON.parse(cached) : [];
   }
   return listsData;
 }
 
 async function saveLists() {
+  localStorage.setItem('vale_lists', JSON.stringify(listsData));
   const token = AUTH.getToken();
   if (!token) return false;
 
@@ -417,9 +420,9 @@ function showAddPackModal(list, onDone) {
     selected.forEach(name => {
       if (!list.packs.includes(name)) list.packs.push(name);
     });
-    await saveLists();
     modal.remove();
     onDone();
+    saveLists();
   };
 }
 
