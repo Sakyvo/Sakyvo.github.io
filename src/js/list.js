@@ -37,7 +37,7 @@ const LIST_PAGE_HTML = `<!DOCTYPE html>
 
 async function loadLists() {
   try {
-    const res = await fetch('/data/lists.json?t=' + Date.now());
+    const res = await fetch('/l/lists.json?t=' + Date.now());
     listsData = await res.json();
   } catch (e) {
     listsData = [];
@@ -53,13 +53,13 @@ async function saveLists() {
 
   let sha;
   try {
-    const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/data/lists.json`, {
+    const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/l/lists.json`, {
       headers: { Authorization: `token ${token}` }
     });
     if (res.ok) sha = (await res.json()).sha;
   } catch (e) {}
 
-  const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/data/lists.json`, {
+  const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/l/lists.json`, {
     method: 'PUT',
     headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: 'Update lists', content, sha })
@@ -110,14 +110,14 @@ function sanitizeName(name) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const hash = window.location.hash.slice(1);
-  if (hash) {
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  if (pathParts[0] === 'l' && pathParts[1]) {
     await loadLists();
     try {
       const index = await fetch('/data/index.json').then(r => r.json());
       allPacks = index.items;
     } catch (e) {}
-    loadListDetail(hash);
+    loadListDetail(pathParts[1]);
     return;
   }
 
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.innerHTML = filtered.map(list => {
       const safeName = sanitizeName(list.name);
       return `
-        <a class="pack-card" href="/l/#${safeName}">
+        <a class="pack-card" href="/l/${safeName}/">
           <div class="cover" style="background:#f0f0f0;aspect-ratio:2;display:flex;align-items:center;justify-content:center;border-bottom:2px solid #000;">
             ${list.cover ? `<img src="${list.cover}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:24px;font-weight:bold;">${list.name}</span>`}
           </div>
@@ -357,7 +357,7 @@ function showEditModal(list, onDone) {
     list.description = modal.querySelector('#edit-desc').value.trim();
     await saveLists();
     modal.remove();
-    window.history.replaceState({}, '', '/l/#' + sanitizeName(newName));
+    window.history.replaceState({}, '', '/l/' + sanitizeName(newName) + '/');
     onDone();
   };
 
