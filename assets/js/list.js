@@ -87,25 +87,25 @@ async function createListPage(listId) {
 
 async function deleteListPage(listId) {
   const token = AUTH.getToken();
-  if (!token) return false;
+  if (!token) throw new Error('Not logged in');
 
   const path = `l/${listId}/index.html`;
 
   let sha;
-  try {
-    const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/${path}`, {
-      headers: { Authorization: `token ${token}` }
-    });
-    if (res.ok) sha = (await res.json()).sha;
-    else return true;
-  } catch (e) { return true; }
+  const getRes = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/${path}`, {
+    headers: { Authorization: `token ${token}` }
+  });
+  if (getRes.status === 404) return true;
+  if (!getRes.ok) throw new Error('Failed to get file');
+  sha = (await getRes.json()).sha;
 
   const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/${path}`, {
     method: 'DELETE',
     headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: `Delete list page: ${listId}`, sha })
   });
-  return res.ok;
+  if (!res.ok) throw new Error('Failed to delete from repo');
+  return true;
 }
 
 function sanitizeName(name) {
@@ -202,12 +202,14 @@ function showManageModal() {
         const name = listsData[idx].name;
         const listId = sanitizeName(name);
         if (await showConfirm(`Delete list "${name}"?`)) {
-          listsData.splice(idx, 1);
-          await saveLists();
-          await deleteListPage(listId);
-          renderManageList();
-          document.getElementById('list-grid').innerHTML = '';
-          location.reload();
+          try {
+            await deleteListPage(listId);
+            listsData.splice(idx, 1);
+            await saveLists();
+            location.reload();
+          } catch (e) {
+            alert('Delete failed: ' + e.message);
+          }
         }
       };
     });
@@ -299,11 +301,15 @@ async function loadListDetail(listId) {
       document.getElementById('add-packs-btn')?.addEventListener('click', () => showAddPackModal(list, render));
       document.getElementById('delete-list-btn')?.addEventListener('click', async () => {
         if (await showConfirm(`Delete list "${list.name}"?`)) {
-          const listId = sanitizeName(list.name);
-          listsData = listsData.filter(l => l.name !== list.name);
-          await saveLists();
-          await deleteListPage(listId);
-          window.location.href = '/l/';
+          try {
+            const listId = sanitizeName(list.name);
+            await deleteListPage(listId);
+            listsData = listsData.filter(l => l.name !== list.name);
+            await saveLists();
+            window.location.href = '/l/';
+          } catch (e) {
+            alert('Delete failed: ' + e.message);
+          }
         }
       });
 
