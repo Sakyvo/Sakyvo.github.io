@@ -36,6 +36,22 @@ const LIST_PAGE_HTML = `<!DOCTYPE html>
 </html>`;
 
 async function loadLists() {
+  const token = AUTH.getToken();
+  // 登录时从 GitHub API 获取最新数据（绕过 CDN 缓存）
+  if (token) {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/l/lists.json`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        listsData = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+        localStorage.setItem('vale_lists', JSON.stringify(listsData));
+        return listsData;
+      }
+    } catch (e) {}
+  }
+  // 未登录时从 CDN 获取
   try {
     const res = await fetch('/l/lists.json?t=' + Date.now());
     listsData = await res.json();
@@ -129,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const grid = document.getElementById('list-grid');
   const searchInput = document.getElementById('list-search');
 
-  function renderLists(query = '') {
+  window.renderLists = function(query = '') {
     const filtered = listsData.filter(l =>
       l.name.toLowerCase().includes(query.toLowerCase())
     );
@@ -158,10 +174,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateUI() {
     const isAdmin = window.AUTH?.isLoggedIn();
     document.getElementById('manage-btn').style.display = isAdmin ? 'inline-block' : 'none';
-    renderLists(searchInput.value);
+    window.renderLists(searchInput.value);
   }
 
-  searchInput.oninput = () => renderLists(searchInput.value);
+  searchInput.oninput = () => window.renderLists(searchInput.value);
 
   document.getElementById('manage-btn').onclick = showManageModal;
 
@@ -206,7 +222,8 @@ function showManageModal() {
             await deleteListPage(listId);
             listsData.splice(idx, 1);
             await saveLists();
-            location.reload();
+            renderManageList();
+            window.renderLists?.('');
           } catch (e) {
             alert('Delete failed: ' + e.message);
           }
@@ -229,7 +246,7 @@ function showManageModal() {
     await createListPage(listId);
     input.value = '';
     renderManageList();
-    location.reload();
+    window.renderLists?.('');
   };
 
   modal.querySelector('#close-manage').onclick = () => modal.remove();
