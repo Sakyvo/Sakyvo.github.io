@@ -95,10 +95,18 @@ const AUTH = {
     const authBtn = nav.querySelector('.auth-btn') || document.createElement('a');
     authBtn.className = 'nav-btn auth-btn';
 
+    const isAdminPage = window.location.pathname.startsWith('/admin');
+
     if (this.isLoggedIn()) {
-      authBtn.textContent = 'LOGOUT';
-      authBtn.href = '#';
-      authBtn.onclick = (e) => { e.preventDefault(); this.logout(); };
+      if (isAdminPage) {
+        authBtn.textContent = 'LOGOUT';
+        authBtn.href = '#';
+        authBtn.onclick = (e) => { e.preventDefault(); this.showLogoutConfirm(); };
+      } else {
+        authBtn.textContent = 'ADMIN';
+        authBtn.href = '/admin/';
+        authBtn.onclick = null;
+      }
     } else {
       authBtn.textContent = 'LOGIN';
       authBtn.href = '#';
@@ -108,6 +116,24 @@ const AUTH = {
     if (!nav.querySelector('.auth-btn')) {
       nav.appendChild(authBtn);
     }
+  },
+
+  showLogoutConfirm() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:350px;text-align:center;">
+        <p style="margin-bottom:24px;">Confirm logout?</p>
+        <div class="modal-buttons">
+          <button class="btn btn-primary" id="logout-yes">CONFIRM</button>
+          <button class="btn btn-secondary" id="logout-no">CANCEL</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#logout-yes').onclick = () => { modal.remove(); this.logout(); };
+    modal.querySelector('#logout-no').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
   }
 };
 

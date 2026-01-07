@@ -566,3 +566,76 @@ footer {
   color: #666;
   margin-bottom: 8px;
 }
+
+/* Admin pack list */
+.admin-pack-item {
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.admin-pack-row1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.admin-pack-icon {
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+  border: 2px solid #ddd;
+  cursor: pointer;
+}
+
+.admin-pack-icon.selected {
+  border-color: #f00;
+}
+
+.admin-pack-name {
+  font-weight: bold;
+  color: #000;
+  text-decoration: none;
+}
+
+.admin-pack-name:hover {
+  text-decoration: underline;
+}
+
+.admin-pack-row2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 52px;
+}
+
+.admin-texture {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.admin-delete-btn {
+  margin-left: auto;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #c00;
+  color: #fff;
+  border: 1px solid #c00;
+}
+
+.admin-delete-btn.disabled {
+  background: #fff;
+  color: #000;
+  border-color: #000;
+  cursor: default;
+}
+
+.btn-danger {
+  background: #c00;
+  color: #fff;
+  border: 2px solid #c00;
+}
