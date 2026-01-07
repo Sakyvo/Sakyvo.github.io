@@ -12,6 +12,9 @@
     "name": "Metar0X",
     "cover": "",
     "description": "",
-    "packs": []
+    "packs": [
+      "Jewdah_Private",
+      "Eum3Blue_Revamp"
+    ]
   }
 ]
