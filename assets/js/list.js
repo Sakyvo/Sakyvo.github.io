@@ -130,6 +130,24 @@ function sanitizeName(name) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const pathParts = window.location.pathname.split('/').filter(Boolean);
+
+  // Handle redirect from 404 for non-existent list pages
+  const redirectPath = sessionStorage.getItem('listPath');
+  if (redirectPath) {
+    sessionStorage.removeItem('listPath');
+    const parts = redirectPath.split('/').filter(Boolean);
+    if (parts[0] === 'l' && parts[1]) {
+      await loadLists();
+      try {
+        const index = await fetch('/data/index.json').then(r => r.json());
+        allPacks = index.items;
+      } catch (e) {}
+      window.history.replaceState({}, '', redirectPath);
+      loadListDetail(parts[1]);
+      return;
+    }
+  }
+
   if (pathParts[0] === 'l' && pathParts[1]) {
     await loadLists();
     try {
@@ -158,13 +176,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.innerHTML = filtered.map(list => {
       const safeName = sanitizeName(list.name);
       return `
-        <a class="pack-card" href="/l/${safeName}/">
-          <div class="cover" style="background:#f0f0f0;aspect-ratio:2;display:flex;align-items:center;justify-content:center;border-bottom:2px solid #000;">
-            ${list.cover ? `<img src="${list.cover}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:24px;font-weight:bold;">${list.name}</span>`}
+        <a class="list-item" href="/l/${safeName}/">
+          <div class="cover">
+            ${list.cover ? `<img src="${list.cover}">` : `<span style="font-size:24px;font-weight:bold;">${list.name}</span>`}
           </div>
           <div class="info">
             <div class="name">${list.name}</div>
-            <div class="meta" style="font-size:12px;color:#666;">${list.packs.length} packs</div>
+            <div class="meta">${list.packs.length} packs</div>
           </div>
         </a>
       `;
@@ -288,7 +306,7 @@ async function loadListDetail(listId) {
           <h1 style="margin:0;">${list.name}</h1>
           ${isAdmin ? `<button class="btn btn-secondary" id="edit-list-btn" style="padding:4px 12px;">EDIT</button>` : ''}
         </div>
-        ${list.description ? `<p style="color:#666;margin-bottom:8px;">${list.description}</p>` : ''}
+        ${list.description ? `<p class="list-description">${list.description}</p>` : ''}
         <p class="meta">${list.packs.length} packs</p>
       </div>
       ${isAdmin ? `
