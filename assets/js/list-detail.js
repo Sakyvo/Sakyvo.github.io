@@ -9,7 +9,7 @@ function saveLists(lists) {
 }
 
 function sanitizeName(name) {
-  return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+  return name.replace(/^#/, '').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

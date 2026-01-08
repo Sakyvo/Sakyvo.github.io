@@ -3,7 +3,17 @@ class PackSearch {
     this.loader = loader;
     this.searchInput = document.querySelector('#search-input');
     this.resultsContainer = document.querySelector('.pack-grid');
+    this.sortBtn = document.getElementById('sort-btn');
+    this.sortByDate = false;
     this.searchInput.addEventListener('input', this.debounce(() => this.search(), 300));
+    this.sortBtn?.addEventListener('click', () => this.toggleSort());
+  }
+
+  toggleSort() {
+    this.sortByDate = !this.sortByDate;
+    this.sortBtn.textContent = this.sortByDate ? 'DATE' : 'A-Z';
+    this.loader.setSortByDate(this.sortByDate);
+    this.search();
   }
 
   search() {
@@ -15,10 +25,14 @@ class PackSearch {
       return;
     }
 
-    const results = this.loader.index.items.filter(pack =>
+    let results = this.loader.index.items.filter(pack =>
       pack.displayName.toLowerCase().includes(query) ||
       pack.name.toLowerCase().includes(query)
     );
+
+    if (this.sortByDate) {
+      results = [...results].reverse();
+    }
 
     this.renderResults(results);
   }

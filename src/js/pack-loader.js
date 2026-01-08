@@ -4,6 +4,7 @@ class PackLoader {
     this.loadedPages = new Set();
     this.pagesData = {};
     this.pageSize = 50;
+    this.sortByDate = false;
     this.observer = new IntersectionObserver(
       entries => this.onIntersect(entries),
       { rootMargin: '200px' }
@@ -16,9 +17,20 @@ class PackLoader {
     this.observeItems();
   }
 
+  setSortByDate(val) {
+    this.sortByDate = val;
+    this.renderPlaceholders();
+    this.observeItems();
+  }
+
+  getItems() {
+    return this.sortByDate ? [...this.index.items].reverse() : this.index.items;
+  }
+
   renderPlaceholders() {
     const grid = document.querySelector('.pack-grid');
-    grid.innerHTML = this.index.items
+    const items = this.getItems();
+    grid.innerHTML = items
       .map((item, i) => `
         <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="p/${item.name}/">
           <div class="placeholder"></div>
@@ -62,8 +74,12 @@ class PackLoader {
   }
 
   getPackByIndex(index) {
-    const page = Math.floor(index / this.pageSize) + 1;
-    const offset = index % this.pageSize;
+    const items = this.getItems();
+    const item = items[index];
+    if (!item) return null;
+    const origIndex = this.index.items.indexOf(item);
+    const page = Math.floor(origIndex / this.pageSize) + 1;
+    const offset = origIndex % this.pageSize;
     return this.pagesData[page]?.[offset];
   }
 

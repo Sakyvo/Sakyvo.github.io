@@ -9,14 +9,22 @@ class Admin {
     this.packs = [];
     this.selected = new Set();
     this.multiSelectMode = false;
+    this.sortByDate = false;
 
     document.getElementById('show-login-btn').onclick = () => AUTH.showLoginModal();
     document.getElementById('upload-btn').onclick = () => this.upload();
     document.getElementById('batch-delete-btn').onclick = () => this.batchDelete();
     document.getElementById('pack-search').oninput = (e) => this.renderPacks(e.target.value);
+    document.getElementById('admin-sort-btn')?.addEventListener('click', () => this.toggleSort());
 
     window.addEventListener('auth-change', () => this.checkAuth());
     this.checkAuth();
+  }
+
+  toggleSort() {
+    this.sortByDate = !this.sortByDate;
+    document.getElementById('admin-sort-btn').textContent = this.sortByDate ? 'DATE' : 'A-Z';
+    this.renderPacks(document.getElementById('pack-search').value);
   }
 
   checkAuth() {
@@ -48,10 +56,16 @@ class Admin {
 
   renderPacks(query = '') {
     const listEl = document.getElementById('pack-list');
-    const filtered = this.packs.filter(p =>
+    let filtered = this.packs.filter(p =>
       p.displayName.toLowerCase().includes(query.toLowerCase()) ||
       p.name.toLowerCase().includes(query.toLowerCase())
     );
+
+    if (this.sortByDate) {
+      filtered = [...filtered].reverse();
+    } else {
+      filtered = [...filtered].sort((a, b) => a.displayName.localeCompare(b.displayName));
+    }
 
     listEl.innerHTML = filtered.map(p => `
       <div class="admin-pack-item" data-name="${p.name}">

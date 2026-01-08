@@ -1,5 +1,6 @@
 let listsData = [];
 let allPacks = [];
+let sortByDate = false;
 
 const LIST_PAGE_HTML = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -125,7 +126,7 @@ async function deleteListPage(listId) {
 }
 
 function sanitizeName(name) {
-  return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+  return name.replace(/^#/, '').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -162,11 +163,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const grid = document.getElementById('list-grid');
   const searchInput = document.getElementById('list-search');
+  const sortBtn = document.getElementById('sort-btn');
 
   window.renderLists = function(query = '') {
-    const filtered = listsData.filter(l =>
+    let filtered = listsData.filter(l =>
       l.name.toLowerCase().includes(query.toLowerCase())
     );
+
+    if (sortByDate) {
+      filtered = [...filtered].reverse();
+    } else {
+      filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    }
 
     if (filtered.length === 0) {
       grid.innerHTML = query ? '<p>No lists found.</p>' : '<p>No lists yet.</p>';
@@ -188,6 +196,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
     }).join('');
   }
+
+  sortBtn?.addEventListener('click', () => {
+    sortByDate = !sortByDate;
+    sortBtn.textContent = sortByDate ? 'DATE' : 'A-Z';
+    window.renderLists(searchInput.value);
+  });
 
   function updateUI() {
     const isAdmin = window.AUTH?.isLoggedIn();
@@ -289,9 +303,25 @@ async function loadListDetail(listId) {
     } catch (e) {}
   }
 
+  let searchQuery = '';
+  let detailSortByDate = false;
+
   function render() {
     const isAdmin = window.AUTH?.isLoggedIn();
-    const packsInList = list.packs.map(name => allPacks.find(p => p.name === name)).filter(Boolean);
+    let packsInList = list.packs.map(name => allPacks.find(p => p.name === name)).filter(Boolean);
+
+    if (searchQuery) {
+      packsInList = packsInList.filter(p =>
+        p.displayName.toLowerCase().includes(searchQuery) ||
+        p.name.toLowerCase().includes(searchQuery)
+      );
+    }
+
+    if (detailSortByDate) {
+      packsInList = [...packsInList].reverse();
+    } else {
+      packsInList = [...packsInList].sort((a, b) => a.displayName.localeCompare(b.displayName));
+    }
 
     document.querySelector('.explore-section').innerHTML = `
       <div class="section-header">
@@ -299,6 +329,7 @@ async function loadListDetail(listId) {
           <a href="/" class="tab-btn">EXPLORE</a>
           <a href="/l/" class="tab-btn active">LISTS</a>
         </div>
+        <button class="sort-btn" id="detail-sort-btn">${detailSortByDate ? 'DATE' : 'A-Z'}</button>
       </div>
       <div style="margin-bottom:24px;">
         <a href="/l/" class="back-link">← Back to Lists</a>
@@ -309,6 +340,10 @@ async function loadListDetail(listId) {
         ${list.description ? `<p class="list-description">${list.description}</p>` : ''}
         <p class="meta">${list.packs.length} packs</p>
       </div>
+      <div class="search-box" style="margin-bottom:24px;">
+        <input type="text" id="list-pack-search" placeholder="Search packs..." value="${searchQuery}">
+        <button class="search-btn">🔍</button>
+      </div>
       ${isAdmin ? `
         <div style="margin-bottom:24px;">
           <button class="btn btn-primary" id="add-packs-btn">ADD PACKS</button>
@@ -316,7 +351,7 @@ async function loadListDetail(listId) {
         </div>
       ` : ''}
       <div class="pack-grid">
-        ${packsInList.length === 0 ? '<p>No packs in this list.</p>' : packsInList.map(pack => `
+        ${packsInList.length === 0 ? '<p>No packs found.</p>' : packsInList.map(pack => `
           <div class="pack-card" style="position:relative;">
             <a href="/p/${pack.name}/" style="display:block;">
               <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
@@ -330,6 +365,16 @@ async function loadListDetail(listId) {
         `).join('')}
       </div>
     `;
+
+    document.getElementById('detail-sort-btn')?.addEventListener('click', () => {
+      detailSortByDate = !detailSortByDate;
+      render();
+    });
+
+    document.getElementById('list-pack-search')?.addEventListener('input', (e) => {
+      searchQuery = e.target.value.toLowerCase();
+      render();
+    });
 
     if (isAdmin) {
       document.getElementById('edit-list-btn')?.addEventListener('click', () => showEditModal(list, render));
@@ -368,6 +413,7 @@ async function loadListDetail(listId) {
 }
 
 function showEditModal(list, onDone) {
+  const listId = sanitizeName(list.name);
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.innerHTML = `
@@ -378,8 +424,9 @@ function showEditModal(list, onDone) {
         <input type="text" id="edit-name" value="${list.name}">
       </div>
       <div class="form-group">
-        <label>COVER URL</label>
-        <input type="text" id="edit-cover" value="${list.cover || ''}" placeholder="https://...">
+        <label>COVER IMAGE</label>
+        <input type="file" id="edit-cover-file" accept="image/*">
+        ${list.cover ? `<p style="margin-top:8px;font-size:12px;color:#666;">Current: ${list.cover}</p>` : ''}
       </div>
       <div class="form-group">
         <label>DESCRIPTION</label>
@@ -396,17 +443,49 @@ function showEditModal(list, onDone) {
   modal.querySelector('#save-edit').onclick = async () => {
     const newName = modal.querySelector('#edit-name').value.trim();
     if (!newName) return;
+    const newListId = sanitizeName(newName);
+    const coverFile = modal.querySelector('#edit-cover-file').files[0];
+
+    if (coverFile) {
+      const token = AUTH.getToken();
+      if (token) {
+        const coverPath = `l/${newListId}/${newListId}_cover.png`;
+        const content = await fileToBase64(coverFile);
+        let sha;
+        try {
+          const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/${coverPath}`, {
+            headers: { Authorization: `token ${token}` }
+          });
+          if (res.ok) sha = (await res.json()).sha;
+        } catch (e) {}
+        await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/${coverPath}`, {
+          method: 'PUT',
+          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Upload cover for ${newListId}`, content, sha })
+        });
+        list.cover = `/${coverPath}`;
+      }
+    }
+
     list.name = newName;
-    list.cover = modal.querySelector('#edit-cover').value.trim();
     list.description = modal.querySelector('#edit-desc').value.trim();
     await saveLists();
     modal.remove();
-    window.history.replaceState({}, '', '/l/' + sanitizeName(newName) + '/');
+    window.history.replaceState({}, '', '/l/' + newListId + '/');
     onDone();
   };
 
   modal.querySelector('#cancel-edit').onclick = () => modal.remove();
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function showAddPackModal(list, onDone) {
