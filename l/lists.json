@@ -4,14 +4,16 @@
     "cover": "",
     "description": "",
     "packs": [
-      "CoolPvp",
-      "Eum3Blue_Revamp"
+      "CoolPvp"
     ]
   },
   {
     "name": "Metar0X",
     "cover": "",
     "description": "",
-    "packs": []
+    "packs": [
+      "Jewdah_Private",
+      "Eum3Blue_Revamp"
+    ]
   }
 ]

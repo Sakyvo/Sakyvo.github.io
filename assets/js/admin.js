@@ -16,9 +16,31 @@ class Admin {
     document.getElementById('batch-delete-btn').onclick = () => this.batchDelete();
     document.getElementById('pack-search').oninput = (e) => this.renderPacks(e.target.value);
     document.getElementById('admin-sort-btn')?.addEventListener('click', () => this.toggleSort());
+    document.getElementById('create-list-btn').onclick = () => this.createList();
 
     window.addEventListener('auth-change', () => this.checkAuth());
     this.checkAuth();
+  }
+
+  loadLists() {
+    const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+    const select = document.getElementById('list-select');
+    select.innerHTML = '<option value="">-- None --</option>' +
+      lists.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+  }
+
+  createList() {
+    const name = prompt('Enter new list name:');
+    if (!name?.trim()) return;
+    const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+    if (lists.find(l => l.name === name.trim())) {
+      alert('List already exists');
+      return;
+    }
+    lists.push({ name: name.trim(), cover: '', description: '', packs: [] });
+    localStorage.setItem('vale_lists', JSON.stringify(lists));
+    this.loadLists();
+    document.getElementById('list-select').value = name.trim();
   }
 
   toggleSort() {
@@ -31,6 +53,7 @@ class Admin {
     if (AUTH.isLoggedIn()) {
       this.loginRequired.style.display = 'none';
       this.adminSection.style.display = 'block';
+      this.loadLists();
       this.loadPacks();
     } else {
       this.loginRequired.style.display = 'block';
@@ -153,6 +176,7 @@ class Admin {
     const token = AUTH.getToken();
     const fileInput = document.getElementById('file-input');
     const files = Array.from(fileInput.files);
+    const selectedList = document.getElementById('list-select').value;
 
     if (files.length === 0) {
       this.showMessage('Please select files', 'error');
@@ -199,6 +223,7 @@ class Admin {
 
     this.showMessage('Uploading...', 'success');
     let success = 0, failed = 0;
+    const uploadedNames = [];
 
     for (const file of valid) {
       try {
@@ -209,12 +234,31 @@ class Admin {
           headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: `Add ${file.name}`, content })
         });
-        if (res.ok) success++; else failed++;
+        if (res.ok) {
+          success++;
+          uploadedNames.push(this.sanitizeName(file.name.replace('.zip', '')));
+        } else failed++;
       } catch (e) { failed++; }
+    }
+
+    // Add to selected list
+    if (selectedList && uploadedNames.length > 0) {
+      const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+      const list = lists.find(l => l.name === selectedList);
+      if (list) {
+        uploadedNames.forEach(name => {
+          if (!list.packs.includes(name)) list.packs.push(name);
+        });
+        localStorage.setItem('vale_lists', JSON.stringify(lists));
+      }
     }
 
     fileInput.value = '';
     this.showMessage(`Uploaded ${success}, failed ${failed}. Run build to update.`, success > 0 ? 'success' : 'error');
+  }
+
+  sanitizeName(name) {
+    return name.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
   }
 
   showInvalidFiles(invalid) {

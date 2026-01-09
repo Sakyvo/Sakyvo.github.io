@@ -23,8 +23,17 @@
 
     <div id="admin-section" class="admin-panel" style="display:none;">
       <div class="form-group">
+        <label>ADD TO LIST (optional)</label>
+        <div style="display:flex;gap:8px;">
+          <select id="list-select" style="flex:1;padding:12px;border:2px solid #000;font-size:14px;">
+            <option value="">-- None --</option>
+          </select>
+          <button class="btn btn-secondary" id="create-list-btn" style="margin:0;">+</button>
+        </div>
+      </div>
+      <div class="form-group">
         <label>UPLOAD PACK (.zip)</label>
-        <input type="file" id="file-input" accept=".zip">
+        <input type="file" id="file-input" accept=".zip" multiple>
       </div>
       <button class="btn btn-primary" id="upload-btn">UPLOAD</button>
 

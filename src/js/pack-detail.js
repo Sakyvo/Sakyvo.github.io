@@ -34,20 +34,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
       <div class="preview-section">
         <h2>Preview</h2>
-        <div class="preview-columns">
-          <div class="preview-col">
-            <div class="preview-card texture-grid">
-              <div class="grid-row">${img('diamond_sword.png')}${img('ender_pearl.png')}${img('potion_bottle_splash.png')}${img('steak.png')}</div>
-              <div class="grid-row">${img('iron_sword.png')}${img('fishing_rod_uncast.png')}${img('apple_golden.png')}${img('golden_carrot.png')}</div>
-              <div class="grid-row">${img('grass_side.png')}${img('stone.png')}${img('cobblestone.png')}${img('wool_colored_white.png')}</div>
-              <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
-            </div>
-            <div class="preview-card icons-card">${img('icons.png')}</div>
+        <div class="preview-grid">
+          <div class="preview-card texture-grid">
+            <div class="grid-row">${img('diamond_sword.png')}${img('ender_pearl.png')}${img('potion_bottle_splash.png')}${img('steak.png')}</div>
+            <div class="grid-row">${img('iron_sword.png')}${img('fishing_rod_uncast.png')}${img('apple_golden.png')}${img('golden_carrot.png')}</div>
+            <div class="grid-row">${img('grass_side.png')}${img('stone.png')}${img('cobblestone.png')}${img('wool_colored_white.png')}</div>
+            <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
           </div>
-          <div class="preview-col">
-            <div class="preview-card armor-card"><div id="armor-viewer"></div></div>
-            <div class="preview-card particles-card">${img('particles.png')}</div>
-          </div>
+          <div class="preview-card armor-card"><div id="armor-viewer"></div></div>
+          <div class="preview-card icons-card">${img('icons.png')}</div>
+          <div class="preview-card particles-card">${img('particles.png')}</div>
         </div>
       </div>
       <div class="admin-actions" id="admin-actions" style="display:none;">
