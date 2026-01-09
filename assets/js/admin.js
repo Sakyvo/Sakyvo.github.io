@@ -222,10 +222,9 @@ class Admin {
     if (!await this.confirm(`Upload ${valid.length} pack(s)?`)) return;
 
     this.showMessage('Uploading...', 'success');
-    let success = 0, failed = 0;
     const uploadedNames = [];
 
-    for (const file of valid) {
+    const results = await Promise.all(valid.map(async file => {
       try {
         const content = await this.fileToBase64(file);
         const path = `resourcepacks/${file.name}`;
@@ -235,11 +234,15 @@ class Admin {
           body: JSON.stringify({ message: `Add ${file.name}`, content })
         });
         if (res.ok) {
-          success++;
           uploadedNames.push(this.sanitizeName(file.name.replace('.zip', '')));
-        } else failed++;
-      } catch (e) { failed++; }
-    }
+          return true;
+        }
+        return false;
+      } catch (e) { return false; }
+    }));
+
+    const success = results.filter(r => r).length;
+    const failed = results.length - success;
 
     // Add to selected list
     if (selectedList && uploadedNames.length > 0) {
