@@ -6,6 +6,10 @@ on:
       - 'resourcepacks/**'
   workflow_dispatch:
 
+concurrency:
+  group: build-site-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
