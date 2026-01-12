@@ -27,14 +27,14 @@
     {
       "id": "#CoolPvp",
       "name": "CoolPvp",
-      "displayName": "#CoolPvp",
+      "displayName": "CoolPvp",
       "cover": "/thumbnails/CoolPvp/cover.png",
       "packPng": "/thumbnails/CoolPvp/pack.png"
     },
     {
       "id": "#eum3edit",
       "name": "eum3edit",
-      "displayName": "#eum3edit",
+      "displayName": "eum3edit",
       "cover": "/thumbnails/eum3edit/cover.png",
       "packPng": "/thumbnails/eum3edit/pack.png"
     }

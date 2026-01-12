@@ -11,7 +11,7 @@
       "icon": null,
       "file": "resourcepacks/!     §1Eum3Blue §9Revamp.zip",
       "fileSize": "20.0MB",
-      "uploadDate": "2025-12-28",
+      "uploadDate": "2026-01-12",
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -27,7 +27,11 @@
           "grass_side.png",
           "stone.png",
           "cobblestone.png",
-          "wool_colored_white.png"
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
         ],
         "armor": [
           "diamond_layer_1.png",
@@ -55,7 +59,7 @@
       "icon": null,
       "file": "resourcepacks/!     §1Jewdah §9Private.zip",
       "fileSize": "19.1MB",
-      "uploadDate": "2025-12-28",
+      "uploadDate": "2026-01-12",
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -71,7 +75,11 @@
           "grass_side.png",
           "stone.png",
           "cobblestone.png",
-          "wool_colored_white.png"
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
         ],
         "armor": [
           "diamond_layer_1.png",
@@ -99,7 +107,7 @@
       "icon": null,
       "file": "resourcepacks/!§bXenon §716x.zip",
       "fileSize": "19.0MB",
-      "uploadDate": "2025-12-28",
+      "uploadDate": "2026-01-12",
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -115,7 +123,11 @@
           "grass_side.png",
           "stone.png",
           "cobblestone.png",
-          "wool_colored_white.png"
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
         ],
         "armor": [
           "diamond_layer_1.png",
@@ -136,14 +148,14 @@
     {
       "id": "#CoolPvp",
       "name": "CoolPvp",
-      "displayName": "#CoolPvp",
+      "displayName": "CoolPvp",
       "description": "1K Special! Sectioned MC",
       "cover": "/thumbnails/CoolPvp/cover.png",
       "packPng": "/thumbnails/CoolPvp/pack.png",
       "icon": null,
       "file": "resourcepacks/#CoolPvp.zip",
       "fileSize": "15.5MB",
-      "uploadDate": "2025-12-28",
+      "uploadDate": "2026-01-12",
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -159,7 +171,11 @@
           "grass_side.png",
           "stone.png",
           "cobblestone.png",
-          "wool_colored_white.png"
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
         ],
         "armor": [
           "diamond_layer_1.png",
@@ -180,14 +196,14 @@
     {
       "id": "#eum3edit",
       "name": "eum3edit",
-      "displayName": "#eum3edit",
+      "displayName": "eum3edit",
       "description": "Eum3's PvP Faithful 32x Edit",
       "cover": "/thumbnails/eum3edit/cover.png",
       "packPng": "/thumbnails/eum3edit/pack.png",
       "icon": null,
       "file": "resourcepacks/#eum3edit.zip",
       "fileSize": "16.7MB",
-      "uploadDate": "2025-12-28",
+      "uploadDate": "2026-01-12",
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -203,7 +219,11 @@
           "grass_side.png",
           "stone.png",
           "cobblestone.png",
-          "wool_colored_white.png"
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
         ],
         "armor": [
           "diamond_layer_1.png",

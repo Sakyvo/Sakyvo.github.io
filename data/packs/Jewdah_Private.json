@@ -8,7 +8,7 @@
   "icon": null,
   "file": "resourcepacks/!     §1Jewdah §9Private.zip",
   "fileSize": "19.1MB",
-  "uploadDate": "2025-12-28",
+  "uploadDate": "2026-01-12",
   "textures": {
     "items": [
       "diamond_sword.png",
@@ -24,7 +24,11 @@
       "grass_side.png",
       "stone.png",
       "cobblestone.png",
-      "wool_colored_white.png"
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
     ],
     "armor": [
       "diamond_layer_1.png",

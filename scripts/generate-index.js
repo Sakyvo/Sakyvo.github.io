@@ -5,7 +5,7 @@ const PAGE_SIZE = 50;
 
 function cleanMinecraftText(text) {
   if (!text) return '';
-  return text.replace(/^!\s*/, '').replace(/§[0-9a-fk-or]/gi, '').trim();
+  return text.replace(/^[!#]\s*/, '').replace(/§[0-9a-fk-or]/gi, '').trim();
 }
 
 function getFileSize(filePath) {
