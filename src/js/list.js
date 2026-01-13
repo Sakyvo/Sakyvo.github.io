@@ -1,6 +1,7 @@
 let listsData = [];
 let allPacks = [];
 let sortByDate = false;
+let saveQueue = Promise.resolve();
 
 const LIST_PAGE_HTML = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -64,27 +65,54 @@ async function loadLists() {
   return listsData;
 }
 
-async function saveLists() {
-  localStorage.setItem('vale_lists', JSON.stringify(listsData));
-  const token = AUTH.getToken();
-  if (!token) return false;
+function getCurrentListId() {
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  if (pathParts[0] === 'l' && pathParts[1]) return pathParts[1];
+  return null;
+}
 
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(listsData, null, 2))));
+async function resyncListsUI() {
+  await loadLists();
+  const currentListId = getCurrentListId();
+  if (currentListId) loadListDetail(currentListId);
+  else window.renderLists?.('');
+}
 
-  let sha;
+async function fetchListsSha(token) {
   try {
     const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/l/lists.json`, {
       headers: { Authorization: `token ${token}` }
     });
-    if (res.ok) sha = (await res.json()).sha;
+    if (res.ok) return (await res.json()).sha;
   } catch (e) {}
+  return undefined;
+}
 
-  const res = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/l/lists.json`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: 'Update lists', content, sha })
-  });
-  return res.ok;
+async function doSaveLists() {
+  const token = AUTH.getToken();
+  if (!token) return false;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(listsData, null, 2))));
+  let lastResponse;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const sha = await fetchListsSha(token);
+    lastResponse = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/contents/l/lists.json`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update lists', content, sha })
+    });
+    if (lastResponse.ok) return true;
+  }
+  alert(`Save failed (${lastResponse?.status || 'network'}). Reloading latest data.`);
+  await resyncListsUI();
+  return false;
+}
+
+async function saveLists() {
+  localStorage.setItem('vale_lists', JSON.stringify(listsData));
+  const token = AUTH.getToken();
+  if (!token) return false;
+  saveQueue = saveQueue.then(() => doSaveLists()).catch(() => doSaveLists());
+  return saveQueue;
 }
 
 async function createListPage(listId) {
@@ -400,7 +428,12 @@ async function loadListDetail(listId) {
           const packName = btn.dataset.pack;
           if (await showConfirm(`Remove "${packName}" from list?`)) {
             list.packs = list.packs.filter(p => p !== packName);
-            await saveLists();
+            const saved = await saveLists();
+            if (!saved) {
+              await loadLists();
+              loadListDetail(listId);
+              return;
+            }
             render();
           }
         };
