@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="detail-header">
         <img class="pack-icon-large" src="${pack.packPng}" alt="Pack">
         <div class="detail-info">
-          <h1>${pack.displayName}</h1>
+          <h1>${pack.coloredName || pack.displayName}</h1>
           <p class="original-name">${pack.id}</p>
           <p class="meta">${pack.fileSize}</p>
           ${inLists.length ? `<p style="color:#888;font-style:italic;margin-top:4px;">${inLists.join(', ')}</p>` : ''}

@@ -44,7 +44,7 @@ class PackSearch {
           <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
           <div class="info">
             <img class="pack-icon" src="${pack.packPng}" alt="">
-            <div class="name">${pack.displayName}</div>
+            <div class="name">${pack.coloredName || pack.displayName}</div>
           </div>
         </a>
       `)

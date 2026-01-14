@@ -2,13 +2,14 @@
   "id": "!§bXenon §716x",
   "name": "Xenon_16x",
   "displayName": "Xenon 16x",
+  "coloredName": "<span style=\"color:#55FFFF\">X</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">n</span><span style=\"color:#55FFFF\">o</span><span style=\"color:#55FFFF\">n</span><span style=\"color:#55FFFF\"> </span><span style=\"color:#AAAAAA\">1</span><span style=\"color:#AAAAAA\">6</span><span style=\"color:#AAAAAA\">x</span>",
   "description": "",
   "cover": "/thumbnails/Xenon_16x/cover.png",
   "packPng": "/thumbnails/Xenon_16x/pack.png",
   "icon": null,
   "file": "resourcepacks/!§bXenon §716x.zip",
   "fileSize": "19.0MB",
-  "uploadDate": "2026-01-12",
+  "uploadDate": "2026-01-14",
   "textures": {
     "items": [
       "diamond_sword.png",

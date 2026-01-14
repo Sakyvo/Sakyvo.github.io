@@ -2,13 +2,14 @@
   "id": "!     §1Jewdah §9Private",
   "name": "Jewdah_Private",
   "displayName": "Jewdah Private",
+  "coloredName": "<span style=\"color:#0000AA\">J</span><span style=\"color:#0000AA\">e</span><span style=\"color:#0000AA\">w</span><span style=\"color:#0000AA\">d</span><span style=\"color:#0000AA\">a</span><span style=\"color:#0000AA\">h</span><span style=\"color:#0000AA\"> </span><span style=\"color:#5555FF\">P</span><span style=\"color:#5555FF\">r</span><span style=\"color:#5555FF\">i</span><span style=\"color:#5555FF\">v</span><span style=\"color:#5555FF\">a</span><span style=\"color:#5555FF\">t</span><span style=\"color:#5555FF\">e</span>",
   "description": "by Metar0X",
   "cover": "/thumbnails/Jewdah_Private/cover.png",
   "packPng": "/thumbnails/Jewdah_Private/pack.png",
   "icon": null,
   "file": "resourcepacks/!     §1Jewdah §9Private.zip",
   "fileSize": "19.1MB",
-  "uploadDate": "2026-01-12",
+  "uploadDate": "2026-01-14",
   "textures": {
     "items": [
       "diamond_sword.png",

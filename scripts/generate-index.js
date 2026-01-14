@@ -3,9 +3,32 @@ const path = require('path');
 
 const PAGE_SIZE = 50;
 
+const MC_COLORS = {
+  '0': '#000000', '1': '#0000AA', '2': '#00AA00', '3': '#00AAAA',
+  '4': '#AA0000', '5': '#AA00AA', '6': '#FFAA00', '7': '#AAAAAA',
+  '8': '#555555', '9': '#5555FF', 'a': '#55FF55', 'b': '#55FFFF',
+  'c': '#FF5555', 'd': '#FF55FF', 'e': '#FFFF55', 'f': '#FFFFFF'
+};
+
 function cleanMinecraftText(text) {
   if (!text) return '';
   return text.replace(/^[!#]\s*/, '').replace(/§[0-9a-fk-or]/gi, '').trim();
+}
+
+function toColoredHtml(text) {
+  if (!text) return '';
+  const cleaned = text.replace(/^[!#]\s*/, '').trim();
+  let result = '', color = null;
+  for (let i = 0; i < cleaned.length; i++) {
+    if (cleaned[i] === '§' && i + 1 < cleaned.length) {
+      const code = cleaned[i + 1].toLowerCase();
+      if (MC_COLORS[code]) color = MC_COLORS[code];
+      i++;
+    } else {
+      result += color ? `<span style="color:${color}">${cleaned[i]}</span>` : cleaned[i];
+    }
+  }
+  return result;
 }
 
 function getFileSize(filePath) {
@@ -34,6 +57,7 @@ function main() {
       id: e.originalName,
       name: e.packId,
       displayName: cleanName || e.packId,
+      coloredName: toColoredHtml(e.originalName),
       description: e.description || '',
       cover: `/thumbnails/${e.packId}/cover.png`,
       packPng: `/thumbnails/${e.packId}/pack.png`,
@@ -49,6 +73,9 @@ function main() {
     };
   });
 
+  // Sort by displayName for A-Z
+  packs.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
   // Write individual pack JSON
   fs.mkdirSync('data/packs', { recursive: true });
   packs.forEach(p => {
@@ -60,6 +87,7 @@ function main() {
     id: p.id,
     name: p.name,
     displayName: p.displayName,
+    coloredName: p.coloredName,
     cover: p.cover,
     packPng: p.packPng
   }));

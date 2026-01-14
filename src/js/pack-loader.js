@@ -35,7 +35,7 @@ class PackLoader {
         <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="p/${item.name}/">
           <div class="placeholder"></div>
           <div class="info">
-            <div class="name">${item.displayName}</div>
+            <div class="name">${item.coloredName || item.displayName}</div>
           </div>
         </a>
       `)
@@ -88,7 +88,7 @@ class PackLoader {
       <img class="cover" src="${pack.cover}" alt="${pack.displayName}" loading="lazy">
       <div class="info">
         <img class="pack-icon" src="${pack.packPng}" alt="">
-        <div class="name">${pack.displayName}</div>
+        <div class="name">${pack.coloredName || pack.displayName}</div>
       </div>
     `;
   }

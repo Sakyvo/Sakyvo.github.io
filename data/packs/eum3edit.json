@@ -2,13 +2,14 @@
   "id": "#eum3edit",
   "name": "eum3edit",
   "displayName": "eum3edit",
+  "coloredName": "eum3edit",
   "description": "Eum3's PvP Faithful 32x Edit",
   "cover": "/thumbnails/eum3edit/cover.png",
   "packPng": "/thumbnails/eum3edit/pack.png",
   "icon": null,
   "file": "resourcepacks/#eum3edit.zip",
   "fileSize": "16.7MB",
-  "uploadDate": "2026-01-12",
+  "uploadDate": "2026-01-14",
   "textures": {
     "items": [
       "diamond_sword.png",
