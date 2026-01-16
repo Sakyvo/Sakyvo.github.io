@@ -28,7 +28,9 @@
         "diamond_layer_2.png"
       ],
       "gui": [
-        "icons.png"
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
       ],
       "particle": [
         "particles.png"
@@ -66,7 +68,9 @@
         "diamond_layer_2.png"
       ],
       "gui": [
-        "icons.png"
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
       ],
       "particle": [
         "particles.png"
@@ -74,6 +78,46 @@
     },
     "outputDir": "thumbnails\\Jewdah_Private",
     "description": "by Metar0X"
+  },
+  {
+    "packId": "Stimpy_Waar_Paack",
+    "originalName": "!    §bStimpy Waar Paack",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "potion_bottle_splash.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails\\Stimpy_Waar_Paack",
+    "description": "Remade by cibay"
   },
   {
     "packId": "Xenon_16x",
@@ -104,7 +148,9 @@
         "diamond_layer_2.png"
       ],
       "gui": [
-        "icons.png"
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
       ],
       "particle": [
         "particles.png"
@@ -142,7 +188,9 @@
         "diamond_layer_2.png"
       ],
       "gui": [
-        "icons.png"
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
       ],
       "particle": [
         "particles.png"
@@ -180,7 +228,9 @@
         "diamond_layer_2.png"
       ],
       "gui": [
-        "icons.png"
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
       ],
       "particle": [
         "particles.png"

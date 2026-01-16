@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
           </div>
           <div class="preview-card armor-card"><div id="armor-viewer"></div></div>
+          <div class="preview-card hud-card"><canvas id="hud-preview"></canvas></div>
+          <div class="preview-card inventory-card"><canvas id="inventory-preview"></canvas></div>
           <div class="preview-card icons-card">${img('icons.png')}</div>
           <div class="preview-card particles-card">${img('particles.png')}</div>
         </div>
@@ -216,6 +218,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         `${base}diamond_layer_1.png`,
         `${base}diamond_layer_2.png`
       );
+    }
+
+    // HUD Preview
+    const hudCanvas = document.getElementById('hud-preview');
+    if (hudCanvas && window.HudPreview) {
+      const hud = new HudPreview(hudCanvas, base);
+      hud.load().then(() => hud.render()).catch(() => {});
+    }
+
+    // Inventory Preview
+    const invCanvas = document.getElementById('inventory-preview');
+    if (invCanvas && window.InventoryPreview) {
+      const inv = new InventoryPreview(invCanvas, base);
+      inv.load().then(() => inv.render()).catch(() => {});
     }
   } catch (e) {
     document.getElementById('pack-content').innerHTML = 'Pack not found';

@@ -28,7 +28,11 @@ const KEY_TEXTURES = {
     ['assets/minecraft/textures/models/armor/diamond_layer_1.png'],
     ['assets/minecraft/textures/models/armor/diamond_layer_2.png'],
   ],
-  gui: [['assets/minecraft/textures/gui/icons.png']],
+  gui: [
+    ['assets/minecraft/textures/gui/icons.png'],
+    ['assets/minecraft/textures/gui/widgets.png'],
+    ['assets/minecraft/textures/gui/container/inventory.png'],
+  ],
   particle: [['assets/minecraft/textures/particle/particles.png']],
 };
 
