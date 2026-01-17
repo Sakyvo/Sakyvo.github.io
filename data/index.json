@@ -1,5 +1,5 @@
 {
-  "total": 5,
+  "total": 6,
   "pageSize": 50,
   "pages": 1,
   "items": [
@@ -34,6 +34,14 @@
       "coloredName": "<span style=\"color:#0000AA\">J</span><span style=\"color:#0000AA\">e</span><span style=\"color:#0000AA\">w</span><span style=\"color:#0000AA\">d</span><span style=\"color:#0000AA\">a</span><span style=\"color:#0000AA\">h</span><span style=\"color:#0000AA\"> </span><span style=\"color:#5555FF\">P</span><span style=\"color:#5555FF\">r</span><span style=\"color:#5555FF\">i</span><span style=\"color:#5555FF\">v</span><span style=\"color:#5555FF\">a</span><span style=\"color:#5555FF\">t</span><span style=\"color:#5555FF\">e</span>",
       "cover": "/thumbnails/Jewdah_Private/cover.png",
       "packPng": "/thumbnails/Jewdah_Private/pack.png"
+    },
+    {
+      "id": "!    §bStimpy Waar Paack",
+      "name": "Stimpy_Waar_Paack",
+      "displayName": "Stimpy Waar Paack",
+      "coloredName": "<span style=\"color:#55FFFF\">S</span><span style=\"color:#55FFFF\">t</span><span style=\"color:#55FFFF\">i</span><span style=\"color:#55FFFF\">m</span><span style=\"color:#55FFFF\">p</span><span style=\"color:#55FFFF\">y</span><span style=\"color:#55FFFF\"> </span><span style=\"color:#55FFFF\">W</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">r</span><span style=\"color:#55FFFF\"> </span><span style=\"color:#55FFFF\">P</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">c</span><span style=\"color:#55FFFF\">k</span>",
+      "cover": "/thumbnails/Stimpy_Waar_Paack/cover.png",
+      "packPng": "/thumbnails/Stimpy_Waar_Paack/pack.png"
     },
     {
       "id": "!§bXenon §716x",

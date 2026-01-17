@@ -9,7 +9,7 @@
   "icon": null,
   "file": "resourcepacks/!     §1Eum3Blue §9Revamp.zip",
   "fileSize": "20.0MB",
-  "uploadDate": "2026-01-14",
+  "uploadDate": "2026-01-17",
   "textures": {
     "items": [
       "diamond_sword.png",
@@ -36,7 +36,9 @@
       "diamond_layer_2.png"
     ],
     "gui": [
-      "icons.png"
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
     ],
     "particle": [
       "particles.png"

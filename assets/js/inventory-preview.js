@@ -28,14 +28,27 @@ class InventoryPreview {
     if (!this.inventory) return;
 
     const s = this.scale;
-    // Original inventory is 176x166 in 256-base
-    const W = 176 * 2, H = 166 * 2;
-    this.canvas.width = W;
-    this.canvas.height = H;
-    this.ctx.imageSmoothingEnabled = false;
+    const imgW = this.inventory.width;
+    const imgH = this.inventory.height;
 
-    // Draw inventory background (0,0,176,166)
-    this.ctx.drawImage(this.inventory, 0, 0, 176 * s, 166 * s, 0, 0, W, H);
+    // Check if this is a full-size inventory texture (width == height)
+    // or if it's larger than standard 256-base (indicating full texture)
+    if (imgW === imgH || imgW > 256) {
+      // Render the full image
+      const aspect = imgW / imgH;
+      const W = 352, H = W / aspect;
+      this.canvas.width = W;
+      this.canvas.height = H;
+      this.ctx.imageSmoothingEnabled = false;
+      this.ctx.drawImage(this.inventory, 0, 0, imgW, imgH, 0, 0, W, H);
+    } else {
+      // Standard 256-base inventory (0,0,176,166)
+      const W = 176 * 2, H = 166 * 2;
+      this.canvas.width = W;
+      this.canvas.height = H;
+      this.ctx.imageSmoothingEnabled = false;
+      this.ctx.drawImage(this.inventory, 0, 0, 176 * s, 166 * s, 0, 0, W, H);
+    }
   }
 }
 
