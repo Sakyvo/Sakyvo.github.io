@@ -57,11 +57,43 @@ class GuiPreview {
     );
   }
 
+  // Draw crosshair with black background removed
+  drawCrosshair(dx, dy, size) {
+    const srcScale = this.iconsScale;
+    const outScale = this.outputScale;
+    const srcSize = 15 * srcScale;
+    const destSize = size * outScale;
+
+    // Create temp canvas to process crosshair
+    const temp = document.createElement('canvas');
+    temp.width = destSize;
+    temp.height = destSize;
+    const tctx = temp.getContext('2d');
+    tctx.imageSmoothingEnabled = false;
+
+    // Draw crosshair to temp canvas
+    tctx.drawImage(this.icons, 0, 0, srcSize, srcSize, 0, 0, destSize, destSize);
+
+    // Remove black background
+    const imageData = tctx.getImageData(0, 0, destSize, destSize);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      // If pixel is black or near-black, make it transparent
+      if (data[i] < 30 && data[i + 1] < 30 && data[i + 2] < 30) {
+        data[i + 3] = 0;
+      }
+    }
+    tctx.putImageData(imageData, 0, 0);
+
+    // Draw processed crosshair to main canvas
+    this.ctx.drawImage(temp, dx * outScale, dy * outScale);
+  }
+
   render() {
     if (!this.widgets || !this.icons) return;
 
     const baseW = 182;
-    const baseH = 100;  // Taller to fit crosshair + HUD
+    const baseH = 100;
     const scale = this.outputScale;
 
     this.canvas.width = baseW * scale;
@@ -72,11 +104,11 @@ class GuiPreview {
     this.ctx.fillStyle = '#87CEEB';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // === Crosshair in center (icons.png 0,0 15x15) ===
+    // === Crosshair in center (with black removed) ===
     const crosshairSize = 15;
     const crosshairX = (baseW - crosshairSize) / 2;
-    const crosshairY = (baseH - 40 - crosshairSize) / 2;  // Center in upper area (above HUD)
-    this.drawIcons(0, 0, crosshairSize, crosshairSize, crosshairX, crosshairY);
+    const crosshairY = (baseH - 40 - crosshairSize) / 2;
+    this.drawCrosshair(crosshairX, crosshairY, crosshairSize);
 
     // === HUD at bottom ===
     const hotbarX = 0;
