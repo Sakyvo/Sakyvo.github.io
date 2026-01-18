@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
           </div>
           <div class="preview-card armor-card"><div id="armor-viewer"></div></div>
-          <div class="preview-card hud-card"><canvas id="hud-preview"></canvas></div>
+          <div class="preview-card gui-card"><canvas id="gui-preview"></canvas></div>
           <div class="preview-card inventory-card"><canvas id="inventory-preview"></canvas></div>
           <div class="preview-card icons-card">${img('icons.png')}</div>
           <div class="preview-card particles-card">${img('particles.png')}</div>
@@ -220,11 +220,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       );
     }
 
-    // HUD Preview
-    const hudCanvas = document.getElementById('hud-preview');
-    if (hudCanvas && window.HudPreview) {
-      const hud = new HudPreview(hudCanvas, base);
-      hud.load().then(() => hud.render()).catch(() => {});
+    // GUI Preview
+    const guiCanvas = document.getElementById('gui-preview');
+    if (guiCanvas && window.GuiPreview) {
+      const gui = new GuiPreview(guiCanvas, base);
+      gui.load().then(() => gui.render()).catch(() => {});
     }
 
     // Inventory Preview

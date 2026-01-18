@@ -247,7 +247,7 @@ footer {
 
 .preview-grid .texture-grid { grid-column: 1; grid-row: 1; }
 .preview-grid .armor-card { grid-column: 2; grid-row: 1; }
-.preview-grid .hud-card { grid-column: 1; grid-row: 2; }
+.preview-grid .gui-card { grid-column: 1; grid-row: 2; }
 .preview-grid .inventory-card { grid-column: 2; grid-row: 2; }
 .preview-grid .icons-card { grid-column: 1; grid-row: 3; }
 .preview-grid .particles-card { grid-column: 2; grid-row: 3; }
@@ -292,7 +292,7 @@ footer {
   image-rendering: pixelated;
 }
 
-.hud-card canvas, .inventory-card canvas {
+.gui-card canvas, .inventory-card canvas {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -310,7 +310,7 @@ footer {
   }
   .preview-grid .texture-grid { grid-column: 1; grid-row: 1; }
   .preview-grid .armor-card { grid-column: 1; grid-row: 2; }
-  .preview-grid .hud-card { grid-column: 1; grid-row: 3; }
+  .preview-grid .gui-card { grid-column: 1; grid-row: 3; }
   .preview-grid .inventory-card { grid-column: 1; grid-row: 4; }
   .preview-grid .icons-card { grid-column: 1; grid-row: 5; }
   .preview-grid .particles-card { grid-column: 1; grid-row: 6; }
