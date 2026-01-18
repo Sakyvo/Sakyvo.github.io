@@ -40,7 +40,10 @@
       "Bash(done)",
       "Bash(git commit -m \"Use skinview3d for armor viewer\")",
       "Bash(git commit:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(powershell -Command \"[System.Drawing.Image]::FromFile\\(''thumbnails/Eum3Blue_Revamp/icons.png''\\) | Select Width,Height\")",
+      "Bash(powershell:*)",
+      "Bash(node:*)"
     ]
   }
 }
