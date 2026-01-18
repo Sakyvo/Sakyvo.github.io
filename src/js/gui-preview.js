@@ -92,32 +92,32 @@ class GuiPreview {
   render() {
     if (!this.widgets || !this.icons) return;
 
-    const baseW = 182;
-    const baseH = 100;
+    // Square canvas to fill the card completely
+    const baseSize = 182;
     const scale = this.outputScale;
 
-    this.canvas.width = baseW * scale;
-    this.canvas.height = baseH * scale;
+    this.canvas.width = baseSize * scale;
+    this.canvas.height = baseSize * scale;
     this.ctx.imageSmoothingEnabled = false;
 
-    // Light blue background
+    // Light blue background - fill entire canvas
     this.ctx.fillStyle = '#87CEEB';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // === Crosshair in center (with black removed) ===
     const crosshairSize = 15;
-    const crosshairX = (baseW - crosshairSize) / 2;
-    const crosshairY = (baseH - 40 - crosshairSize) / 2;
+    const crosshairX = (baseSize - crosshairSize) / 2;
+    const crosshairY = (baseSize - 40 - crosshairSize) / 2;
     this.drawCrosshair(crosshairX, crosshairY, crosshairSize);
 
     // === HUD at bottom ===
     const hotbarX = 0;
-    const hotbarY = baseH - 22;
+    const hotbarY = baseSize - 22;
 
-    // XP bar background
-    this.drawWidgets(0, 64, 182, 5, hotbarX, hotbarY - 7);
-    // XP bar fill (80%)
-    this.drawWidgets(0, 69, 145, 5, hotbarX, hotbarY - 7);
+    // XP bar from icons.png (y=64 background, y=69 fill)
+    this.drawIcons(0, 64, 182, 5, hotbarX, hotbarY - 7);
+    // XP bar fill (80%) from icons.png
+    this.drawIcons(0, 69, 145, 5, hotbarX, hotbarY - 7);
 
     // Hotbar background
     this.drawWidgets(0, 0, 182, 22, hotbarX, hotbarY);
