@@ -172,38 +172,72 @@ footer {
 
 .back-link:hover { text-decoration: underline; }
 
-.detail-header {
-  display: flex;
-  gap: 24px;
+.pack-cards {
   margin-bottom: 32px;
   padding-bottom: 32px;
   border-bottom: 2px solid #000;
-  align-items: flex-start;
 }
 
-.pack-icon-large {
-  width: 96px;
-  height: 96px;
+.main-card {
+  display: flex;
+  gap: 20px;
+  border: 2px solid #000;
+  padding: 16px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+
+.main-card-icon {
+  width: 80px;
+  height: 80px;
   image-rendering: pixelated;
   border: 2px solid #000;
+  flex-shrink: 0;
 }
 
-.detail-info { flex: 1; }
+.main-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-.detail-info h1 {
+.main-card-info h1 {
   font-size: 24px;
-  margin-bottom: 4px;
+  margin: 0;
 }
 
-.detail-info .original-name {
+.main-card-info .description {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.sub-card {
+  border: 2px solid #000;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sub-card .original-name {
   font-size: 12px;
   color: #666;
-  margin-bottom: 8px;
+  margin: 0;
 }
 
-.detail-info .meta {
+.sub-card .file-size {
   font-size: 12px;
   color: #999;
+  margin: 0;
+}
+
+.sub-card .in-lists {
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
+  margin: 0;
 }
 
 .download-section { margin-bottom: 32px; }

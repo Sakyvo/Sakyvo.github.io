@@ -18,13 +18,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const inLists = lists.filter(l => l.packs.includes(packName)).map(l => l.name);
 
     document.getElementById('pack-content').innerHTML = `
-      <div class="detail-header">
-        <img class="pack-icon-large" src="${pack.packPng}" alt="Pack">
-        <div class="detail-info">
-          <h1>${pack.coloredName || pack.displayName}</h1>
-          <p class="original-name">${pack.id}</p>
-          <p class="meta">${pack.fileSize}</p>
-          ${inLists.length ? `<p style="color:#888;font-style:italic;margin-top:4px;">${inLists.join(', ')}</p>` : ''}
+      <div class="pack-cards">
+        <div class="main-card">
+          <img class="main-card-icon" src="${pack.packPng}" alt="Pack">
+          <div class="main-card-info">
+            <h1>${pack.coloredName || pack.displayName}</h1>
+            <p class="description">${pack.description || ''}</p>
+          </div>
+        </div>
+        <div class="sub-card">
+          <p class="original-name">${pack.id.replace('.zip', '')}</p>
+          <p class="file-size">${pack.fileSize}</p>
+          ${inLists.length ? `<p class="in-lists">[${inLists.join('] [')}]</p>` : ''}
         </div>
       </div>
       <div class="download-section">
