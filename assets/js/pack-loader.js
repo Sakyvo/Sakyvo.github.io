@@ -35,12 +35,7 @@ class PackLoader {
         <a class="pack-card" data-index="${i}" data-id="${item.name}" data-loaded="false" href="p/${item.name}/">
           <div class="placeholder"></div>
           <div class="info">
-            <img class="pack-icon" src="${item.packPng}" alt="">
-            <div class="text-content">
-              <div class="name">${item.coloredName || item.displayName}</div>
-              ${item.description ? `<div class="description">${item.description}</div>` : ''}
-              ${item.lists && item.lists.length > 0 ? `<div class="lists">${item.lists.map(l => `<a href="/l/${l}/" class="list-tag" onclick="event.stopPropagation()">${l}</a>`).join('')}</div>` : ''}
-            </div>
+            <div class="name">${item.coloredName || item.displayName}</div>
           </div>
         </a>
       `)
@@ -93,11 +88,7 @@ class PackLoader {
       <img class="cover" src="${pack.cover}" alt="${pack.displayName}" loading="lazy">
       <div class="info">
         <img class="pack-icon" src="${pack.packPng}" alt="">
-        <div class="text-content">
-          <div class="name">${pack.coloredName || pack.displayName}</div>
-          ${pack.description ? `<div class="description">${pack.description}</div>` : ''}
-          ${pack.lists && pack.lists.length > 0 ? `<div class="lists">${pack.lists.map(l => `<a href="/l/${l}/" class="list-tag" onclick="event.stopPropagation()">${l}</a>`).join('')}</div>` : ''}
-        </div>
+        <div class="name">${pack.coloredName || pack.displayName}</div>
       </div>
     `;
   }
