@@ -12,7 +12,10 @@
       "icon": null,
       "file": "resourcepacks/#CoolPvp.zip",
       "fileSize": "15.5MB",
-      "uploadDate": "2026-01-19",
+      "uploadDate": "2026-01-20",
+      "lists": [
+        "test"
+      ],
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -63,7 +66,10 @@
       "icon": null,
       "file": "resourcepacks/!     §1Eum3Blue §9Revamp.zip",
       "fileSize": "20.0MB",
-      "uploadDate": "2026-01-19",
+      "uploadDate": "2026-01-20",
+      "lists": [
+        "Metar0X"
+      ],
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -114,7 +120,8 @@
       "icon": null,
       "file": "resourcepacks/#eum3edit.zip",
       "fileSize": "16.7MB",
-      "uploadDate": "2026-01-19",
+      "uploadDate": "2026-01-20",
+      "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -165,7 +172,10 @@
       "icon": null,
       "file": "resourcepacks/!     §1Jewdah §9Private.zip",
       "fileSize": "19.1MB",
-      "uploadDate": "2026-01-19",
+      "uploadDate": "2026-01-20",
+      "lists": [
+        "Metar0X"
+      ],
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -216,7 +226,8 @@
       "icon": null,
       "file": "resourcepacks/!    §bStimpy Waar Paack.zip",
       "fileSize": "28.6MB",
-      "uploadDate": "2026-01-19",
+      "uploadDate": "2026-01-20",
+      "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -267,7 +278,8 @@
       "icon": null,
       "file": "resourcepacks/!§bXenon §716x.zip",
       "fileSize": "19.0MB",
-      "uploadDate": "2026-01-19",
+      "uploadDate": "2026-01-20",
+      "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",

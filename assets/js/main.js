@@ -44,7 +44,11 @@ class PackSearch {
           <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
           <div class="info">
             <img class="pack-icon" src="${pack.packPng}" alt="">
-            <div class="name">${pack.coloredName || pack.displayName}</div>
+            <div class="text-content">
+              <div class="name">${pack.coloredName || pack.displayName}</div>
+              ${pack.description ? `<div class="description">${pack.description}</div>` : ''}
+              ${pack.lists && pack.lists.length > 0 ? `<div class="lists">${pack.lists.map(l => `<a href="/l/${l}/" class="list-tag" onclick="event.stopPropagation()">${l}</a>`).join('')}</div>` : ''}
+            </div>
           </div>
         </a>
       `)

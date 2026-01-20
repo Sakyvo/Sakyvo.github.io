@@ -49,6 +49,17 @@ function main() {
   const extracted = JSON.parse(fs.readFileSync(extractedPath, 'utf-8'));
   const today = new Date().toISOString().split('T')[0];
 
+  // Load lists
+  const listsPath = 'l/lists.json';
+  const lists = fs.existsSync(listsPath) ? JSON.parse(fs.readFileSync(listsPath, 'utf-8')) : [];
+  const packToLists = {};
+  lists.forEach(list => {
+    list.packs.forEach(packName => {
+      if (!packToLists[packName]) packToLists[packName] = [];
+      packToLists[packName].push(list.name);
+    });
+  });
+
   // Generate pack details
   const packs = extracted.map(e => {
     const zipPath = path.join('resourcepacks', `${e.originalName}.zip`);
@@ -65,6 +76,7 @@ function main() {
       file: `resourcepacks/${e.originalName}.zip`,
       fileSize: getFileSize(zipPath),
       uploadDate: today,
+      lists: packToLists[e.packId] || [],
       textures: e.extracted,
       downloads: {
         github: `https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodeURIComponent(e.originalName)}.zip`,
@@ -88,6 +100,8 @@ function main() {
     name: p.name,
     displayName: p.displayName,
     coloredName: p.coloredName,
+    description: p.description,
+    lists: p.lists,
     cover: p.cover,
     packPng: p.packPng
   }));
