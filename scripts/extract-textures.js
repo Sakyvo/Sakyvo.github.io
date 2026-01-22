@@ -8,6 +8,7 @@ const KEY_TEXTURES = {
     ['assets/minecraft/textures/items/diamond_sword.png'],
     ['assets/minecraft/textures/items/ender_pearl.png'],
     ['assets/minecraft/textures/items/potion_bottle_splash.png'],
+    ['assets/minecraft/textures/items/potion_overlay.png'],
     ['assets/minecraft/textures/items/steak.png', 'assets/minecraft/textures/items/beef_cooked.png'],
     ['assets/minecraft/textures/items/iron_sword.png'],
     ['assets/minecraft/textures/items/fishing_rod_uncast.png'],

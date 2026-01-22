@@ -9,13 +9,14 @@
   "icon": null,
   "file": "resourcepacks/#eum3edit.zip",
   "fileSize": "16.7MB",
-  "uploadDate": "2026-01-20",
+  "uploadDate": "2026-01-22",
   "lists": [],
   "textures": {
     "items": [
       "diamond_sword.png",
       "ender_pearl.png",
       "potion_bottle_splash.png",
+      "potion_overlay.png",
       "steak.png",
       "iron_sword.png",
       "fishing_rod_uncast.png",

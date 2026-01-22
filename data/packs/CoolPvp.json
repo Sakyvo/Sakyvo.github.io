@@ -9,7 +9,7 @@
   "icon": null,
   "file": "resourcepacks/#CoolPvp.zip",
   "fileSize": "15.5MB",
-  "uploadDate": "2026-01-20",
+  "uploadDate": "2026-01-22",
   "lists": [
     "test"
   ],
@@ -18,6 +18,7 @@
       "diamond_sword.png",
       "ender_pearl.png",
       "potion_bottle_splash.png",
+      "potion_overlay.png",
       "steak.png",
       "iron_sword.png",
       "fishing_rod_uncast.png",
