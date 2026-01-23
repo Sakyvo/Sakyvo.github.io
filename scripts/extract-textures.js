@@ -7,7 +7,7 @@ const KEY_TEXTURES = {
   items: [
     ['assets/minecraft/textures/items/diamond_sword.png'],
     ['assets/minecraft/textures/items/ender_pearl.png'],
-    ['assets/minecraft/textures/items/splash_potion_of_healing.png'],
+    { composite: 'potion', bottle: 'assets/minecraft/textures/items/potion_bottle_splash.png', overlay: 'assets/minecraft/textures/items/potion_overlay.png', color: [255, 0, 0] },
     ['assets/minecraft/textures/items/steak.png', 'assets/minecraft/textures/items/beef_cooked.png'],
     ['assets/minecraft/textures/items/iron_sword.png'],
     ['assets/minecraft/textures/items/fishing_rod_uncast.png'],
@@ -90,6 +90,43 @@ async function extractPack(zipPath) {
 
   for (const [category, pathsArray] of Object.entries(KEY_TEXTURES)) {
     for (const alternatives of pathsArray) {
+      // Handle composite textures (like potions)
+      if (alternatives.composite === 'potion') {
+        const filename = 'potion_healing.png';
+        const bottleEntry = zip.getEntry(alternatives.bottle);
+        const overlayEntry = zip.getEntry(alternatives.overlay);
+
+        if (bottleEntry && overlayEntry) {
+          const bottleBuffer = bottleEntry.getData();
+          const overlayBuffer = overlayEntry.getData();
+          const [r, g, b] = alternatives.color;
+
+          // Tint overlay with color and composite onto bottle
+          const tintedOverlay = await sharp(overlayBuffer)
+            .ensureAlpha()
+            .raw()
+            .toBuffer({ resolveWithObject: true });
+
+          const pixels = tintedOverlay.data;
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] > 0) {
+              pixels[i] = Math.round(pixels[i] * r / 255);
+              pixels[i + 1] = Math.round(pixels[i + 1] * g / 255);
+              pixels[i + 2] = Math.round(pixels[i + 2] * b / 255);
+            }
+          }
+
+          const tinted = await sharp(pixels, { raw: { width: tintedOverlay.info.width, height: tintedOverlay.info.height, channels: 4 } }).png().toBuffer();
+
+          await sharp(bottleBuffer)
+            .composite([{ input: tinted, blend: 'over' }])
+            .toFile(path.join(outputDir, filename));
+
+          extracted[category].push(filename);
+        }
+        continue;
+      }
+
       let entry = null;
       const filename = path.basename(alternatives[0]);
       for (const alt of alternatives) {

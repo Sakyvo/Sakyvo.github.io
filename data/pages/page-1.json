@@ -12,7 +12,7 @@
       "icon": null,
       "file": "resourcepacks/#CoolPvp.zip",
       "fileSize": "15.5MB",
-      "uploadDate": "2026-01-22",
+      "uploadDate": "2026-01-23",
       "lists": [
         "test"
       ],
@@ -20,8 +20,7 @@
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "potion_bottle_splash.png",
-          "potion_overlay.png",
+          "potion_healing.png",
           "steak.png",
           "iron_sword.png",
           "fishing_rod_uncast.png",
@@ -67,7 +66,7 @@
       "icon": null,
       "file": "resourcepacks/!     §1Eum3Blue §9Revamp.zip",
       "fileSize": "20.0MB",
-      "uploadDate": "2026-01-22",
+      "uploadDate": "2026-01-23",
       "lists": [
         "Metar0X"
       ],
@@ -75,8 +74,7 @@
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "potion_bottle_splash.png",
-          "potion_overlay.png",
+          "potion_healing.png",
           "steak.png",
           "iron_sword.png",
           "fishing_rod_uncast.png",
@@ -122,14 +120,13 @@
       "icon": null,
       "file": "resourcepacks/#eum3edit.zip",
       "fileSize": "16.7MB",
-      "uploadDate": "2026-01-22",
+      "uploadDate": "2026-01-23",
       "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "potion_bottle_splash.png",
-          "potion_overlay.png",
+          "potion_healing.png",
           "steak.png",
           "iron_sword.png",
           "fishing_rod_uncast.png",
@@ -175,7 +172,7 @@
       "icon": null,
       "file": "resourcepacks/!     §1Jewdah §9Private.zip",
       "fileSize": "19.1MB",
-      "uploadDate": "2026-01-22",
+      "uploadDate": "2026-01-23",
       "lists": [
         "Metar0X"
       ],
@@ -183,8 +180,7 @@
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "potion_bottle_splash.png",
-          "potion_overlay.png",
+          "potion_healing.png",
           "steak.png",
           "iron_sword.png",
           "fishing_rod_uncast.png",
@@ -230,14 +226,13 @@
       "icon": null,
       "file": "resourcepacks/!    §bStimpy Waar Paack.zip",
       "fileSize": "28.6MB",
-      "uploadDate": "2026-01-22",
+      "uploadDate": "2026-01-23",
       "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "potion_bottle_splash.png",
-          "potion_overlay.png",
+          "potion_healing.png",
           "steak.png",
           "iron_sword.png",
           "fishing_rod_uncast.png",
@@ -283,14 +278,13 @@
       "icon": null,
       "file": "resourcepacks/!§bXenon §716x.zip",
       "fileSize": "19.0MB",
-      "uploadDate": "2026-01-22",
+      "uploadDate": "2026-01-23",
       "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",
           "ender_pearl.png",
-          "potion_bottle_splash.png",
-          "potion_overlay.png",
+          "potion_healing.png",
           "steak.png",
           "iron_sword.png",
           "fishing_rod_uncast.png",
