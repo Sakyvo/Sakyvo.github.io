@@ -96,9 +96,21 @@ async function extractPack(zipPath) {
         const bottleEntry = zip.getEntry(alternatives.bottle);
         const overlayEntry = zip.getEntry(alternatives.overlay);
 
+        let bottleBuffer, overlayBuffer;
         if (bottleEntry && overlayEntry) {
-          const bottleBuffer = bottleEntry.getData();
-          const overlayBuffer = overlayEntry.getData();
+          bottleBuffer = bottleEntry.getData();
+          overlayBuffer = overlayEntry.getData();
+        } else {
+          // Fallback to Default_Texture
+          const defaultBottle = path.join('Default_Texture', alternatives.bottle);
+          const defaultOverlay = path.join('Default_Texture', alternatives.overlay);
+          if (fs.existsSync(defaultBottle) && fs.existsSync(defaultOverlay)) {
+            bottleBuffer = fs.readFileSync(defaultBottle);
+            overlayBuffer = fs.readFileSync(defaultOverlay);
+          }
+        }
+
+        if (bottleBuffer && overlayBuffer) {
           const [r, g, b] = alternatives.color;
 
           // Tint overlay with color and composite onto bottle
