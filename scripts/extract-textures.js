@@ -7,7 +7,7 @@ const KEY_TEXTURES = {
   items: [
     ['assets/minecraft/textures/items/diamond_sword.png'],
     ['assets/minecraft/textures/items/ender_pearl.png'],
-    { composite: 'potion', bottle: 'assets/minecraft/textures/items/potion_bottle_splash.png', overlay: 'assets/minecraft/textures/items/potion_overlay.png', color: [255, 0, 0] },
+    { composite: 'potion', bottle: 'assets/minecraft/textures/items/potion_bottle_splash.png', overlay: 'assets/minecraft/textures/items/potion_overlay.png', color: [248, 36, 35] },
     ['assets/minecraft/textures/items/steak.png', 'assets/minecraft/textures/items/beef_cooked.png'],
     ['assets/minecraft/textures/items/iron_sword.png'],
     ['assets/minecraft/textures/items/fishing_rod_uncast.png'],
@@ -92,7 +92,7 @@ async function extractPack(zipPath) {
     for (const alternatives of pathsArray) {
       // Handle composite textures (like potions)
       if (alternatives.composite === 'potion') {
-        const filename = 'potion_healing.png';
+        const filename = 'splash_potion_of_healing.png';
         const bottleEntry = zip.getEntry(alternatives.bottle);
         const overlayEntry = zip.getEntry(alternatives.overlay);
 
@@ -113,26 +113,37 @@ async function extractPack(zipPath) {
         if (bottleBuffer && overlayBuffer) {
           const [r, g, b] = alternatives.color;
 
-          // Tint overlay with color and composite onto bottle
-          const tintedOverlay = await sharp(overlayBuffer)
+          // 获取 overlay 的原始像素数据
+          const overlayRaw = await sharp(overlayBuffer)
             .ensureAlpha()
             .raw()
             .toBuffer({ resolveWithObject: true });
 
-          const pixels = tintedOverlay.data;
-          for (let i = 0; i < pixels.length; i += 4) {
-            if (pixels[i + 3] > 0) {
-              pixels[i] = Math.round(pixels[i] * r / 255);
-              pixels[i + 1] = Math.round(pixels[i + 1] * g / 255);
-              pixels[i + 2] = Math.round(pixels[i + 2] * b / 255);
+          const overlayPixels = overlayRaw.data;
+          const { width, height } = overlayRaw.info;
+
+          // Multiply 染色：颜色与灰度相乘，保留阴影细节
+          for (let i = 0; i < overlayPixels.length; i += 4) {
+            if (overlayPixels[i + 3] > 0) {
+              overlayPixels[i] = Math.round(overlayPixels[i] * r / 255);
+              overlayPixels[i + 1] = Math.round(overlayPixels[i + 1] * g / 255);
+              overlayPixels[i + 2] = Math.round(overlayPixels[i + 2] * b / 255);
             }
           }
 
-          const tinted = await sharp(pixels, { raw: { width: tintedOverlay.info.width, height: tintedOverlay.info.height, channels: 4 } }).png().toBuffer();
+          // 创建染色后的 overlay
+          const tintedOverlay = await sharp(overlayPixels, { raw: { width, height, channels: 4 } })
+            .png()
+            .toBuffer();
 
-          await sharp(bottleBuffer)
-            .composite([{ input: tinted, blend: 'over' }])
+          // 正确的合成顺序：染色液体在底层，瓶子在上层
+          await sharp(tintedOverlay)
+            .composite([{ input: bottleBuffer, blend: 'over' }])
             .toFile(path.join(outputDir, filename));
+
+          // 同时保存原始 overlay 和 bottle 供前端动态渲染使用
+          fs.writeFileSync(path.join(outputDir, 'potion_overlay.png'), overlayBuffer);
+          fs.writeFileSync(path.join(outputDir, 'potion_bottle_splash.png'), bottleBuffer);
 
           extracted[category].push(filename);
         }

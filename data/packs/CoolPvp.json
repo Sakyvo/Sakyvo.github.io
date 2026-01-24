@@ -9,7 +9,7 @@
   "icon": null,
   "file": "resourcepacks/#CoolPvp.zip",
   "fileSize": "15.5MB",
-  "uploadDate": "2026-01-23",
+  "uploadDate": "2026-01-24",
   "lists": [
     "test"
   ],
@@ -17,7 +17,7 @@
     "items": [
       "diamond_sword.png",
       "ender_pearl.png",
-      "potion_healing.png",
+      "splash_potion_of_healing.png",
       "steak.png",
       "iron_sword.png",
       "fishing_rod_uncast.png",

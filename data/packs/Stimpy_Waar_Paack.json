@@ -9,13 +9,13 @@
   "icon": null,
   "file": "resourcepacks/!    §bStimpy Waar Paack.zip",
   "fileSize": "28.6MB",
-  "uploadDate": "2026-01-23",
+  "uploadDate": "2026-01-24",
   "lists": [],
   "textures": {
     "items": [
       "diamond_sword.png",
       "ender_pearl.png",
-      "potion_healing.png",
+      "splash_potion_of_healing.png",
       "steak.png",
       "iron_sword.png",
       "fishing_rod_uncast.png",
