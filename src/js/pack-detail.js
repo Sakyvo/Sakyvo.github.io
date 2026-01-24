@@ -29,7 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="sub-card">
           <p class="original-name">${pack.id.replace('.zip', '')}</p>
           <p class="file-size">${pack.fileSize}</p>
-          ${inLists.length ? `<p class="in-lists">[${inLists.join('] [')}]</p>` : ''}
+          ${inLists.length ? `<p class="in-lists">${inLists.map(name => {
+            const listId = name.replace(/^#/, '').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+            return `<a href="/l/${listId}/">[${name}]</a>`;
+          }).join(' ')}</p>` : ''}
         </div>
       </div>
       <div class="download-section">

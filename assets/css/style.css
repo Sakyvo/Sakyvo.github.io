@@ -98,6 +98,27 @@ nav { display: flex; gap: 12px; }
   gap: 24px;
 }
 
+.pack-card-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.pack-card-wrapper .remove-pack-btn {
+  width: 100%;
+  background: none;
+  border: 2px solid #000;
+  border-top: none;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.pack-card-wrapper .remove-pack-btn:hover {
+  background: #f5f5f5;
+}
+
 .pack-card {
   border: 2px solid #000;
   cursor: pointer;
@@ -235,9 +256,18 @@ footer {
 
 .sub-card .in-lists {
   font-size: 12px;
-  color: #888;
-  font-style: italic;
+  color: #00CED1;
+  font-style: normal;
   margin: 0;
+}
+
+.sub-card .in-lists a {
+  color: #00CED1;
+  text-decoration: none;
+}
+
+.sub-card .in-lists a:hover {
+  text-decoration: underline;
 }
 
 .download-section { margin-bottom: 32px; }

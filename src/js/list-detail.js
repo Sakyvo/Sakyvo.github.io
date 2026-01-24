@@ -56,14 +56,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       ` : ''}
       <div class="pack-grid">
         ${packsInList.length === 0 ? '<p>No packs in this list.</p>' : packsInList.map(pack => `
-          <a class="pack-card" href="/p/${pack.name}/">
-            <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
-            <div class="info">
-              <img class="pack-icon" src="${pack.packPng}" alt="">
-              <div class="name">${pack.displayName}</div>
-              ${isAdmin ? `<button class="remove-pack-btn" data-pack="${pack.name}" style="margin-left:auto;background:none;border:1px solid #000;padding:4px 8px;cursor:pointer;">×</button>` : ''}
-            </div>
-          </a>
+          <div class="pack-card-wrapper">
+            <a class="pack-card" href="/p/${pack.name}/">
+              <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
+              <div class="info">
+                <img class="pack-icon" src="${pack.packPng}" alt="">
+                <div class="name">${pack.coloredName || pack.displayName}</div>
+              </div>
+            </a>
+            ${isAdmin ? `<button class="remove-pack-btn" data-pack="${pack.name}">×</button>` : ''}
+          </div>
         `).join('')}
       </div>
     `;
