@@ -24,6 +24,15 @@
 
     <div id="admin-section" class="admin-panel" style="display:none;">
       <div class="form-group">
+        <label>ADD TO LIST (optional)</label>
+        <div style="display:flex;gap:8px;">
+          <select id="list-select" style="flex:1;padding:12px;border:2px solid #000;font-size:14px;">
+            <option value="">-- None --</option>
+          </select>
+          <button class="btn btn-secondary" id="create-list-btn" style="margin:0;">+</button>
+        </div>
+      </div>
+      <div class="form-group">
         <label>UPLOAD PACK (.zip)</label>
         <input type="file" id="file-input" accept=".zip" multiple>
       </div>
@@ -33,8 +42,11 @@
       </div>
 
       <div class="pack-list">
-        <h2 style="font-size:14px;margin-bottom:16px;">PACKS</h2>
-        <input type="text" id="pack-search" placeholder="Search packs..." style="width:100%;padding:12px;border:2px solid #000;margin-bottom:16px;">
+        <h2 style="font-size:14px;margin-bottom:16px;">EXISTING PACKS</h2>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input type="text" id="pack-search" placeholder="Search packs..." style="flex:1;padding:8px;border:2px solid #000;">
+          <button class="sort-btn" id="admin-sort-btn">A-Z</button>
+        </div>
         <div id="pack-list"></div>
       </div>
     </div>
