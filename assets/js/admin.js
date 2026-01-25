@@ -24,9 +24,17 @@ class Admin {
 
   loadLists() {
     const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
-    const select = document.getElementById('list-select');
-    select.innerHTML = '<option value="">-- None --</option>' +
-      lists.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+    const container = document.getElementById('list-checkboxes');
+    if (lists.length === 0) {
+      container.innerHTML = '<span style="color:#666;font-size:12px;">No lists yet</span>';
+      return;
+    }
+    container.innerHTML = lists.map(l => `
+      <label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;">
+        <input type="checkbox" class="list-checkbox" value="${l.name}">
+        <span>${l.name}</span>
+      </label>
+    `).join('');
   }
 
   createList() {
@@ -40,7 +48,9 @@ class Admin {
     lists.push({ name: name.trim(), cover: '', description: '', packs: [] });
     localStorage.setItem('vale_lists', JSON.stringify(lists));
     this.loadLists();
-    document.getElementById('list-select').value = name.trim();
+    // 自动勾选新创建的列表
+    const checkbox = document.querySelector(`.list-checkbox[value="${name.trim()}"]`);
+    if (checkbox) checkbox.checked = true;
   }
 
   toggleSort() {
@@ -176,7 +186,7 @@ class Admin {
     const token = AUTH.getToken();
     const fileInput = document.getElementById('file-input');
     const files = Array.from(fileInput.files);
-    const selectedList = document.getElementById('list-select').value;
+    const selectedLists = [...document.querySelectorAll('.list-checkbox:checked')].map(cb => cb.value);
 
     if (files.length === 0) {
       this.showMessage('Please select files', 'error');
@@ -244,16 +254,18 @@ class Admin {
     const success = results.filter(r => r).length;
     const failed = results.length - success;
 
-    // Add to selected list
-    if (selectedList && uploadedNames.length > 0) {
+    // Add to selected lists (multiple)
+    if (selectedLists.length > 0 && uploadedNames.length > 0) {
       const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
-      const list = lists.find(l => l.name === selectedList);
-      if (list) {
-        uploadedNames.forEach(name => {
-          if (!list.packs.includes(name)) list.packs.push(name);
-        });
-        localStorage.setItem('vale_lists', JSON.stringify(lists));
-      }
+      selectedLists.forEach(listName => {
+        const list = lists.find(l => l.name === listName);
+        if (list) {
+          uploadedNames.forEach(name => {
+            if (!list.packs.includes(name)) list.packs.push(name);
+          });
+        }
+      });
+      localStorage.setItem('vale_lists', JSON.stringify(lists));
     }
 
     fileInput.value = '';

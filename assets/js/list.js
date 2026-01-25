@@ -88,6 +88,73 @@ async function fetchListsSha(token) {
   return undefined;
 }
 
+// 批量提交多个文件（单次 commit，避免多次 workflow）
+async function batchCommit(files, message) {
+  const token = AUTH.getToken();
+  if (!token) return false;
+
+  try {
+    // 获取最新的 main 分支 ref
+    const refRes = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/git/ref/heads/main`, {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (!refRes.ok) return false;
+    const refData = await refRes.json();
+    const latestCommitSha = refData.object.sha;
+
+    // 获取最新 commit 的 tree
+    const commitRes = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/git/commits/${latestCommitSha}`, {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (!commitRes.ok) return false;
+    const commitData = await commitRes.json();
+    const baseTreeSha = commitData.tree.sha;
+
+    // 创建 blobs 并构建 tree
+    const treeItems = await Promise.all(files.map(async f => {
+      const blobRes = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/git/blobs`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: f.content, encoding: 'utf-8' })
+      });
+      if (!blobRes.ok) return null;
+      const blob = await blobRes.json();
+      return { path: f.path, mode: '100644', type: 'blob', sha: blob.sha };
+    }));
+
+    if (treeItems.some(t => !t)) return false;
+
+    // 创建新 tree
+    const treeRes = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/git/trees`, {
+      method: 'POST',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems })
+    });
+    if (!treeRes.ok) return false;
+    const newTree = await treeRes.json();
+
+    // 创建新 commit
+    const newCommitRes = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/git/commits`, {
+      method: 'POST',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, tree: newTree.sha, parents: [latestCommitSha] })
+    });
+    if (!newCommitRes.ok) return false;
+    const newCommit = await newCommitRes.json();
+
+    // 更新 ref
+    const updateRefRes = await fetch(`https://api.github.com/repos/${AUTH.REPO_OWNER}/${AUTH.REPO_NAME}/git/refs/heads/main`, {
+      method: 'PATCH',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sha: newCommit.sha })
+    });
+    return updateRefRes.ok;
+  } catch (e) {
+    console.error('Batch commit failed:', e);
+    return false;
+  }
+}
+
 async function doSaveLists() {
   const token = AUTH.getToken();
   if (!token) return false;
@@ -113,6 +180,27 @@ async function saveLists() {
   if (!token) return false;
   saveQueue = saveQueue.then(() => doSaveLists()).catch(() => doSaveLists());
   return saveQueue;
+}
+
+// 创建 list 时同时保存 lists.json 和创建页面（单次 commit）
+async function createListWithPage(listId) {
+  const token = AUTH.getToken();
+  if (!token) return false;
+
+  const listsContent = JSON.stringify(listsData, null, 2);
+  const pageContent = LIST_PAGE_HTML;
+
+  const success = await batchCommit([
+    { path: 'l/lists.json', content: listsContent },
+    { path: `l/${listId}/index.html`, content: pageContent }
+  ], `Create list: ${listId}`);
+
+  if (!success) {
+    // 降级为串行操作
+    await saveLists();
+    await createListPage(listId);
+  }
+  return true;
 }
 
 async function createListPage(listId) {
@@ -302,8 +390,8 @@ function showManageModal() {
     }
     const listId = sanitizeName(name);
     listsData.push({ name, cover: '', description: '', packs: [] });
-    await saveLists();
-    await createListPage(listId);
+    localStorage.setItem('vale_lists', JSON.stringify(listsData));
+    await createListWithPage(listId);
     input.value = '';
     renderManageList();
     window.renderLists?.('');
