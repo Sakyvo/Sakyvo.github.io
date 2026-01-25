@@ -380,15 +380,15 @@ async function loadListDetail(listId) {
       ` : ''}
       <div class="pack-grid">
         ${packsInList.length === 0 ? '<p>No packs found.</p>' : packsInList.map(pack => `
-          <div class="pack-card" style="position:relative;">
-            <a href="/p/${pack.name}/" style="display:block;">
+          <div class="pack-card-wrapper">
+            <a class="pack-card" href="/p/${pack.name}/">
               <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
               <div class="info">
                 <img class="pack-icon" src="${pack.packPng}" alt="">
-                <div class="name">${pack.displayName}</div>
+                <div class="name">${pack.coloredName || pack.displayName}</div>
               </div>
             </a>
-            ${isAdmin ? `<button class="remove-pack-btn" data-pack="${pack.name}" style="position:absolute;top:8px;right:8px;background:#fff;border:1px solid #000;padding:4px 8px;cursor:pointer;">×</button>` : ''}
+            ${isAdmin ? `<button class="remove-pack-btn" data-pack="${pack.name}">REMOVE</button>` : ''}
           </div>
         `).join('')}
       </div>
