@@ -3,6 +3,12 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
+// 粒子图集裁剪映射 (16x16 网格, index = x + y * 16)
+const PARTICLE_TILES = {
+  magicCrit: { index: 65, x: 1, y: 4 },  // 锋利/附魔暴击
+  crit: { index: 66, x: 2, y: 4 },       // 普通暴击
+};
+
 const KEY_TEXTURES = {
   items: [
     ['assets/minecraft/textures/items/diamond_sword.png'],
@@ -179,9 +185,39 @@ async function extractPack(zipPath) {
     }
   }
 
+  // 从 particles.png 裁剪出单个粒子贴图
+  const particlesPath = path.join(outputDir, 'particles.png');
+  if (fs.existsSync(particlesPath)) {
+    await extractParticleTiles(particlesPath, outputDir);
+  }
+
   await generateCover(packId, extracted, outputDir);
 
   return { packId, originalName, extracted, outputDir, description };
+}
+
+// 从 particles.png 图集中裁剪指定粒子
+async function extractParticleTiles(imagePath, outputDir) {
+  try {
+    const metadata = await sharp(imagePath).metadata();
+    const { width, height } = metadata;
+
+    // particles.png 是 16x16 网格
+    const tileW = Math.floor(width / 16);
+    const tileH = Math.floor(height / 16);
+
+    for (const [name, tile] of Object.entries(PARTICLE_TILES)) {
+      const sx = tile.x * tileW;
+      const sy = tile.y * tileH;
+
+      await sharp(imagePath)
+        .extract({ left: sx, top: sy, width: tileW, height: tileH })
+        .png()
+        .toFile(path.join(outputDir, `particle_${name}.png`));
+    }
+  } catch (e) {
+    console.error(`  Failed to extract particle tiles: ${e.message}`);
+  }
 }
 
 async function generateCover(packId, textures, outputDir) {

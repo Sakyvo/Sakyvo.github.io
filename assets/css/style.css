@@ -366,6 +366,42 @@ footer {
   image-rendering: pixelated;
 }
 
+/* Armor viewer with particles */
+.armor-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.particle-side {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.particle-left {
+  left: 16px;
+}
+
+.particle-right {
+  right: 16px;
+}
+
+.particle-img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
 #armor-viewer {
   width: 100%;
   height: 100%;
