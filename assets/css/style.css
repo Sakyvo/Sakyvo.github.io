@@ -744,3 +744,29 @@ footer {
   color: #fff;
   border: 2px solid #c00;
 }
+
+/* Admin list selector */
+.admin-list-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.admin-list-item:hover {
+  background: #f5f5f5;
+}
+
+.admin-list-name {
+  flex: 1;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-list-checkbox {
+  margin-left: 12px;
+  flex-shrink: 0;
+}
