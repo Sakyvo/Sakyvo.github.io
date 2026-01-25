@@ -10,6 +10,8 @@ class Admin {
     this.selected = new Set();
     this.multiSelectMode = false;
     this.sortByDate = false;
+    this.listSortByDate = false;
+    this.checkedLists = new Set();
 
     document.getElementById('show-login-btn').onclick = () => AUTH.showLoginModal();
     document.getElementById('upload-btn').onclick = () => this.upload();
@@ -17,24 +19,52 @@ class Admin {
     document.getElementById('pack-search').oninput = (e) => this.renderPacks(e.target.value);
     document.getElementById('admin-sort-btn')?.addEventListener('click', () => this.toggleSort());
     document.getElementById('create-list-btn').onclick = () => this.createList();
+    document.getElementById('list-search').oninput = (e) => this.renderLists(e.target.value);
+    document.getElementById('list-sort-btn')?.addEventListener('click', () => this.toggleListSort());
 
     window.addEventListener('auth-change', () => this.checkAuth());
     this.checkAuth();
   }
 
   loadLists() {
+    this.renderLists('');
+  }
+
+  renderLists(query = '') {
     const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
     const container = document.getElementById('list-checkboxes');
-    if (lists.length === 0) {
-      container.innerHTML = '<span style="color:#666;font-size:12px;">No lists yet</span>';
+
+    let filtered = lists.filter(l => l.name.toLowerCase().includes(query.toLowerCase()));
+
+    if (this.listSortByDate) {
+      filtered = [...filtered].reverse();
+    } else {
+      filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="padding:12px;color:#666;font-size:12px;">No lists found</div>';
       return;
     }
-    container.innerHTML = lists.map(l => `
-      <label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;">
-        <input type="checkbox" class="list-checkbox" value="${l.name}">
-        <span>${l.name}</span>
+    container.innerHTML = filtered.map(l => `
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;">
+        <span style="font-size:14px;">${l.name}</span>
+        <input type="checkbox" class="list-checkbox" value="${l.name}" ${this.checkedLists.has(l.name) ? 'checked' : ''}>
       </label>
     `).join('');
+
+    container.querySelectorAll('.list-checkbox').forEach(cb => {
+      cb.onchange = () => {
+        if (cb.checked) this.checkedLists.add(cb.value);
+        else this.checkedLists.delete(cb.value);
+      };
+    });
+  }
+
+  toggleListSort() {
+    this.listSortByDate = !this.listSortByDate;
+    document.getElementById('list-sort-btn').textContent = this.listSortByDate ? 'DATE' : 'A-Z';
+    this.renderLists(document.getElementById('list-search').value);
   }
 
   createList() {
@@ -47,10 +77,9 @@ class Admin {
     }
     lists.push({ name: name.trim(), cover: '', description: '', packs: [] });
     localStorage.setItem('vale_lists', JSON.stringify(lists));
-    this.loadLists();
     // 自动勾选新创建的列表
-    const checkbox = document.querySelector(`.list-checkbox[value="${name.trim()}"]`);
-    if (checkbox) checkbox.checked = true;
+    this.checkedLists.add(name.trim());
+    this.renderLists(document.getElementById('list-search').value);
   }
 
   toggleSort() {
@@ -186,7 +215,7 @@ class Admin {
     const token = AUTH.getToken();
     const fileInput = document.getElementById('file-input');
     const files = Array.from(fileInput.files);
-    const selectedLists = [...document.querySelectorAll('.list-checkbox:checked')].map(cb => cb.value);
+    const selectedLists = [...this.checkedLists];
 
     if (files.length === 0) {
       this.showMessage('Please select files', 'error');
