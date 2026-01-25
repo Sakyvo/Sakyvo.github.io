@@ -47,9 +47,9 @@ class Admin {
       return;
     }
     container.innerHTML = filtered.map(l => `
-      <label style="display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;gap:12px;">
-        <span style="flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.name}</span>
-        <input type="checkbox" class="list-checkbox" value="${l.name}" ${this.checkedLists.has(l.name) ? 'checked' : ''} style="flex-shrink:0;">
+      <label style="display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;">
+        <span style="flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.name}</span>
+        <input type="checkbox" class="list-checkbox" value="${l.name}" ${this.checkedLists.has(l.name) ? 'checked' : ''} style="margin-left:12px;">
       </label>
     `).join('');
 
