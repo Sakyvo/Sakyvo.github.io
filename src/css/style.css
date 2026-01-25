@@ -101,22 +101,25 @@ nav { display: flex; gap: 12px; }
 .pack-card-wrapper {
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .pack-card-wrapper .remove-pack-btn {
-  width: 100%;
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
   background: none;
-  border: 2px solid #000;
-  border-top: none;
-  padding: 8px;
+  border: none;
+  padding: 4px 8px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
-  transition: background 0.2s;
+  color: #999;
+  transition: color 0.2s;
 }
 
 .pack-card-wrapper .remove-pack-btn:hover {
-  background: #f5f5f5;
+  color: #000;
 }
 
 .pack-card {

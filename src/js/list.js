@@ -388,7 +388,7 @@ async function loadListDetail(listId) {
                 <div class="name">${pack.coloredName || pack.displayName}</div>
               </div>
             </a>
-            ${isAdmin ? `<button class="remove-pack-btn" data-pack="${pack.name}">REMOVE</button>` : ''}
+            ${isAdmin ? `<button class="remove-pack-btn" data-pack="${pack.name}">×</button>` : ''}
           </div>
         `).join('')}
       </div>
