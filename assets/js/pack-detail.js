@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
           <div class="preview-card gui-card"><canvas id="gui-preview"></canvas></div>
-          <div class="preview-card inventory-card"><canvas id="inventory-preview"></canvas></div>
+          <div class="preview-card inventory-card">${img('inv.png')}</div>
           <div class="preview-card icons-card">${img('icons.png')}</div>
           <div class="preview-card particles-card">${img('particles.png')}</div>
         </div>
@@ -243,13 +243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (guiCanvas && window.GuiPreview) {
       const gui = new GuiPreview(guiCanvas, base);
       gui.load().then(() => gui.render()).catch(() => {});
-    }
-
-    // Inventory Preview
-    const invCanvas = document.getElementById('inventory-preview');
-    if (invCanvas && window.InventoryPreview) {
-      const inv = new InventoryPreview(invCanvas, base);
-      inv.load().then(() => inv.render()).catch(() => {});
     }
   } catch (e) {
     document.getElementById('pack-content').innerHTML = 'Pack not found';

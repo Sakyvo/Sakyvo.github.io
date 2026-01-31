@@ -191,9 +191,92 @@ async function extractPack(zipPath) {
     await extractParticleTiles(particlesPath, outputDir);
   }
 
+  // 生成带暗化背景的背包预览图
+  const inventoryPath = path.join(outputDir, 'inventory.png');
+  if (fs.existsSync(inventoryPath)) {
+    await generateInventoryPreview(inventoryPath, outputDir);
+  }
+
   await generateCover(packId, extracted, outputDir);
 
   return { packId, originalName, extracted, outputDir, description };
+}
+
+// 生成带暗化背景的背包预览图 inv.png
+// 参考 inventory-processing.md 文档规则
+async function generateInventoryPreview(inventoryPath, outputDir) {
+  try {
+    const metadata = await sharp(inventoryPath).metadata();
+    const { width, height } = metadata;
+    const scale = width / 256;
+
+    // 裁剪主背包区域 (0,0,176,166) - 256-base 坐标
+    const cropW = Math.round(176 * scale);
+    const cropH = Math.round(166 * scale);
+
+    const inventoryCrop = await sharp(inventoryPath)
+      .extract({ left: 0, top: 0, width: cropW, height: cropH })
+      .toBuffer();
+
+    // 创建方形画布 (512x512)
+    const canvasSize = 512;
+    const padding = 24;
+
+    // 计算缩放后的背包尺寸，保持宽高比，适应方形画布
+    const availableSize = canvasSize - padding * 2;
+    const invAspect = 176 / 166;
+    let destW, destH;
+    if (invAspect > 1) {
+      destW = availableSize;
+      destH = Math.round(availableSize / invAspect);
+    } else {
+      destH = availableSize;
+      destW = Math.round(availableSize * invAspect);
+    }
+
+    // 居中位置
+    const destX = Math.round((canvasSize - destW) / 2);
+    const destY = Math.round((canvasSize - destH) / 2);
+
+    // 缩放背包图像
+    const resizedInventory = await sharp(inventoryCrop)
+      .resize(destW, destH, { kernel: 'nearest' })
+      .toBuffer();
+
+    // 创建暗化背景渐变 (模拟 Minecraft drawDefaultBackground)
+    // 顶部: RGBA(16,16,16,192/255) 底部: RGBA(16,16,16,208/255)
+    // 使用 SVG 创建渐变
+    const gradientSvg = `
+      <svg width="${canvasSize}" height="${canvasSize}">
+        <defs>
+          <linearGradient id="darkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgb(16,16,16);stop-opacity:0.75"/>
+            <stop offset="100%" style="stop-color:rgb(16,16,16);stop-opacity:0.82"/>
+          </linearGradient>
+        </defs>
+        <rect width="${canvasSize}" height="${canvasSize}" fill="url(#darkGrad)"/>
+      </svg>
+    `;
+
+    // 合成最终图像
+    await sharp({
+      create: {
+        width: canvasSize,
+        height: canvasSize,
+        channels: 4,
+        background: { r: 139, g: 139, b: 139, alpha: 255 } // 灰色基底
+      }
+    })
+      .composite([
+        { input: Buffer.from(gradientSvg), blend: 'over' },
+        { input: resizedInventory, left: destX, top: destY, blend: 'over' }
+      ])
+      .png()
+      .toFile(path.join(outputDir, 'inv.png'));
+
+  } catch (e) {
+    console.error(`  Failed to generate inventory preview: ${e.message}`);
+  }
 }
 
 // 从 particles.png 图集中裁剪指定粒子

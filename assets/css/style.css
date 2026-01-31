@@ -352,14 +352,14 @@ footer {
   image-rendering: pixelated;
 }
 
-.icons-card img, .particles-card img {
+.icons-card img, .particles-card img, .inventory-card img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
 }
 
-.gui-card canvas, .inventory-card canvas {
+.gui-card canvas {
   width: 100%;
   height: 100%;
   object-fit: contain;
