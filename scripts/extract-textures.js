@@ -10,11 +10,10 @@ const PARTICLE_TILES = {
 };
 
 // 药水Buff图标映射 (从 inventory.png 的 v=198 开始，横向排列，每个 18x18)
-// 每行最多 14 个图标 (256/18=14)
-// statusIconIndex: 速度=0, 抗火=11
+// 每行 8 个图标
 const BUFF_ICONS = {
-  speed: { row: 0, col: 0 },            // 速度 (蓝色脚印)
-  fire_resistance: { row: 0, col: 11 }, // 抗火 (橙色火焰)
+  speed: { row: 0, col: 0 },           // 速度 (蓝色脚印)
+  fire_resistance: { row: 1, col: 3 }, // 抗火 (橙色火焰)
 };
 
 const KEY_TEXTURES = {
