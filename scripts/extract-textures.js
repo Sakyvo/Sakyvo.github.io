@@ -9,6 +9,13 @@ const PARTICLE_TILES = {
   crit: { index: 66, x: 2, y: 4 },       // 普通暴击
 };
 
+// 药水Buff图标映射 (从 inventory.png 的 v=198 开始，横向排列，每个 18x18)
+// 每行最多 14 个图标 (256/18=14)
+const BUFF_ICONS = {
+  speed: { row: 0, col: 0 },           // 速度 (蓝色脚印)
+  fire_resistance: { row: 1, col: 3 }, // 抗火 (橙色火焰)
+};
+
 const KEY_TEXTURES = {
   items: [
     ['assets/minecraft/textures/items/diamond_sword.png'],
@@ -195,6 +202,8 @@ async function extractPack(zipPath) {
   const inventoryPath = path.join(outputDir, 'inventory.png');
   if (fs.existsSync(inventoryPath)) {
     await generateInventoryPreview(inventoryPath, outputDir);
+    // 提取药水buff图标
+    await extractBuffIcons(inventoryPath, outputDir);
   }
 
   await generateCover(packId, extracted, outputDir);
@@ -300,6 +309,31 @@ async function extractParticleTiles(imagePath, outputDir) {
     }
   } catch (e) {
     console.error(`  Failed to extract particle tiles: ${e.message}`);
+  }
+}
+
+// 从 inventory.png 图集中裁剪药水buff图标
+// 图标位于 v=198 开始，横向排列，每个 18x18
+async function extractBuffIcons(inventoryPath, outputDir) {
+  try {
+    const metadata = await sharp(inventoryPath).metadata();
+    const { width } = metadata;
+    const scale = width / 256;
+
+    const iconSize = Math.round(18 * scale);
+    const baseV = Math.round(198 * scale);
+
+    for (const [name, icon] of Object.entries(BUFF_ICONS)) {
+      const sx = icon.col * iconSize;
+      const sy = baseV + icon.row * iconSize;
+
+      await sharp(inventoryPath)
+        .extract({ left: sx, top: sy, width: iconSize, height: iconSize })
+        .png()
+        .toFile(path.join(outputDir, `buff_${name}.png`));
+    }
+  } catch (e) {
+    console.error(`  Failed to extract buff icons: ${e.message}`);
   }
 }
 

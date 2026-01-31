@@ -44,7 +44,8 @@
       "Bash(powershell -Command \"[System.Drawing.Image]::FromFile\\(''thumbnails/Eum3Blue_Revamp/icons.png''\\) | Select Width,Height\")",
       "Bash(powershell:*)",
       "Bash(node:*)",
-      "Bash(npx serve:*)"
+      "Bash(npx serve:*)",
+      "Skill(tavily-web)"
     ]
   }
 }

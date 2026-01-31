@@ -51,11 +51,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
           <div class="preview-card armor-card">
             <div class="armor-wrapper">
-              <div class="particle-side particle-left">
-                <img src="${base}particle_magicCrit.png" alt="magicCrit" class="particle-img" onerror="this.style.display='none'">
+              <div class="buff-side buff-left">
+                <img src="${base}buff_speed.png" alt="speed" class="buff-img" onerror="this.style.display='none'">
+                <img src="${base}buff_fire_resistance.png" alt="fire_resistance" class="buff-img" onerror="this.style.display='none'">
               </div>
               <div id="armor-viewer"></div>
               <div class="particle-side particle-right">
+                <img src="${base}particle_magicCrit.png" alt="magicCrit" class="particle-img" onerror="this.style.display='none'">
                 <img src="${base}particle_crit.png" alt="crit" class="particle-img" onerror="this.style.display='none'">
               </div>
             </div>
