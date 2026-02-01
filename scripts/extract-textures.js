@@ -13,7 +13,7 @@ const PARTICLE_TILES = {
 // 每行 8 个图标
 const BUFF_ICONS = {
   speed: { row: 0, col: 0 },           // 速度 (蓝色脚印) - index 0
-  fire_resistance: { row: 1, col: 6 }, // 抗火 (橙色火焰) - index 14
+  fire_resistance: { row: 1, col: 7 }, // 抗火 (橙色火焰) - index 15
 };
 
 const KEY_TEXTURES = {
