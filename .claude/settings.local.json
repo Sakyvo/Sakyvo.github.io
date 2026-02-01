@@ -45,7 +45,9 @@
       "Bash(powershell:*)",
       "Bash(node:*)",
       "Bash(npx serve:*)",
-      "Skill(tavily-web)"
+      "Skill(tavily-web)",
+      "Bash(ls -la \"K:\\\\Sakyvo.github.io\\\\thumbnails\\\\Eum3Blue_Revamp\\\\buff_\"*)",
+      "Bash(git add scripts/extract-textures.js src/css/style.css src/js/pack-detail.js assets/css/style.css assets/js/pack-detail.js thumbnails/*/buff_fire_resistance.png)"
     ]
   }
 }
