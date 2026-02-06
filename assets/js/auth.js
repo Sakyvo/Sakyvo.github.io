@@ -82,6 +82,9 @@ const AUTH = {
 
       if (result.ok) {
         modal.remove();
+        if (!window.location.pathname.startsWith('/admin')) {
+          window.location.href = '/admin/';
+        }
       } else {
         errorEl.textContent = result.error;
       }

@@ -13,15 +13,15 @@ class Admin {
     this.listSortByDate = false;
     this.checkedLists = new Set();
 
-    document.getElementById('show-login-btn').onclick = () => AUTH.showLoginModal();
-    document.getElementById('upload-btn').onclick = () => this.upload();
-    document.getElementById('batch-delete-btn').onclick = () => this.batchDelete();
-    document.getElementById('pack-search').oninput = (e) => this.renderPacks(e.target.value);
+    document.getElementById('show-login-btn')?.addEventListener('click', () => AUTH.showLoginModal());
+    document.getElementById('upload-btn')?.addEventListener('click', () => this.upload());
+    document.getElementById('batch-delete-btn')?.addEventListener('click', () => this.batchDelete());
+    document.getElementById('pack-search')?.addEventListener('input', (e) => this.renderPacks(e.target.value));
     document.getElementById('admin-sort-btn')?.addEventListener('click', () => this.toggleSort());
-    document.getElementById('create-list-btn').onclick = () => this.createList();
-    document.getElementById('list-search').oninput = (e) => this.renderLists(e.target.value);
+    document.getElementById('create-list-btn')?.addEventListener('click', () => this.createList());
+    document.getElementById('list-search')?.addEventListener('input', (e) => this.renderLists(e.target.value));
     document.getElementById('list-sort-btn')?.addEventListener('click', () => this.toggleListSort());
-    document.getElementById('manual-build-btn').onclick = () => this.manualBuild();
+    document.getElementById('manual-build-btn')?.addEventListener('click', () => this.manualBuild());
 
     this.setupDragDrop();
 
