@@ -36,10 +36,8 @@
         <label>UPLOAD PACK (.zip)</label>
         <input type="file" id="file-input" accept=".zip" multiple>
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:24px;">
-        <button class="btn btn-primary" id="upload-btn">UPLOAD</button>
-        <button class="btn btn-secondary" id="batch-delete-btn">BATCH DELETE</button>
-      </div>
+      <button class="btn btn-primary" id="upload-btn">UPLOAD</button>
+      <button class="btn btn-secondary" id="batch-delete-btn">BATCH DELETE</button>
 
       <div class="pack-list">
         <h2 style="font-size:14px;margin-bottom:16px;">EXISTING PACKS</h2>
@@ -48,6 +46,10 @@
           <button class="sort-btn" id="admin-sort-btn">A-Z</button>
         </div>
         <div id="pack-list"></div>
+      </div>
+
+      <div style="margin-top:32px;padding-top:24px;border-top:2px solid #000;">
+        <button class="btn btn-secondary" id="manual-build-btn">RUN BUILD</button>
       </div>
     </div>
   </div>
