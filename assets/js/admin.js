@@ -23,41 +23,8 @@ class Admin {
     document.getElementById('list-sort-btn')?.addEventListener('click', () => this.toggleListSort());
     document.getElementById('manual-build-btn')?.addEventListener('click', () => this.manualBuild());
 
-    this.setupDragDrop();
-
     window.addEventListener('auth-change', () => this.checkAuth());
     this.checkAuth();
-  }
-
-  setupDragDrop() {
-    const overlay = document.createElement('div');
-    overlay.id = 'drop-overlay';
-    overlay.innerHTML = '<div class="drop-text">DROP .ZIP FILES HERE</div>';
-    overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;justify-content:center;align-items:center;';
-    overlay.querySelector('.drop-text').style.cssText = 'color:#fff;font-size:32px;font-weight:bold;border:4px dashed #fff;padding:60px 80px;';
-    document.body.appendChild(overlay);
-
-    let dragCounter = 0;
-    document.addEventListener('dragenter', (e) => {
-      e.preventDefault();
-      if (!AUTH.isLoggedIn()) return;
-      dragCounter++;
-      overlay.style.display = 'flex';
-    });
-    document.addEventListener('dragleave', (e) => {
-      e.preventDefault();
-      dragCounter--;
-      if (dragCounter === 0) overlay.style.display = 'none';
-    });
-    document.addEventListener('dragover', (e) => e.preventDefault());
-    document.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dragCounter = 0;
-      overlay.style.display = 'none';
-      if (!AUTH.isLoggedIn()) return;
-      const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.zip'));
-      if (files.length > 0) this.uploadFiles(files);
-    });
   }
 
   loadLists() {
@@ -246,19 +213,15 @@ class Admin {
   }
 
   async upload() {
+    const token = AUTH.getToken();
     const fileInput = document.getElementById('file-input');
     const files = Array.from(fileInput.files);
+    const selectedLists = [...this.checkedLists];
+
     if (files.length === 0) {
       this.showMessage('Please select files', 'error');
       return;
     }
-    await this.uploadFiles(files);
-    fileInput.value = '';
-  }
-
-  async uploadFiles(files) {
-    const token = AUTH.getToken();
-    const selectedLists = [...this.checkedLists];
 
     if (!token) {
       this.showMessage('Please login first', 'error');
@@ -321,6 +284,7 @@ class Admin {
     const success = results.filter(r => r).length;
     const failed = results.length - success;
 
+    // Add to selected lists (multiple)
     if (selectedLists.length > 0 && uploadedNames.length > 0) {
       const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
       selectedLists.forEach(listName => {
@@ -334,47 +298,8 @@ class Admin {
       localStorage.setItem('vale_lists', JSON.stringify(lists));
     }
 
-    if (success > 0) {
-      this.showMessage(`Uploaded ${success}, failed ${failed}. Building...`, 'success');
-      await this.triggerBuild();
-    } else {
-      this.showMessage(`Uploaded ${success}, failed ${failed}.`, 'error');
-    }
-  }
-
-  async triggerBuild() {
-    const token = AUTH.getToken();
-    try {
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
-        method: 'POST',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main' })
-      });
-      if (res.ok || res.status === 204) {
-        this.showMessage('Upload complete! Build started.', 'success');
-      }
-    } catch (e) {}
-  }
-
-  async manualBuild() {
-    const token = AUTH.getToken();
-    if (!token) { this.showMessage('Please login first', 'error'); return; }
-    if (!await this.confirm('Run build to refresh packs?')) return;
-    this.showMessage('Starting build...', 'success');
-    try {
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
-        method: 'POST',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main' })
-      });
-      if (res.ok || res.status === 204) {
-        this.showMessage('Build started!', 'success');
-      } else {
-        this.showMessage('Failed to start build', 'error');
-      }
-    } catch (e) {
-      this.showMessage(`Error: ${e.message}`, 'error');
-    }
+    fileInput.value = '';
+    this.showMessage(`Uploaded ${success}, failed ${failed}. Run build to update.`, success > 0 ? 'success' : 'error');
   }
 
   sanitizeName(name) {
@@ -428,6 +353,41 @@ class Admin {
       } else {
         const err = await res.json();
         this.showMessage(`Delete failed: ${err.message}`, 'error');
+      }
+    } catch (e) {
+      this.showMessage(`Error: ${e.message}`, 'error');
+    }
+  }
+
+  async triggerBuild() {
+    const token = AUTH.getToken();
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main' })
+      });
+      if (res.ok || res.status === 204) {
+        this.showMessage('Upload complete! Build started.', 'success');
+      }
+    } catch (e) {}
+  }
+
+  async manualBuild() {
+    const token = AUTH.getToken();
+    if (!token) { this.showMessage('Please login first', 'error'); return; }
+    if (!await this.confirm('Run build to refresh packs?')) return;
+    this.showMessage('Starting build...', 'success');
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main' })
+      });
+      if (res.ok || res.status === 204) {
+        this.showMessage('Build started!', 'success');
+      } else {
+        this.showMessage('Failed to start build', 'error');
       }
     } catch (e) {
       this.showMessage(`Error: ${e.message}`, 'error');
