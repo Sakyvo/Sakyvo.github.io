@@ -359,6 +359,7 @@ class Admin {
   async manualBuild() {
     const token = AUTH.getToken();
     if (!token) { this.showMessage('Please login first', 'error'); return; }
+    if (!await this.confirm('Run build to refresh packs?')) return;
     this.showMessage('Starting build...', 'success');
     try {
       const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {

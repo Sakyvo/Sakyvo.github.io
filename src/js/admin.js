@@ -21,6 +21,7 @@ class Admin {
     document.getElementById('create-list-btn')?.addEventListener('click', () => this.createList());
     document.getElementById('list-search')?.addEventListener('input', (e) => this.renderLists(e.target.value));
     document.getElementById('list-sort-btn')?.addEventListener('click', () => this.toggleListSort());
+    document.getElementById('manual-build-btn')?.addEventListener('click', () => this.manualBuild());
 
     window.addEventListener('auth-change', () => this.checkAuth());
     this.checkAuth();
@@ -352,6 +353,41 @@ class Admin {
       } else {
         const err = await res.json();
         this.showMessage(`Delete failed: ${err.message}`, 'error');
+      }
+    } catch (e) {
+      this.showMessage(`Error: ${e.message}`, 'error');
+    }
+  }
+
+  async triggerBuild() {
+    const token = AUTH.getToken();
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main' })
+      });
+      if (res.ok || res.status === 204) {
+        this.showMessage('Upload complete! Build started.', 'success');
+      }
+    } catch (e) {}
+  }
+
+  async manualBuild() {
+    const token = AUTH.getToken();
+    if (!token) { this.showMessage('Please login first', 'error'); return; }
+    if (!await this.confirm('Run build to refresh packs?')) return;
+    this.showMessage('Starting build...', 'success');
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main' })
+      });
+      if (res.ok || res.status === 204) {
+        this.showMessage('Build started!', 'success');
+      } else {
+        this.showMessage('Failed to start build', 'error');
       }
     } catch (e) {
       this.showMessage(`Error: ${e.message}`, 'error');
