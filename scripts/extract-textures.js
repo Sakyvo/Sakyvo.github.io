@@ -65,7 +65,7 @@ function parseDescription(desc) {
 }
 
 function sanitizeName(name) {
-  return name.replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
+  return name.replace(/^[!#]\s*/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
 }
 
 async function extractPack(zipPath) {
@@ -149,10 +149,20 @@ async function extractPack(zipPath) {
             .png()
             .toBuffer();
 
-          // 正确的合成顺序：染色液体在底层，瓶子在上层
-          await sharp(tintedOverlay)
-            .ensureAlpha()
-            .composite([{ input: bottleBuffer, blend: 'over' }])
+          // 正确的合成顺序：透明画布 + 染色液体 + 瓶子
+          const overlayMeta = await sharp(tintedOverlay).metadata();
+          await sharp({
+            create: {
+              width: overlayMeta.width,
+              height: overlayMeta.height,
+              channels: 4,
+              background: { r: 0, g: 0, b: 0, alpha: 0 }
+            }
+          })
+            .composite([
+              { input: tintedOverlay, blend: 'over' },
+              { input: bottleBuffer, blend: 'over' }
+            ])
             .png()
             .toFile(path.join(outputDir, filename));
 
