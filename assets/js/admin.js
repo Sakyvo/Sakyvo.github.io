@@ -377,20 +377,101 @@ class Admin {
     const token = AUTH.getToken();
     if (!token) { this.showMessage('Please login first', 'error'); return; }
     if (!await this.confirm('Run build to refresh packs?')) return;
-    this.showMessage('Starting build...', 'success');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:400px;text-align:center;">
+        <h2 style="margin-bottom:16px;">BUILD</h2>
+        <p id="build-status" style="margin-bottom:8px;">Starting build...</p>
+        <div style="background:#eee;height:8px;margin-bottom:16px;"><div id="build-bar" style="background:#000;height:100%;width:10%;transition:width 0.3s;"></div></div>
+        <p id="build-time" style="font-size:12px;color:#666;"></p>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const statusEl = modal.querySelector('#build-status');
+    const barEl = modal.querySelector('#build-bar');
+    const timeEl = modal.querySelector('#build-time');
+    const startTime = Date.now();
+    const updateTime = () => { timeEl.textContent = `${Math.floor((Date.now() - startTime) / 1000)}s`; };
+    const timer = setInterval(updateTime, 1000);
+
     try {
       const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
         method: 'POST',
         headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ref: 'main' })
       });
-      if (res.ok || res.status === 204) {
-        this.showMessage('Build started!', 'success');
-      } else {
-        this.showMessage('Failed to start build', 'error');
+      if (!res.ok && res.status !== 204) {
+        clearInterval(timer);
+        statusEl.textContent = 'Failed to start build';
+        barEl.style.background = '#c00';
+        setTimeout(() => modal.remove(), 2000);
+        return;
       }
+
+      statusEl.textContent = 'Waiting for workflow...';
+      barEl.style.width = '20%';
+
+      await new Promise(r => setTimeout(r, 3000));
+
+      let runId = null;
+      for (let i = 0; i < 10; i++) {
+        const runsRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/runs?per_page=1`, {
+          headers: { Authorization: `token ${token}` }
+        });
+        const runs = await runsRes.json();
+        if (runs.workflow_runs?.[0]?.status !== 'completed') {
+          runId = runs.workflow_runs?.[0]?.id;
+          break;
+        }
+        await new Promise(r => setTimeout(r, 2000));
+      }
+
+      if (!runId) {
+        clearInterval(timer);
+        statusEl.textContent = 'Build may have completed quickly';
+        barEl.style.width = '100%';
+        setTimeout(() => { modal.remove(); location.reload(); }, 1500);
+        return;
+      }
+
+      statusEl.textContent = 'Building...';
+      barEl.style.width = '40%';
+
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 5000));
+        const runRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/runs/${runId}`, {
+          headers: { Authorization: `token ${token}` }
+        });
+        const run = await runRes.json();
+        const progress = Math.min(40 + i * 2, 90);
+        barEl.style.width = `${progress}%`;
+
+        if (run.status === 'completed') {
+          clearInterval(timer);
+          if (run.conclusion === 'success') {
+            statusEl.textContent = 'Build complete!';
+            barEl.style.width = '100%';
+            setTimeout(() => { modal.remove(); location.reload(); }, 1500);
+          } else {
+            statusEl.textContent = `Build failed: ${run.conclusion}`;
+            barEl.style.background = '#c00';
+            barEl.style.width = '100%';
+            setTimeout(() => modal.remove(), 3000);
+          }
+          return;
+        }
+      }
+
+      clearInterval(timer);
+      statusEl.textContent = 'Build timed out. Check GitHub Actions.';
+      setTimeout(() => modal.remove(), 3000);
     } catch (e) {
-      this.showMessage(`Error: ${e.message}`, 'error');
+      clearInterval(timer);
+      statusEl.textContent = `Error: ${e.message}`;
+      setTimeout(() => modal.remove(), 3000);
     }
   }
 

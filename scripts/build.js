@@ -1,30 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-function copyDir(src, dest) {
-  fs.mkdirSync(dest, { recursive: true });
-  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-    if (entry.isDirectory()) {
-      copyDir(srcPath, destPath);
-    } else {
-      fs.copyFileSync(srcPath, destPath);
-    }
-  }
-}
-
-// Copy src files to root
-copyDir('src/css', 'assets/css');
-copyDir('src/js', 'assets/js');
-fs.copyFileSync('src/index.html', 'index.html');
-fs.copyFileSync('src/admin.html', 'admin.html');
-
-// Generate pack subdirectories
+// Generate pack subdirectories from pack.html template
 const indexPath = 'data/index.json';
 if (fs.existsSync(indexPath)) {
   const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
-  const packHtml = fs.readFileSync('src/pack.html', 'utf-8');
+  const packHtml = fs.readFileSync('pack.html', 'utf-8');
 
   fs.mkdirSync('p', { recursive: true });
   for (const pack of index.items) {
@@ -34,14 +15,5 @@ if (fs.existsSync(indexPath)) {
   }
   console.log(`Generated ${index.items.length} pack pages.`);
 }
-
-// Generate list pages
-fs.mkdirSync('l', { recursive: true });
-fs.copyFileSync('src/list.html', 'l/index.html');
-
-// Copy 404 for GitHub Pages routing
-fs.copyFileSync('src/404.html', '404.html');
-
-console.log('Generated list pages.');
 
 console.log('Build complete.');
