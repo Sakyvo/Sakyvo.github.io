@@ -151,7 +151,9 @@ async function extractPack(zipPath) {
 
           // 正确的合成顺序：染色液体在底层，瓶子在上层
           await sharp(tintedOverlay)
+            .ensureAlpha()
             .composite([{ input: bottleBuffer, blend: 'over' }])
+            .png()
             .toFile(path.join(outputDir, filename));
 
           // 同时保存原始 overlay 和 bottle 供前端动态渲染使用
