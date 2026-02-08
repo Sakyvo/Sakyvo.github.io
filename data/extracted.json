@@ -240,7 +240,7 @@
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
-    "packId": "Chromatic__8_764x_8",
+    "packId": "Chromatic_64x",
     "originalName": "§8! Chromatic _8[_764x_8]",
     "extracted": {
       "items": [
@@ -276,7 +276,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Chromatic__8_764x_8",
+    "outputDir": "thumbnails/Chromatic_64x",
     "description": "Made by Airbus"
   }
 ]

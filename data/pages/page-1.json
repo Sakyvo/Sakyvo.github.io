@@ -3,12 +3,12 @@
   "items": [
     {
       "id": "§8! Chromatic _8[_764x_8]",
-      "name": "Chromatic__8_764x_8",
-      "displayName": "! Chromatic _8[_764x_8]",
-      "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#555555\">C</span><span style=\"color:#555555\">h</span><span style=\"color:#555555\">r</span><span style=\"color:#555555\">o</span><span style=\"color:#555555\">m</span><span style=\"color:#555555\">a</span><span style=\"color:#555555\">t</span><span style=\"color:#555555\">i</span><span style=\"color:#555555\">c</span><span style=\"color:#555555\"> </span><span style=\"color:#555555\">_</span><span style=\"color:#555555\">8</span><span style=\"color:#555555\">[</span><span style=\"color:#555555\">_</span><span style=\"color:#555555\">7</span><span style=\"color:#555555\">6</span><span style=\"color:#555555\">4</span><span style=\"color:#555555\">x</span><span style=\"color:#555555\">_</span><span style=\"color:#555555\">8</span><span style=\"color:#555555\">]</span>",
+      "name": "Chromatic_64x",
+      "displayName": "! Chromatic [64x]",
+      "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#555555\">C</span><span style=\"color:#555555\">h</span><span style=\"color:#555555\">r</span><span style=\"color:#555555\">o</span><span style=\"color:#555555\">m</span><span style=\"color:#555555\">a</span><span style=\"color:#555555\">t</span><span style=\"color:#555555\">i</span><span style=\"color:#555555\">c</span><span style=\"color:#555555\"> </span><span style=\"color:#555555\">[</span><span style=\"color:#AAAAAA\">6</span><span style=\"color:#AAAAAA\">4</span><span style=\"color:#AAAAAA\">x</span><span style=\"color:#555555\">]</span>",
       "description": "Made by Airbus",
-      "cover": "/thumbnails/Chromatic__8_764x_8/cover.png",
-      "packPng": "/thumbnails/Chromatic__8_764x_8/pack.png",
+      "cover": "/thumbnails/Chromatic_64x/cover.png",
+      "packPng": "/thumbnails/Chromatic_64x/pack.png",
       "icon": null,
       "file": "resourcepacks/§8! Chromatic _8[_764x_8].zip",
       "fileSize": "13.7MB",
