@@ -51,7 +51,7 @@ const KEY_TEXTURES = {
 
 function cleanMinecraftText(text) {
   if (!text) return '';
-  return text.replace(/^!\s*/, '').replace(/§[0-9a-fk-or]/gi, '').trim();
+  return text.replace(/^!\s*/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').trim();
 }
 
 function parseDescription(desc) {
@@ -65,7 +65,7 @@ function parseDescription(desc) {
 }
 
 function sanitizeName(name) {
-  return name.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
+  return name.replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
 }
 
 async function extractPack(zipPath) {
