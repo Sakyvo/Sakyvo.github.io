@@ -1,8 +1,18 @@
 {
-  "total": 6,
+  "total": 7,
   "pageSize": 50,
   "pages": 1,
   "items": [
+    {
+      "id": "§8! Chromatic _8[_764x_8]",
+      "name": "Chromatic__8_764x_8",
+      "displayName": "! Chromatic _8[_764x_8]",
+      "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#555555\">C</span><span style=\"color:#555555\">h</span><span style=\"color:#555555\">r</span><span style=\"color:#555555\">o</span><span style=\"color:#555555\">m</span><span style=\"color:#555555\">a</span><span style=\"color:#555555\">t</span><span style=\"color:#555555\">i</span><span style=\"color:#555555\">c</span><span style=\"color:#555555\"> </span><span style=\"color:#555555\">_</span><span style=\"color:#555555\">8</span><span style=\"color:#555555\">[</span><span style=\"color:#555555\">_</span><span style=\"color:#555555\">7</span><span style=\"color:#555555\">6</span><span style=\"color:#555555\">4</span><span style=\"color:#555555\">x</span><span style=\"color:#555555\">_</span><span style=\"color:#555555\">8</span><span style=\"color:#555555\">]</span>",
+      "description": "Made by Airbus",
+      "lists": [],
+      "cover": "/thumbnails/Chromatic__8_764x_8/cover.png",
+      "packPng": "/thumbnails/Chromatic__8_764x_8/pack.png"
+    },
     {
       "id": "#CoolPvp",
       "name": "CoolPvp",
