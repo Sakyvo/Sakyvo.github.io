@@ -227,25 +227,56 @@ async function extractPack(zipPath) {
 
 async function renderMcText(asciiPath, text, targetCellH) {
   const meta = await sharp(asciiPath).metadata();
-  // ascii.png 是 16x16 网格，基准 cell = 8x8 (128x128 图集)
   const srcCellW = Math.round(meta.width / 16);
   const srcCellH = Math.round(meta.height / 16);
 
-  const charBuffers = [];
+  // 读取整个 ascii.png 的 raw 像素用于测量字符宽度
+  const asciiRaw = await sharp(asciiPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const asciiPixels = asciiRaw.data;
+  const imgW = asciiRaw.info.width;
+
+  // 测量字符实际宽度：找最右非透明像素列
+  function getCharWidth(charCode) {
+    const col = charCode % 16;
+    const row = Math.floor(charCode / 16);
+    const ox = col * srcCellW;
+    const oy = row * srcCellH;
+    let maxCol = 0;
+    for (let cy = 0; cy < srcCellH; cy++) {
+      for (let cx = srcCellW - 1; cx >= 0; cx--) {
+        const idx = ((oy + cy) * imgW + (ox + cx)) * 4;
+        if (asciiPixels[idx + 3] > 0) {
+          if (cx + 1 > maxCol) maxCol = cx + 1;
+          break;
+        }
+      }
+    }
+    // 空格特殊处理：宽度 = cellW 的一半
+    if (maxCol === 0) return Math.round(srcCellW / 2);
+    return maxCol + 1; // +1 for spacing
+  }
+
+  const charInfos = [];
+  let totalW = 0;
   for (const c of text) {
     const code = c.charCodeAt(0);
     const col = code % 16;
     const row = Math.floor(code / 16);
-    const buf = await sharp(asciiPath)
-      .extract({ left: col * srcCellW, top: row * srcCellH, width: srcCellW, height: srcCellH })
-      .toBuffer();
-    charBuffers.push(buf);
+    const w = getCharWidth(code);
+    charInfos.push({ code, col, row, w });
+    totalW += w;
   }
 
-  const totalW = srcCellW * text.length;
-  const composites = charBuffers.map((buf, i) => ({
-    input: buf, left: i * srcCellW, top: 0,
-  }));
+  // 逐字符裁剪并紧凑拼接
+  const composites = [];
+  let curX = 0;
+  for (const info of charInfos) {
+    const buf = await sharp(asciiPath)
+      .extract({ left: info.col * srcCellW, top: info.row * srcCellH, width: info.w, height: srcCellH })
+      .toBuffer();
+    composites.push({ input: buf, left: curX, top: 0 });
+    curX += info.w;
+  }
 
   let textBuf = await sharp({
     create: { width: totalW, height: srcCellH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
@@ -258,7 +289,6 @@ async function renderMcText(asciiPath, text, targetCellH) {
     }
   }
 
-  // 缩放到目标 cell 高度
   const ratio = targetCellH / srcCellH;
   const finalW = Math.round(totalW * ratio);
   const finalH = targetCellH;
@@ -330,11 +360,11 @@ async function generateInventoryPreview(inventoryPath, outputDir) {
     // 在 inventory 裁剪图上合成 Steve 和 Crafting 文字（在缩放之前）
     const invCropComposites = [];
 
-    // Steve 皮肤 - 预览框内部区域 (256-base): 约 (25,7) 起，宽51×高72
+    // Steve 皮肤 - 预览框内部区域 (256-base): 约 (27,8) 起，宽49×高70
     const skinPath = path.join(outputDir, 'steve.png');
     if (fs.existsSync(skinPath)) {
-      const boxX = 25, boxY = 7, boxW = 51, boxH = 72;
-      const skinTargetH = Math.round(boxH * scale * 0.85);
+      const boxX = 27, boxY = 8, boxW = 49, boxH = 70;
+      const skinTargetH = Math.round(boxH * scale * 0.95);
       const skinBuf = await renderSkinFront(skinPath, skinTargetH);
       const skinMeta = await sharp(skinBuf).metadata();
       const skinX = Math.round(boxX * scale + (boxW * scale - skinMeta.width) / 2);
