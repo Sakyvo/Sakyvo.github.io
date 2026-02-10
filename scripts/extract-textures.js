@@ -357,20 +357,8 @@ async function generateInventoryPreview(inventoryPath, outputDir) {
     const cropW = Math.round(176 * scale);
     const cropH = Math.round(166 * scale);
 
-    // 在 inventory 裁剪图上合成 Steve 和 Crafting 文字（在缩放之前）
+    // 在 inventory 裁剪图上合成 Crafting 文字（在缩放之前）
     const invCropComposites = [];
-
-    // Steve 皮肤 - 预览框内部区域 (256-base): 约 (27,8) 起，宽49×高70
-    const skinPath = path.join(outputDir, 'steve.png');
-    if (fs.existsSync(skinPath)) {
-      const boxX = 27, boxY = 8, boxW = 49, boxH = 70;
-      const skinTargetH = Math.round(boxH * scale * 0.95);
-      const skinBuf = await renderSkinFront(skinPath, skinTargetH);
-      const skinMeta = await sharp(skinBuf).metadata();
-      const skinX = Math.round(boxX * scale + (boxW * scale - skinMeta.width) / 2);
-      const skinY = Math.round(boxY * scale + (boxH * scale - skinMeta.height) / 2);
-      invCropComposites.push({ input: skinBuf, left: skinX, top: skinY, blend: 'over' });
-    }
 
     // "Crafting" 文字 - 位置 (256-base): 约 (86,16)
     const asciiPath = path.join(outputDir, 'ascii.png');
