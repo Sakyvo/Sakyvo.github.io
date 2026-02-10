@@ -46,6 +46,8 @@ const KEY_TEXTURES = {
     ['assets/minecraft/textures/gui/widgets.png'],
     ['assets/minecraft/textures/gui/container/inventory.png'],
   ],
+  font: [['assets/minecraft/textures/font/ascii.png']],
+  skin: [['assets/minecraft/textures/entity/steve.png']],
   particle: [['assets/minecraft/textures/particle/particles.png']],
 };
 
@@ -75,7 +77,7 @@ async function extractPack(zipPath) {
   const outputDir = path.join('thumbnails', packId);
   fs.mkdirSync(outputDir, { recursive: true });
 
-  const extracted = { items: [], blocks: [], armor: [], gui: [], particle: [] };
+  const extracted = { items: [], blocks: [], armor: [], gui: [], font: [], skin: [], particle: [] };
   let description = '';
 
   // Extract pack.png (use default if not found)
@@ -223,27 +225,145 @@ async function extractPack(zipPath) {
   return { packId, originalName, extracted, outputDir, description };
 }
 
+async function renderMcText(asciiPath, text, scale = 1) {
+  const asciiImg = sharp(asciiPath);
+  const meta = await asciiImg.metadata();
+  const cellW = Math.round(meta.width / 16);
+  const cellH = Math.round(meta.height / 16);
+
+  const charBuffers = [];
+  for (const c of text) {
+    const code = c.charCodeAt(0);
+    const col = code % 16;
+    const row = Math.floor(code / 16);
+    const buf = await sharp(asciiPath)
+      .extract({ left: col * cellW, top: row * cellH, width: cellW, height: cellH })
+      .toBuffer();
+    charBuffers.push(buf);
+  }
+
+  const totalW = cellW * text.length;
+  const composites = charBuffers.map((buf, i) => ({
+    input: buf, left: i * cellW, top: 0,
+  }));
+
+  let textBuf = await sharp({
+    create: { width: totalW, height: cellH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+  }).composite(composites).raw().toBuffer({ resolveWithObject: true });
+
+  const pixels = textBuf.data;
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] > 0) {
+      pixels[i] = 64; pixels[i + 1] = 64; pixels[i + 2] = 64;
+    }
+  }
+
+  const finalW = totalW * scale;
+  const finalH = cellH * scale;
+  return sharp(pixels, { raw: { width: totalW, height: cellH, channels: 4 } })
+    .resize(finalW, finalH, { kernel: 'nearest' })
+    .png()
+    .toBuffer();
+}
+
+async function renderSkinFront(skinPath, targetHeight) {
+  const skinMeta = await sharp(skinPath).metadata();
+  const isOld = skinMeta.height === skinMeta.width / 2; // 64x32 format
+  const skinScale = skinMeta.width / 64;
+  const s = skinScale;
+
+  const parts = {
+    head:     { sx: 8*s,  sy: 8*s,  w: 8*s,  h: 8*s  },
+    body:     { sx: 20*s, sy: 20*s, w: 8*s,  h: 12*s },
+    rightArm: { sx: 44*s, sy: 20*s, w: 4*s,  h: 12*s },
+    rightLeg: { sx: 4*s,  sy: 20*s, w: 4*s,  h: 12*s },
+    leftArm:  isOld ? null : { sx: 36*s, sy: 52*s, w: 4*s, h: 12*s },
+    leftLeg:  isOld ? null : { sx: 20*s, sy: 52*s, w: 4*s, h: 12*s },
+  };
+
+  const extractPart = (p) => sharp(skinPath)
+    .extract({ left: p.sx, top: p.sy, width: p.w, height: p.h })
+    .toBuffer();
+
+  const mirrorPart = (p) => sharp(skinPath)
+    .extract({ left: p.sx, top: p.sy, width: p.w, height: p.h })
+    .flop()
+    .toBuffer();
+
+  const canvasW = 16 * s;
+  const canvasH = 32 * s;
+
+  const composites = [
+    { input: await extractPart(parts.head), left: 4*s, top: 0 },
+    { input: await extractPart(parts.body), left: 4*s, top: 8*s },
+    { input: parts.leftArm ? await extractPart(parts.leftArm) : await mirrorPart(parts.rightArm), left: 0, top: 8*s },
+    { input: await extractPart(parts.rightArm), left: 12*s, top: 8*s },
+    { input: parts.leftLeg ? await extractPart(parts.leftLeg) : await mirrorPart(parts.rightLeg), left: 4*s, top: 20*s },
+    { input: await extractPart(parts.rightLeg), left: 8*s, top: 20*s },
+  ];
+
+  const scaleRatio = targetHeight / canvasH;
+  const finalW = Math.round(canvasW * scaleRatio);
+
+  return sharp({
+    create: { width: canvasW, height: canvasH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+  })
+    .composite(composites)
+    .resize(finalW, targetHeight, { kernel: 'nearest' })
+    .png()
+    .toBuffer();
+}
+
 // 生成带暗化背景的背包预览图 inv.png
-// 参考 inventory-processing.md 文档规则
 async function generateInventoryPreview(inventoryPath, outputDir) {
   try {
     const metadata = await sharp(inventoryPath).metadata();
-    const { width, height } = metadata;
+    const { width } = metadata;
     const scale = width / 256;
 
     // 裁剪主背包区域 (0,0,176,166) - 256-base 坐标
     const cropW = Math.round(176 * scale);
     const cropH = Math.round(166 * scale);
 
-    const inventoryCrop = await sharp(inventoryPath)
-      .extract({ left: 0, top: 0, width: cropW, height: cropH })
-      .toBuffer();
+    // 在 inventory 裁剪图上合成 Steve 和 Crafting 文字（在缩放之前）
+    const invCropComposites = [];
+
+    // Steve 皮肤 - 预览框区域约 (52,19) 起，宽50×高70
+    const skinPath = path.join(outputDir, 'steve.png');
+    if (fs.existsSync(skinPath)) {
+      const skinTargetH = Math.round(70 * scale);
+      const skinBuf = await renderSkinFront(skinPath, skinTargetH);
+      const skinMeta = await sharp(skinBuf).metadata();
+      const skinX = Math.round(52 * scale + (50 * scale - skinMeta.width) / 2);
+      const skinY = Math.round(19 * scale + (70 * scale - skinMeta.height) / 2);
+      invCropComposites.push({ input: skinBuf, left: skinX, top: skinY, blend: 'over' });
+    }
+
+    // "Crafting" 文字 - 位置约 (97,18)
+    const asciiPath = path.join(outputDir, 'ascii.png');
+    if (fs.existsSync(asciiPath)) {
+      const textBuf = await renderMcText(asciiPath, 'Crafting', Math.round(scale));
+      const textX = Math.round(97 * scale);
+      const textY = Math.round(18 * scale);
+      invCropComposites.push({ input: textBuf, left: textX, top: textY, blend: 'over' });
+    }
+
+    let inventoryCrop;
+    if (invCropComposites.length > 0) {
+      inventoryCrop = await sharp(inventoryPath)
+        .extract({ left: 0, top: 0, width: cropW, height: cropH })
+        .composite(invCropComposites)
+        .toBuffer();
+    } else {
+      inventoryCrop = await sharp(inventoryPath)
+        .extract({ left: 0, top: 0, width: cropW, height: cropH })
+        .toBuffer();
+    }
 
     // 创建方形画布 (512x512)
     const canvasSize = 512;
     const padding = 24;
 
-    // 计算缩放后的背包尺寸，保持宽高比，适应方形画布
     const availableSize = canvasSize - padding * 2;
     const invAspect = 176 / 166;
     let destW, destH;
@@ -255,18 +375,13 @@ async function generateInventoryPreview(inventoryPath, outputDir) {
       destW = Math.round(availableSize * invAspect);
     }
 
-    // 居中位置
     const destX = Math.round((canvasSize - destW) / 2);
     const destY = Math.round((canvasSize - destH) / 2);
 
-    // 缩放背包图像
     const resizedInventory = await sharp(inventoryCrop)
       .resize(destW, destH, { kernel: 'nearest' })
       .toBuffer();
 
-    // 创建暗化背景渐变 (模拟 Minecraft drawDefaultBackground)
-    // 顶部: RGBA(16,16,16,192/255) 底部: RGBA(16,16,16,208/255)
-    // 使用 SVG 创建渐变
     const gradientSvg = `
       <svg width="${canvasSize}" height="${canvasSize}">
         <defs>
@@ -279,13 +394,12 @@ async function generateInventoryPreview(inventoryPath, outputDir) {
       </svg>
     `;
 
-    // 合成最终图像
     await sharp({
       create: {
         width: canvasSize,
         height: canvasSize,
         channels: 4,
-        background: { r: 139, g: 139, b: 139, alpha: 255 } // 灰色基底
+        background: { r: 139, g: 139, b: 139, alpha: 255 }
       }
     })
       .composite([

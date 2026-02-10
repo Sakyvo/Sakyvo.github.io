@@ -9,7 +9,7 @@
   "icon": null,
   "file": "resourcepacks/!     §1Eum3Blue §9Revamp.zip",
   "fileSize": "20.0MB",
-  "uploadDate": "2026-02-09",
+  "uploadDate": "2026-02-10",
   "lists": [
     "Metar0X"
   ],
@@ -42,6 +42,12 @@
       "icons.png",
       "widgets.png",
       "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
     ],
     "particle": [
       "particles.png"

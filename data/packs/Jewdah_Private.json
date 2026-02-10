@@ -9,7 +9,7 @@
   "icon": null,
   "file": "resourcepacks/!     §1Jewdah §9Private.zip",
   "fileSize": "19.1MB",
-  "uploadDate": "2026-02-09",
+  "uploadDate": "2026-02-10",
   "lists": [
     "Metar0X"
   ],
@@ -42,6 +42,12 @@
       "icons.png",
       "widgets.png",
       "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
     ],
     "particle": [
       "particles.png"

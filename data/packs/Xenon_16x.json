@@ -9,7 +9,7 @@
   "icon": null,
   "file": "resourcepacks/!§bXenon §716x.zip",
   "fileSize": "19.0MB",
-  "uploadDate": "2026-02-09",
+  "uploadDate": "2026-02-10",
   "lists": [],
   "textures": {
     "items": [
@@ -40,6 +40,12 @@
       "icons.png",
       "widgets.png",
       "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
     ],
     "particle": [
       "particles.png"

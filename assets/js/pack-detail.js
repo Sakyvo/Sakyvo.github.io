@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
           <div class="preview-card gui-card"><canvas id="gui-preview"></canvas></div>
           <div class="preview-card inventory-card">${img('inv.png')}</div>
-          <div class="preview-card inventory-raw-card">${img('inventory.png')}</div>
           <div class="preview-card particles-card">${img('particles.png')}</div>
         </div>
       </div>

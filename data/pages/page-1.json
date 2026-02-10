@@ -12,7 +12,7 @@
       "icon": null,
       "file": "resourcepacks/§8! Chromatic _8[_764x_8].zip",
       "fileSize": "13.7MB",
-      "uploadDate": "2026-02-09",
+      "uploadDate": "2026-02-10",
       "lists": [],
       "textures": {
         "items": [
@@ -44,6 +44,12 @@
           "widgets.png",
           "inventory.png"
         ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
         "particle": [
           "particles.png"
         ]
@@ -64,7 +70,7 @@
       "icon": null,
       "file": "resourcepacks/#CoolPvp.zip",
       "fileSize": "15.5MB",
-      "uploadDate": "2026-02-09",
+      "uploadDate": "2026-02-10",
       "lists": [
         "test"
       ],
@@ -98,6 +104,12 @@
           "widgets.png",
           "inventory.png"
         ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
         "particle": [
           "particles.png"
         ]
@@ -118,7 +130,7 @@
       "icon": null,
       "file": "resourcepacks/!     §1Eum3Blue §9Revamp.zip",
       "fileSize": "20.0MB",
-      "uploadDate": "2026-02-09",
+      "uploadDate": "2026-02-10",
       "lists": [
         "Metar0X"
       ],
@@ -151,6 +163,12 @@
           "icons.png",
           "widgets.png",
           "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
         ],
         "particle": [
           "particles.png"
@@ -172,7 +190,7 @@
       "icon": null,
       "file": "resourcepacks/#eum3edit.zip",
       "fileSize": "16.7MB",
-      "uploadDate": "2026-02-09",
+      "uploadDate": "2026-02-10",
       "lists": [],
       "textures": {
         "items": [
@@ -204,6 +222,12 @@
           "widgets.png",
           "inventory.png"
         ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
         "particle": [
           "particles.png"
         ]
@@ -224,7 +248,7 @@
       "icon": null,
       "file": "resourcepacks/!     §1Jewdah §9Private.zip",
       "fileSize": "19.1MB",
-      "uploadDate": "2026-02-09",
+      "uploadDate": "2026-02-10",
       "lists": [
         "Metar0X"
       ],
@@ -258,6 +282,12 @@
           "widgets.png",
           "inventory.png"
         ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
         "particle": [
           "particles.png"
         ]
@@ -278,7 +308,7 @@
       "icon": null,
       "file": "resourcepacks/!    §bStimpy Waar Paack.zip",
       "fileSize": "28.6MB",
-      "uploadDate": "2026-02-09",
+      "uploadDate": "2026-02-10",
       "lists": [],
       "textures": {
         "items": [
@@ -309,6 +339,12 @@
           "icons.png",
           "widgets.png",
           "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
         ],
         "particle": [
           "particles.png"
@@ -330,7 +366,7 @@
       "icon": null,
       "file": "resourcepacks/!§bXenon §716x.zip",
       "fileSize": "19.0MB",
-      "uploadDate": "2026-02-09",
+      "uploadDate": "2026-02-10",
       "lists": [],
       "textures": {
         "items": [
@@ -361,6 +397,12 @@
           "icons.png",
           "widgets.png",
           "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
         ],
         "particle": [
           "particles.png"

@@ -32,11 +32,17 @@
         "widgets.png",
         "inventory.png"
       ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
       "particle": [
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Eum3Blue_Revamp",
+    "outputDir": "thumbnails\\Eum3Blue_Revamp",
     "description": "by Metar0X"
   },
   {
@@ -72,11 +78,17 @@
         "widgets.png",
         "inventory.png"
       ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
       "particle": [
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Jewdah_Private",
+    "outputDir": "thumbnails\\Jewdah_Private",
     "description": "by Metar0X"
   },
   {
@@ -112,11 +124,17 @@
         "widgets.png",
         "inventory.png"
       ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
       "particle": [
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Stimpy_Waar_Paack",
+    "outputDir": "thumbnails\\Stimpy_Waar_Paack",
     "description": "Remade by cibay"
   },
   {
@@ -152,11 +170,17 @@
         "widgets.png",
         "inventory.png"
       ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
       "particle": [
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Xenon_16x",
+    "outputDir": "thumbnails\\Xenon_16x",
     "description": ""
   },
   {
@@ -192,11 +216,17 @@
         "widgets.png",
         "inventory.png"
       ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
       "particle": [
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/CoolPvp",
+    "outputDir": "thumbnails\\CoolPvp",
     "description": "Sectioned MC"
   },
   {
@@ -232,11 +262,17 @@
         "widgets.png",
         "inventory.png"
       ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
       "particle": [
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/eum3edit",
+    "outputDir": "thumbnails\\eum3edit",
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
@@ -272,11 +308,17 @@
         "widgets.png",
         "inventory.png"
       ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
       "particle": [
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Chromatic_64x",
+    "outputDir": "thumbnails\\Chromatic_64x",
     "description": "Made by Airbus"
   }
 ]
