@@ -225,11 +225,11 @@ async function extractPack(zipPath) {
   return { packId, originalName, extracted, outputDir, description };
 }
 
-async function renderMcText(asciiPath, text, scale = 1) {
-  const asciiImg = sharp(asciiPath);
-  const meta = await asciiImg.metadata();
-  const cellW = Math.round(meta.width / 16);
-  const cellH = Math.round(meta.height / 16);
+async function renderMcText(asciiPath, text, targetCellH) {
+  const meta = await sharp(asciiPath).metadata();
+  // ascii.png 是 16x16 网格，基准 cell = 8x8 (128x128 图集)
+  const srcCellW = Math.round(meta.width / 16);
+  const srcCellH = Math.round(meta.height / 16);
 
   const charBuffers = [];
   for (const c of text) {
@@ -237,18 +237,18 @@ async function renderMcText(asciiPath, text, scale = 1) {
     const col = code % 16;
     const row = Math.floor(code / 16);
     const buf = await sharp(asciiPath)
-      .extract({ left: col * cellW, top: row * cellH, width: cellW, height: cellH })
+      .extract({ left: col * srcCellW, top: row * srcCellH, width: srcCellW, height: srcCellH })
       .toBuffer();
     charBuffers.push(buf);
   }
 
-  const totalW = cellW * text.length;
+  const totalW = srcCellW * text.length;
   const composites = charBuffers.map((buf, i) => ({
-    input: buf, left: i * cellW, top: 0,
+    input: buf, left: i * srcCellW, top: 0,
   }));
 
   let textBuf = await sharp({
-    create: { width: totalW, height: cellH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+    create: { width: totalW, height: srcCellH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
   }).composite(composites).raw().toBuffer({ resolveWithObject: true });
 
   const pixels = textBuf.data;
@@ -258,9 +258,11 @@ async function renderMcText(asciiPath, text, scale = 1) {
     }
   }
 
-  const finalW = totalW * scale;
-  const finalH = cellH * scale;
-  return sharp(pixels, { raw: { width: totalW, height: cellH, channels: 4 } })
+  // 缩放到目标 cell 高度
+  const ratio = targetCellH / srcCellH;
+  const finalW = Math.round(totalW * ratio);
+  const finalH = targetCellH;
+  return sharp(pixels, { raw: { width: totalW, height: srcCellH, channels: 4 } })
     .resize(finalW, finalH, { kernel: 'nearest' })
     .png()
     .toBuffer();
@@ -328,23 +330,24 @@ async function generateInventoryPreview(inventoryPath, outputDir) {
     // 在 inventory 裁剪图上合成 Steve 和 Crafting 文字（在缩放之前）
     const invCropComposites = [];
 
-    // Steve 皮肤 - 预览框区域约 (52,19) 起，宽50×高70
+    // Steve 皮肤 - 预览框内部区域 (256-base): 约 (25,7) 起，宽51×高72
     const skinPath = path.join(outputDir, 'steve.png');
     if (fs.existsSync(skinPath)) {
-      const skinTargetH = Math.round(70 * scale);
+      const boxX = 25, boxY = 7, boxW = 51, boxH = 72;
+      const skinTargetH = Math.round(boxH * scale * 0.85);
       const skinBuf = await renderSkinFront(skinPath, skinTargetH);
       const skinMeta = await sharp(skinBuf).metadata();
-      const skinX = Math.round(52 * scale + (50 * scale - skinMeta.width) / 2);
-      const skinY = Math.round(19 * scale + (70 * scale - skinMeta.height) / 2);
+      const skinX = Math.round(boxX * scale + (boxW * scale - skinMeta.width) / 2);
+      const skinY = Math.round(boxY * scale + (boxH * scale - skinMeta.height) / 2);
       invCropComposites.push({ input: skinBuf, left: skinX, top: skinY, blend: 'over' });
     }
 
-    // "Crafting" 文字 - 位置约 (97,18)
+    // "Crafting" 文字 - 位置 (256-base): 约 (86,16)
     const asciiPath = path.join(outputDir, 'ascii.png');
     if (fs.existsSync(asciiPath)) {
-      const textBuf = await renderMcText(asciiPath, 'Crafting', Math.round(scale));
-      const textX = Math.round(97 * scale);
-      const textY = Math.round(18 * scale);
+      const textBuf = await renderMcText(asciiPath, 'Crafting', Math.round(8 * scale));
+      const textX = Math.round(86 * scale);
+      const textY = Math.round(16 * scale);
       invCropComposites.push({ input: textBuf, left: textX, top: textY, blend: 'over' });
     }
 
