@@ -185,31 +185,65 @@ class Admin {
 
     this.showMessage('Deleting...', 'success');
     const names = [...this.selected];
-    let success = 0, failed = 0;
 
-    for (const name of names) {
-      try {
+    try {
+      const refRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/main`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (!refRes.ok) throw new Error('Failed to get branch ref');
+      const latestCommitSha = (await refRes.json()).object.sha;
+
+      const commitRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/commits/${latestCommitSha}`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (!commitRes.ok) throw new Error('Failed to get commit');
+      const baseTreeSha = (await commitRes.json()).tree.sha;
+
+      const treeItems = [];
+      for (const name of names) {
         const pack = this.packs.find(p => p.name === name);
         if (!pack) continue;
-        const path = `resourcepacks/${pack.id}.zip`;
-        const fileRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
-          headers: { Authorization: `token ${token}` }
-        });
-        if (!fileRes.ok) { failed++; continue; }
-        const fileData = await fileRes.json();
-        const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
-          method: 'DELETE',
-          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Delete ${pack.id}`, sha: fileData.sha })
-        });
-        if (res.ok) success++; else failed++;
-      } catch (e) { failed++; }
-    }
+        treeItems.push({ path: `resourcepacks/${pack.id}.zip`, mode: '100644', type: 'blob', sha: null });
+      }
 
-    this.selected.clear();
-    this.multiSelectMode = false;
-    this.showMessage(`Deleted ${success}, failed ${failed}. Run build to update.`, success > 0 ? 'success' : 'error');
-    this.loadPacks();
+      if (treeItems.length === 0) {
+        this.showMessage('No packs to delete', 'error');
+        return;
+      }
+
+      const treeRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems })
+      });
+      if (!treeRes.ok) throw new Error('Failed to create tree');
+      const treeData = await treeRes.json();
+
+      const newCommitRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/commits`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Delete ${treeItems.length} pack(s)`, tree: treeData.sha, parents: [latestCommitSha] })
+      });
+      if (!newCommitRes.ok) throw new Error('Failed to create commit');
+      const newCommit = await newCommitRes.json();
+
+      const updateRefRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/refs/heads/main`, {
+        method: 'PATCH',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sha: newCommit.sha })
+      });
+      if (!updateRefRes.ok) throw new Error('Failed to update branch');
+
+      this.selected.clear();
+      this.multiSelectMode = false;
+      this.showMessage(`Deleted ${treeItems.length} pack(s). Build triggered.`, 'success');
+      this.loadPacks();
+    } catch (e) {
+      this.selected.clear();
+      this.multiSelectMode = false;
+      this.showMessage(`Delete error: ${e.message}`, 'error');
+      this.loadPacks();
+    }
   }
 
   async upload() {
@@ -408,7 +442,7 @@ class Admin {
       });
 
       if (res.ok) {
-        this.showMessage('Deleted! Run build to update.', 'success');
+        this.showMessage('Deleted! Build triggered.', 'success');
         this.loadPacks();
       } else {
         const err = await res.json();
