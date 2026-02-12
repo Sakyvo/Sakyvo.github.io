@@ -111,18 +111,16 @@ async function extractPack(zipPath) {
         const bottleEntry = zip.getEntry(alternatives.bottle);
         const overlayEntry = zip.getEntry(alternatives.overlay);
 
-        let bottleBuffer, overlayBuffer;
-        if (bottleEntry && overlayEntry) {
-          bottleBuffer = bottleEntry.getData();
-          overlayBuffer = overlayEntry.getData();
-        } else {
-          // Fallback to Default_Texture
-          const defaultBottle = path.join('Default_Texture', alternatives.bottle);
-          const defaultOverlay = path.join('Default_Texture', alternatives.overlay);
-          if (fs.existsSync(defaultBottle) && fs.existsSync(defaultOverlay)) {
-            bottleBuffer = fs.readFileSync(defaultBottle);
-            overlayBuffer = fs.readFileSync(defaultOverlay);
-          }
+        let bottleBuffer = bottleEntry ? bottleEntry.getData() : null;
+        let overlayBuffer = overlayEntry ? overlayEntry.getData() : null;
+
+        if (!bottleBuffer) {
+          const defaultPath = path.join('Default_Texture', alternatives.bottle);
+          if (fs.existsSync(defaultPath)) bottleBuffer = fs.readFileSync(defaultPath);
+        }
+        if (!overlayBuffer) {
+          const defaultPath = path.join('Default_Texture', alternatives.overlay);
+          if (fs.existsSync(defaultPath)) overlayBuffer = fs.readFileSync(defaultPath);
         }
 
         if (bottleBuffer && overlayBuffer) {

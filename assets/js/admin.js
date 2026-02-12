@@ -109,7 +109,7 @@ class Admin {
 
   async loadPacks() {
     try {
-      const index = await fetch('/data/index.json').then(r => r.json());
+      const index = await fetch('/data/index.json?t=' + Date.now()).then(r => r.json());
       this.packs = index.items;
       this.renderPacks();
     } catch (e) {
@@ -238,6 +238,7 @@ class Admin {
       this.multiSelectMode = false;
       this.showMessage(`Deleted ${treeItems.length} pack(s). Build triggered.`, 'success');
       this.loadPacks();
+      await this.trackBuildProgress(token);
     } catch (e) {
       this.selected.clear();
       this.multiSelectMode = false;
@@ -391,6 +392,7 @@ class Admin {
       const failed = valid.length - success;
       fileInput.value = '';
       this.showMessage(`Uploaded ${success}, failed ${failed}. Build triggered.`, success > 0 ? 'success' : 'error');
+      if (success > 0) await this.trackBuildProgress(token);
     } catch (e) {
       this.showMessage(`Upload error: ${e.message}`, 'error');
     }
@@ -444,6 +446,7 @@ class Admin {
       if (res.ok) {
         this.showMessage('Deleted! Build triggered.', 'success');
         this.loadPacks();
+        await this.trackBuildProgress(token);
       } else {
         const err = await res.json();
         this.showMessage(`Delete failed: ${err.message}`, 'error');
@@ -453,31 +456,13 @@ class Admin {
     }
   }
 
-  async triggerBuild() {
-    const token = AUTH.getToken();
-    try {
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
-        method: 'POST',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main' })
-      });
-      if (res.ok || res.status === 204) {
-        this.showMessage('Upload complete! Build started.', 'success');
-      }
-    } catch (e) {}
-  }
-
-  async manualBuild() {
-    const token = AUTH.getToken();
-    if (!token) { this.showMessage('Please login first', 'error'); return; }
-    if (!await this.confirm('Run build to refresh packs?')) return;
-
+  async trackBuildProgress(token) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
       <div class="modal-content" style="max-width:400px;text-align:center;">
         <h2 style="margin-bottom:16px;">BUILD</h2>
-        <p id="build-status" style="margin-bottom:8px;">Starting build...</p>
+        <p id="build-status" style="margin-bottom:8px;">Waiting for build...</p>
         <div style="background:#eee;height:8px;margin-bottom:16px;"><div id="build-bar" style="background:#000;height:100%;width:10%;transition:width 0.3s;"></div></div>
         <p id="build-time" style="font-size:12px;color:#666;"></p>
       </div>
@@ -492,22 +477,7 @@ class Admin {
     const timer = setInterval(updateTime, 1000);
 
     try {
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
-        method: 'POST',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main' })
-      });
-      if (!res.ok && res.status !== 204) {
-        clearInterval(timer);
-        statusEl.textContent = 'Failed to start build';
-        barEl.style.background = '#c00';
-        setTimeout(() => modal.remove(), 2000);
-        return;
-      }
-
-      statusEl.textContent = 'Waiting for workflow...';
       barEl.style.width = '20%';
-
       await new Promise(r => setTimeout(r, 3000));
 
       let runId = null;
@@ -567,6 +537,29 @@ class Admin {
       statusEl.textContent = `Error: ${e.message}`;
       setTimeout(() => modal.remove(), 3000);
     }
+  }
+
+  async manualBuild() {
+    const token = AUTH.getToken();
+    if (!token) { this.showMessage('Please login first', 'error'); return; }
+    if (!await this.confirm('Run build to refresh packs?')) return;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main' })
+      });
+      if (!res.ok && res.status !== 204) {
+        this.showMessage('Failed to start build', 'error');
+        return;
+      }
+    } catch (e) {
+      this.showMessage(`Error: ${e.message}`, 'error');
+      return;
+    }
+
+    await this.trackBuildProgress(token);
   }
 
   confirm(message) {

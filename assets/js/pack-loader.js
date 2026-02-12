@@ -12,7 +12,7 @@ class PackLoader {
   }
 
   async init() {
-    this.index = await fetch('data/index.json').then(r => r.json());
+    this.index = await fetch('data/index.json?t=' + Date.now()).then(r => r.json());
     this.renderPlaceholders();
     this.observeItems();
   }
@@ -68,7 +68,7 @@ class PackLoader {
   }
 
   async loadPage(page) {
-    const data = await fetch(`data/pages/page-${page}.json`).then(r => r.json());
+    const data = await fetch(`data/pages/page-${page}.json?t=` + Date.now()).then(r => r.json());
     this.pagesData[page] = data.items;
     this.loadedPages.add(page);
   }
