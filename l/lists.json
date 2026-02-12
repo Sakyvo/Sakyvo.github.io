@@ -26,6 +26,10 @@
     "name": "iil pf v1",
     "cover": "",
     "description": "",
-    "packs": []
+    "packs": [
+      "RedDust_64x",
+      "Aerick_Faith",
+      "Aspecti_250_subs_pack"
+    ]
   }
 ]
