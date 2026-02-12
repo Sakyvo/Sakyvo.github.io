@@ -126,6 +126,18 @@ async function extractPack(zipPath) {
         if (bottleBuffer && overlayBuffer) {
           const [r, g, b] = alternatives.color;
 
+          // Normalize both textures to the same size
+          const bottleMeta = await sharp(bottleBuffer).metadata();
+          const overlayMeta0 = await sharp(overlayBuffer).metadata();
+          const targetSize = Math.max(bottleMeta.width, bottleMeta.height, overlayMeta0.width, overlayMeta0.height);
+
+          if (bottleMeta.width !== targetSize || bottleMeta.height !== targetSize) {
+            bottleBuffer = await sharp(bottleBuffer).resize(targetSize, targetSize, { kernel: 'nearest' }).toBuffer();
+          }
+          if (overlayMeta0.width !== targetSize || overlayMeta0.height !== targetSize) {
+            overlayBuffer = await sharp(overlayBuffer).resize(targetSize, targetSize, { kernel: 'nearest' }).toBuffer();
+          }
+
           // 获取 overlay 的原始像素数据
           const overlayRaw = await sharp(overlayBuffer)
             .ensureAlpha()
