@@ -1,8 +1,18 @@
 {
-  "total": 7,
+  "total": 8,
   "pageSize": 50,
   "pages": 1,
   "items": [
+    {
+      "id": "! §bBloo",
+      "name": "Bloo",
+      "displayName": "Bloo",
+      "coloredName": "<span style=\"color:#55FFFF\">B</span><span style=\"color:#55FFFF\">l</span><span style=\"color:#55FFFF\">o</span><span style=\"color:#55FFFF\">o</span>",
+      "description": "by Elleptical",
+      "lists": [],
+      "cover": "/thumbnails/Bloo/cover.png",
+      "packPng": "/thumbnails/Bloo/pack.png"
+    },
     {
       "id": "§8! Chromatic _8[_764x_8]",
       "name": "Chromatic_64x",

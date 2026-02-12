@@ -42,7 +42,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Eum3Blue_Revamp",
+    "outputDir": "thumbnails/Eum3Blue_Revamp",
     "description": "by Metar0X"
   },
   {
@@ -88,7 +88,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Jewdah_Private",
+    "outputDir": "thumbnails/Jewdah_Private",
     "description": "by Metar0X"
   },
   {
@@ -134,8 +134,54 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Stimpy_Waar_Paack",
+    "outputDir": "thumbnails/Stimpy_Waar_Paack",
     "description": "Remade by cibay"
+  },
+  {
+    "packId": "Bloo",
+    "originalName": "! §bBloo",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/Bloo",
+    "description": "by Elleptical"
   },
   {
     "packId": "Xenon_16x",
@@ -180,7 +226,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Xenon_16x",
+    "outputDir": "thumbnails/Xenon_16x",
     "description": ""
   },
   {
@@ -226,7 +272,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\CoolPvp",
+    "outputDir": "thumbnails/CoolPvp",
     "description": "Sectioned MC"
   },
   {
@@ -272,7 +318,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\eum3edit",
+    "outputDir": "thumbnails/eum3edit",
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
@@ -318,7 +364,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Chromatic_64x",
+    "outputDir": "thumbnails/Chromatic_64x",
     "description": "Made by Airbus"
   }
 ]

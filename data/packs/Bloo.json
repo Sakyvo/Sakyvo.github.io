@@ -1,14 +1,14 @@
 {
-  "id": "#eum3edit",
-  "name": "eum3edit",
-  "displayName": "eum3edit",
-  "coloredName": "eum3edit",
-  "description": "Eum3's PvP Faithful 32x Edit",
-  "cover": "/thumbnails/eum3edit/cover.png",
-  "packPng": "/thumbnails/eum3edit/pack.png",
+  "id": "! §bBloo",
+  "name": "Bloo",
+  "displayName": "Bloo",
+  "coloredName": "<span style=\"color:#55FFFF\">B</span><span style=\"color:#55FFFF\">l</span><span style=\"color:#55FFFF\">o</span><span style=\"color:#55FFFF\">o</span>",
+  "description": "by Elleptical",
+  "cover": "/thumbnails/Bloo/cover.png",
+  "packPng": "/thumbnails/Bloo/pack.png",
   "icon": null,
-  "file": "resourcepacks/#eum3edit.zip",
-  "fileSize": "16.7MB",
+  "file": "resourcepacks/! §bBloo.zip",
+  "fileSize": "8.7MB",
   "uploadDate": "2026-02-12",
   "lists": [],
   "textures": {
@@ -52,7 +52,7 @@
     ]
   },
   "downloads": {
-    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23eum3edit.zip",
-    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23eum3edit.zip"
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A7bBloo.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A7bBloo.zip"
   }
 }
