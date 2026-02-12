@@ -488,8 +488,11 @@ async function loadListDetail(listId) {
     });
 
     document.getElementById('list-pack-search')?.addEventListener('input', (e) => {
+      const pos = e.target.selectionStart;
       searchQuery = e.target.value.toLowerCase();
       render();
+      const input = document.getElementById('list-pack-search');
+      if (input) { input.focus(); input.setSelectionRange(pos, pos); }
     });
 
     if (isAdmin) {
