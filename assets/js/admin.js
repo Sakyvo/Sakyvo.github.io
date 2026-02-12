@@ -262,44 +262,104 @@ class Admin {
     if (!await this.confirm(`Upload ${valid.length} pack(s)?`)) return;
 
     this.showMessage('Uploading...', 'success');
-    const uploadedNames = [];
 
-    const results = await Promise.all(valid.map(async file => {
-      try {
-        const content = await this.fileToBase64(file);
-        const path = `resourcepacks/${file.name}`;
-        const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
-          method: 'PUT',
-          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Add ${file.name}`, content })
-        });
-        if (res.ok) {
-          uploadedNames.push(this.sanitizeName(file.name.replace('.zip', '')));
-          return true;
-        }
-        return false;
-      } catch (e) { return false; }
-    }));
-
-    const success = results.filter(r => r).length;
-    const failed = results.length - success;
-
-    // Add to selected lists (multiple)
-    if (selectedLists.length > 0 && uploadedNames.length > 0) {
-      const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
-      selectedLists.forEach(listName => {
-        const list = lists.find(l => l.name === listName);
-        if (list) {
-          uploadedNames.forEach(name => {
-            if (!list.packs.includes(name)) list.packs.push(name);
-          });
-        }
+    try {
+      // Get latest commit and tree SHA
+      const refRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/main`, {
+        headers: { Authorization: `token ${token}` }
       });
-      localStorage.setItem('vale_lists', JSON.stringify(lists));
-    }
+      if (!refRes.ok) throw new Error('Failed to get branch ref');
+      const latestCommitSha = (await refRes.json()).object.sha;
 
-    fileInput.value = '';
-    this.showMessage(`Uploaded ${success}, failed ${failed}. Run build to update.`, success > 0 ? 'success' : 'error');
+      const commitRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/commits/${latestCommitSha}`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (!commitRes.ok) throw new Error('Failed to get commit');
+      const baseTreeSha = (await commitRes.json()).tree.sha;
+
+      // Create blobs sequentially to avoid conflicts
+      const uploadedNames = [];
+      const treeItems = [];
+
+      for (let i = 0; i < valid.length; i++) {
+        const file = valid[i];
+        this.showMessage(`Uploading ${i + 1}/${valid.length}: ${file.name}...`, 'success');
+        try {
+          const content = await this.fileToBase64(file);
+          const blobRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/blobs`, {
+            method: 'POST',
+            headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, encoding: 'base64' })
+          });
+          if (!blobRes.ok) continue;
+          const blob = await blobRes.json();
+          treeItems.push({ path: `resourcepacks/${file.name}`, mode: '100644', type: 'blob', sha: blob.sha });
+          uploadedNames.push(this.sanitizeName(file.name.replace('.zip', '')));
+        } catch (e) { continue; }
+      }
+
+      if (treeItems.length === 0) {
+        this.showMessage('All uploads failed', 'error');
+        return;
+      }
+
+      // Include lists.json update in the same commit
+      if (selectedLists.length > 0 && uploadedNames.length > 0) {
+        const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+        selectedLists.forEach(listName => {
+          const list = lists.find(l => l.name === listName);
+          if (list) {
+            uploadedNames.forEach(name => {
+              if (!list.packs.includes(name)) list.packs.push(name);
+            });
+          }
+        });
+        localStorage.setItem('vale_lists', JSON.stringify(lists));
+        try {
+          const listsBlobRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/blobs`, {
+            method: 'POST',
+            headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: JSON.stringify(lists, null, 2), encoding: 'utf-8' })
+          });
+          if (listsBlobRes.ok) {
+            const listsBlob = await listsBlobRes.json();
+            treeItems.push({ path: 'l/lists.json', mode: '100644', type: 'blob', sha: listsBlob.sha });
+          }
+        } catch (e) {}
+      }
+
+      // Single commit with all files
+      this.showMessage('Creating commit...', 'success');
+      const treeRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems })
+      });
+      if (!treeRes.ok) throw new Error('Failed to create tree');
+      const treeData = await treeRes.json();
+
+      const newCommitRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/commits`, {
+        method: 'POST',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Add ${uploadedNames.length} pack(s)`, tree: treeData.sha, parents: [latestCommitSha] })
+      });
+      if (!newCommitRes.ok) throw new Error('Failed to create commit');
+      const newCommit = await newCommitRes.json();
+
+      const updateRefRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/refs/heads/main`, {
+        method: 'PATCH',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sha: newCommit.sha })
+      });
+      if (!updateRefRes.ok) throw new Error('Failed to update branch');
+
+      const success = uploadedNames.length;
+      const failed = valid.length - success;
+      fileInput.value = '';
+      this.showMessage(`Uploaded ${success}, failed ${failed}. Build triggered.`, success > 0 ? 'success' : 'error');
+    } catch (e) {
+      this.showMessage(`Upload error: ${e.message}`, 'error');
+    }
   }
 
   sanitizeName(name) {
