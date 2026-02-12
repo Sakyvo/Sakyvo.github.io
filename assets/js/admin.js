@@ -314,6 +314,8 @@ class Admin {
 
       // Create blobs sequentially to avoid conflicts
       const uploadedNames = [];
+      const successFiles = [];
+      const failedFiles = [];
       const treeItems = [];
 
       for (let i = 0; i < valid.length; i++) {
@@ -326,11 +328,12 @@ class Admin {
             headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ content, encoding: 'base64' })
           });
-          if (!blobRes.ok) continue;
+          if (!blobRes.ok) { failedFiles.push(file.name); continue; }
           const blob = await blobRes.json();
           treeItems.push({ path: `resourcepacks/${file.name}`, mode: '100644', type: 'blob', sha: blob.sha });
           uploadedNames.push(this.sanitizeName(file.name.replace('.zip', '')));
-        } catch (e) { continue; }
+          successFiles.push(file.name);
+        } catch (e) { failedFiles.push(file.name); continue; }
       }
 
       if (treeItems.length === 0) {
@@ -391,7 +394,7 @@ class Admin {
       const success = uploadedNames.length;
       const failed = valid.length - success;
       fileInput.value = '';
-      this.showMessage(`Uploaded ${success}, failed ${failed}. Build triggered.`, success > 0 ? 'success' : 'error');
+      this.showUploadResult(successFiles, failedFiles);
       if (success > 0) await this.trackBuildProgress(token);
     } catch (e) {
       this.showMessage(`Upload error: ${e.message}`, 'error');
@@ -400,6 +403,34 @@ class Admin {
 
   sanitizeName(name) {
     return name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
+  }
+
+  showUploadResult(successFiles, failedFiles) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:500px;">
+        <h2>Upload Result</h2>
+        ${successFiles.length > 0 ? `
+          <p style="color:#060;font-weight:bold;">Uploaded (${successFiles.length})</p>
+          <div style="max-height:150px;overflow-y:auto;margin-bottom:12px;font-size:13px;">
+            ${successFiles.map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+          </div>
+        ` : ''}
+        ${failedFiles.length > 0 ? `
+          <p style="color:#c00;font-weight:bold;">Failed (${failedFiles.length})</p>
+          <div style="max-height:150px;overflow-y:auto;margin-bottom:12px;font-size:13px;">
+            ${failedFiles.map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+          </div>
+        ` : ''}
+        <div class="modal-buttons">
+          <button class="btn btn-secondary" id="close-result">OK</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#close-result').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
   }
 
   showInvalidFiles(invalid) {
