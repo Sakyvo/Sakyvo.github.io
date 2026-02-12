@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'resourcepacks/**'
+      - 'scripts/**'
   workflow_dispatch:
 
 permissions:
