@@ -1,0 +1,60 @@
+{
+  "id": "!    #§bAerick §7Faith",
+  "name": "Aerick_Faith",
+  "displayName": "Aerick Faith",
+  "coloredName": "<span style=\"color:#55FFFF\">A</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">r</span><span style=\"color:#55FFFF\">i</span><span style=\"color:#55FFFF\">c</span><span style=\"color:#55FFFF\">k</span><span style=\"color:#55FFFF\"> </span><span style=\"color:#AAAAAA\">F</span><span style=\"color:#AAAAAA\">a</span><span style=\"color:#AAAAAA\">i</span><span style=\"color:#AAAAAA\">t</span><span style=\"color:#AAAAAA\">h</span>",
+  "description": "Ping",
+  "cover": "/thumbnails/Aerick_Faith/cover.png",
+  "packPng": "/thumbnails/Aerick_Faith/pack.png",
+  "icon": null,
+  "file": "resourcepacks/!    #§bAerick §7Faith.zip",
+  "fileSize": "14.1MB",
+  "uploadDate": "2026-02-12",
+  "lists": [
+    "iil pf v1"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%23%C2%A7bAerick%20%C2%A77Faith.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%23%C2%A7bAerick%20%C2%A77Faith.zip"
+  }
+}

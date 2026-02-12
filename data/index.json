@@ -1,8 +1,32 @@
 {
-  "total": 7,
+  "total": 10,
   "pageSize": 50,
   "pages": 1,
   "items": [
+    {
+      "id": "!    #§bAerick §7Faith",
+      "name": "Aerick_Faith",
+      "displayName": "Aerick Faith",
+      "coloredName": "<span style=\"color:#55FFFF\">A</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">r</span><span style=\"color:#55FFFF\">i</span><span style=\"color:#55FFFF\">c</span><span style=\"color:#55FFFF\">k</span><span style=\"color:#55FFFF\"> </span><span style=\"color:#AAAAAA\">F</span><span style=\"color:#AAAAAA\">a</span><span style=\"color:#AAAAAA\">i</span><span style=\"color:#AAAAAA\">t</span><span style=\"color:#AAAAAA\">h</span>",
+      "description": "Ping",
+      "lists": [
+        "iil pf v1"
+      ],
+      "cover": "/thumbnails/Aerick_Faith/cover.png",
+      "packPng": "/thumbnails/Aerick_Faith/pack.png"
+    },
+    {
+      "id": "!           Aspecti 250 subs pack",
+      "name": "Aspecti_250_subs_pack",
+      "displayName": "Aspecti 250 subs pack",
+      "coloredName": "Aspecti 250 subs pack",
+      "description": "",
+      "lists": [
+        "iil pf v1"
+      ],
+      "cover": "/thumbnails/Aspecti_250_subs_pack/cover.png",
+      "packPng": "/thumbnails/Aspecti_250_subs_pack/pack.png"
+    },
     {
       "id": "§8! Chromatic _8[_764x_8]",
       "name": "Chromatic_64x",
@@ -58,6 +82,18 @@
       ],
       "cover": "/thumbnails/Jewdah_Private/cover.png",
       "packPng": "/thumbnails/Jewdah_Private/pack.png"
+    },
+    {
+      "id": "!     §4RedDust §8[§464x§8]",
+      "name": "RedDust_64x",
+      "displayName": "RedDust [64x]",
+      "coloredName": "<span style=\"color:#AA0000\">R</span><span style=\"color:#AA0000\">e</span><span style=\"color:#AA0000\">d</span><span style=\"color:#AA0000\">D</span><span style=\"color:#AA0000\">u</span><span style=\"color:#AA0000\">s</span><span style=\"color:#AA0000\">t</span><span style=\"color:#AA0000\"> </span><span style=\"color:#555555\">[</span><span style=\"color:#AA0000\">6</span><span style=\"color:#AA0000\">4</span><span style=\"color:#AA0000\">x</span><span style=\"color:#555555\">]</span>",
+      "description": "By FreeSoups",
+      "lists": [
+        "iil pf v1"
+      ],
+      "cover": "/thumbnails/RedDust_64x/cover.png",
+      "packPng": "/thumbnails/RedDust_64x/pack.png"
     },
     {
       "id": "!    §bStimpy Waar Paack",

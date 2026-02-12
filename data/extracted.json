@@ -1,5 +1,51 @@
 [
   {
+    "packId": "Aspecti_250_subs_pack",
+    "originalName": "!           Aspecti 250 subs pack",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/Aspecti_250_subs_pack",
+    "description": ""
+  },
+  {
     "packId": "Eum3Blue_Revamp",
     "originalName": "!     §1Eum3Blue §9Revamp",
     "extracted": {
@@ -90,6 +136,98 @@
     },
     "outputDir": "thumbnails/Jewdah_Private",
     "description": "by Metar0X"
+  },
+  {
+    "packId": "RedDust_64x",
+    "originalName": "!     §4RedDust §8[§464x§8]",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/RedDust_64x",
+    "description": "By FreeSoups"
+  },
+  {
+    "packId": "Aerick_Faith",
+    "originalName": "!    #§bAerick §7Faith",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/Aerick_Faith",
+    "description": "Ping"
   },
   {
     "packId": "Stimpy_Waar_Paack",
