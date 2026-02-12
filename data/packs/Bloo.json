@@ -10,7 +10,9 @@
   "file": "resourcepacks/! §bBloo.zip",
   "fileSize": "8.7MB",
   "uploadDate": "2026-02-12",
-  "lists": [],
+  "lists": [
+    "iil pf v1"
+  ],
   "textures": {
     "items": [
       "diamond_sword.png",

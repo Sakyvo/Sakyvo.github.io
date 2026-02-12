@@ -1,0 +1,60 @@
+{
+  "id": "!Dynamic Duo By Brakeless",
+  "name": "Dynamic_Duo_By_Brakeless",
+  "displayName": "Dynamic Duo By Brakeless",
+  "coloredName": "Dynamic Duo By Brakeless",
+  "description": "Dynamic Duo 32x By Brakeless (Zevy and Hermes Help me)",
+  "cover": "/thumbnails/Dynamic_Duo_By_Brakeless/cover.png",
+  "packPng": "/thumbnails/Dynamic_Duo_By_Brakeless/pack.png",
+  "icon": null,
+  "file": "resourcepacks/!Dynamic Duo By Brakeless.zip",
+  "fileSize": "18.7MB",
+  "uploadDate": "2026-02-12",
+  "lists": [
+    "iil pf v1"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!Dynamic%20Duo%20By%20Brakeless.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!Dynamic%20Duo%20By%20Brakeless.zip"
+  }
+}

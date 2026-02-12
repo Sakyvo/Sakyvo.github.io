@@ -1,0 +1,60 @@
+{
+  "id": "#Eum3 Blue Edit - Fawokh",
+  "name": "Eum3_Blue_Edit_-_Fawokh",
+  "displayName": "Eum3 Blue Edit - Fawokh",
+  "coloredName": "Eum3 Blue Edit - Fawokh",
+  "description": "WE ARE THE CHAMPIONS",
+  "cover": "/thumbnails/Eum3_Blue_Edit_-_Fawokh/cover.png",
+  "packPng": "/thumbnails/Eum3_Blue_Edit_-_Fawokh/pack.png",
+  "icon": null,
+  "file": "resourcepacks/#Eum3 Blue Edit - Fawokh.zip",
+  "fileSize": "5.2MB",
+  "uploadDate": "2026-02-12",
+  "lists": [
+    "iil pf v1"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23Eum3%20Blue%20Edit%20-%20Fawokh.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23Eum3%20Blue%20Edit%20-%20Fawokh.zip"
+  }
+}
