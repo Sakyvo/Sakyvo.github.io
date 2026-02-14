@@ -11,6 +11,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pack = await fetch(`/data/packs/${packName}.json`).then(r => r.json());
     document.title = `${pack.displayName} - VALE`;
 
+    // Set pack.png as favicon
+    const favicon = document.getElementById('favicon');
+    if (favicon) {
+      const testImg = new Image();
+      testImg.onload = () => { favicon.href = pack.packPng; };
+      testImg.onerror = () => { favicon.href = '/Default_Texture/pack.png'; };
+      testImg.src = pack.packPng;
+    }
+
     const base = `/thumbnails/${pack.name}/`;
     const img = (name) => `<img src="${base}${name}" alt="${name}" data-texture="${name}">`;
 
