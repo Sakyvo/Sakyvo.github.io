@@ -1702,52 +1702,6 @@
     "description": "By Kyzuko & Verzide"
   },
   {
-    "packId": "Kiro_2",
-    "originalName": "§9Kiro_2",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails/Kiro_2",
-    "description": "By Kyzuko & Verzide"
-  },
-  {
     "packId": "HUU_Mint",
     "originalName": "§b§lHUU Mint",
     "extracted": {
