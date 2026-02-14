@@ -548,17 +548,10 @@ async function main() {
     console.log(`Processing: ${file}`);
     try {
       const result = await extractPack(path.join(packsDir, file));
-      // Deduplicate packId
-      let id = result.packId;
-      if (usedIds.has(id)) {
-        let suffix = 2;
-        while (usedIds.has(`${id}_${suffix}`)) suffix++;
-        const newId = `${id}_${suffix}`;
-        const newDir = path.join('thumbnails', newId);
-        fs.renameSync(result.outputDir, newDir);
-        result.packId = newId;
-        result.outputDir = newDir;
-        console.log(`  Renamed to: ${newId} (duplicate)`);
+      if (usedIds.has(result.packId)) {
+        console.log(`  Skipped: ${result.packId} (duplicate of existing)`);
+        fs.rmSync(result.outputDir, { recursive: true, force: true });
+        continue;
       }
       usedIds.add(result.packId);
       results.push(result);

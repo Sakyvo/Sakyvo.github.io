@@ -46,7 +46,7 @@ function main() {
     return;
   }
 
-  const extracted = JSON.parse(fs.readFileSync(extractedPath, 'utf-8'));
+  let extracted = JSON.parse(fs.readFileSync(extractedPath, 'utf-8'));
   const today = new Date().toISOString().split('T')[0];
 
   // Load lists
@@ -60,15 +60,12 @@ function main() {
     });
   });
 
-  // Deduplicate packIds
+  // Deduplicate packIds - skip duplicates
   const usedIds = new Set();
-  extracted.forEach(e => {
-    if (usedIds.has(e.packId)) {
-      let suffix = 2;
-      while (usedIds.has(`${e.packId}_${suffix}`)) suffix++;
-      e.packId = `${e.packId}_${suffix}`;
-    }
+  extracted = extracted.filter(e => {
+    if (usedIds.has(e.packId)) return false;
     usedIds.add(e.packId);
+    return true;
   });
 
   // Generate pack details
