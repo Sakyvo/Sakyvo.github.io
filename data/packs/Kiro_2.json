@@ -1,18 +1,16 @@
 {
-  "id": "!Dynamic Duo By Brakeless",
-  "name": "Dynamic_Duo_By_Brakeless",
-  "displayName": "Dynamic Duo By Brakeless",
-  "coloredName": "Dynamic Duo By Brakeless",
-  "description": "Dynamic Duo 32x By Brakeless (Zevy and Hermes Help me)",
-  "cover": "/thumbnails/Dynamic_Duo_By_Brakeless/cover.png",
-  "packPng": "/thumbnails/Dynamic_Duo_By_Brakeless/pack.png",
+  "id": "§9Kiro_2",
+  "name": "Kiro_2",
+  "displayName": "Kiro",
+  "coloredName": "<span style=\"color:#5555FF\">K</span><span style=\"color:#5555FF\">i</span><span style=\"color:#5555FF\">r</span><span style=\"color:#5555FF\">o</span>",
+  "description": "By Kyzuko & Verzide",
+  "cover": "/thumbnails/Kiro_2/cover.png",
+  "packPng": "/thumbnails/Kiro_2/pack.png",
   "icon": null,
-  "file": "resourcepacks/!Dynamic Duo By Brakeless.zip",
-  "fileSize": "18.7MB",
+  "file": "resourcepacks/§9Kiro_2.zip",
+  "fileSize": "26.7MB",
   "uploadDate": "2026-02-14",
-  "lists": [
-    "iil pf v1"
-  ],
+  "lists": [],
   "textures": {
     "items": [
       "diamond_sword.png",
@@ -54,7 +52,7 @@
     ]
   },
   "downloads": {
-    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!Dynamic%20Duo%20By%20Brakeless.zip",
-    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!Dynamic%20Duo%20By%20Brakeless.zip"
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A79Kiro_2.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A79Kiro_2.zip"
   }
 }

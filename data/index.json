@@ -253,15 +253,13 @@
     },
     {
       "id": "§9Kiro_2",
-      "name": "Kiro",
+      "name": "Kiro_2",
       "displayName": "Kiro",
       "coloredName": "<span style=\"color:#5555FF\">K</span><span style=\"color:#5555FF\">i</span><span style=\"color:#5555FF\">r</span><span style=\"color:#5555FF\">o</span>",
       "description": "By Kyzuko & Verzide",
-      "lists": [
-        "iil pf v1"
-      ],
-      "cover": "/thumbnails/Kiro/cover.png",
-      "packPng": "/thumbnails/Kiro/pack.png"
+      "lists": [],
+      "cover": "/thumbnails/Kiro_2/cover.png",
+      "packPng": "/thumbnails/Kiro_2/pack.png"
     },
     {
       "id": "§4Kiro FPS V5",

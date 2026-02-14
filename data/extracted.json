@@ -1702,7 +1702,7 @@
     "description": "By Kyzuko & Verzide"
   },
   {
-    "packId": "Kiro",
+    "packId": "Kiro_2",
     "originalName": "§9Kiro_2",
     "extracted": {
       "items": [
@@ -1744,7 +1744,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Kiro",
+    "outputDir": "thumbnails/Kiro_2",
     "description": "By Kyzuko & Verzide"
   },
   {
