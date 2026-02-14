@@ -84,13 +84,40 @@ class PackLoader {
   }
 
   renderCard(el, pack) {
+    const coverImg = new Image();
+    coverImg.className = 'cover';
+    coverImg.alt = pack.displayName;
+    coverImg.loading = 'lazy';
+    coverImg.style.imageRendering = 'pixelated';
+
+    coverImg.onload = function() {
+      if (this.naturalHeight > this.naturalWidth) {
+        const frames = this.naturalHeight / this.naturalWidth;
+        if (Number.isInteger(frames) && frames > 1) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'cover animated-cover';
+          wrapper.style.backgroundImage = `url(${this.src})`;
+          wrapper.style.backgroundSize = `100% ${frames * 100}%`;
+          wrapper.style.imageRendering = 'pixelated';
+          let currentFrame = 0;
+          setInterval(() => {
+            currentFrame = (currentFrame + 1) % frames;
+            wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
+          }, 100);
+          this.replaceWith(wrapper);
+          return;
+        }
+      }
+    };
+    coverImg.src = pack.cover;
+
     el.innerHTML = `
-      <img class="cover" src="${pack.cover}" alt="${pack.displayName}" loading="lazy">
       <div class="info">
         <img class="pack-icon" src="${pack.packPng}" alt="">
         <div class="name">${pack.coloredName || pack.displayName}</div>
       </div>
     `;
+    el.insertBefore(coverImg, el.firstChild);
   }
 }
 

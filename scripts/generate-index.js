@@ -60,6 +60,17 @@ function main() {
     });
   });
 
+  // Deduplicate packIds
+  const usedIds = new Set();
+  extracted.forEach(e => {
+    if (usedIds.has(e.packId)) {
+      let suffix = 2;
+      while (usedIds.has(`${e.packId}_${suffix}`)) suffix++;
+      e.packId = `${e.packId}_${suffix}`;
+    }
+    usedIds.add(e.packId);
+  });
+
   // Generate pack details
   const packs = extracted.map(e => {
     const zipPath = path.join('resourcepacks', `${e.originalName}.zip`);

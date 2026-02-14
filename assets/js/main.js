@@ -41,7 +41,7 @@ class PackSearch {
     this.resultsContainer.innerHTML = results
       .map(pack => `
         <a class="pack-card" href="/p/${pack.name}/">
-          <img class="cover" src="${pack.cover}" alt="${pack.displayName}">
+          <img class="cover" src="${pack.cover}" alt="${pack.displayName}" style="visibility:hidden">
           <div class="info">
             <img class="pack-icon" src="${pack.packPng}" alt="">
             <div class="name">${pack.coloredName || pack.displayName}</div>
@@ -49,6 +49,29 @@ class PackSearch {
         </a>
       `)
       .join('');
+
+    this.resultsContainer.querySelectorAll('.cover').forEach(img => {
+      img.onload = function() {
+        if (this.naturalHeight > this.naturalWidth) {
+          const frames = this.naturalHeight / this.naturalWidth;
+          if (Number.isInteger(frames) && frames > 1) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'cover animated-cover';
+            wrapper.style.backgroundImage = `url(${this.src})`;
+            wrapper.style.backgroundSize = `100% ${frames * 100}%`;
+            wrapper.style.imageRendering = 'pixelated';
+            let currentFrame = 0;
+            setInterval(() => {
+              currentFrame = (currentFrame + 1) % frames;
+              wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
+            }, 100);
+            this.replaceWith(wrapper);
+            return;
+          }
+        }
+        this.style.visibility = 'visible';
+      };
+    });
   }
 
   debounce(fn, delay) {

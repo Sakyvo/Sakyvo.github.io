@@ -265,41 +265,51 @@ class Admin {
 
     this.showMessage('Validating files...', 'success');
 
+    // Load existing pack names for duplicate detection
+    const existingNames = new Set();
+    try {
+      const idx = await fetch('/data/index.json?t=' + Date.now()).then(r => r.json());
+      idx.items.forEach(p => existingNames.add(p.name.toLowerCase()));
+    } catch(e) {}
+
     const valid = [];
-    const invalid = [];
+    const invalidFiles = [];
+    const duplicateFiles = [];
 
     for (const file of files) {
       if (!file.name.endsWith('.zip')) {
-        invalid.push(`${file.name}: Not a .zip file`);
+        invalidFiles.push(file.name);
         continue;
       }
       try {
         const zip = await JSZip.loadAsync(file);
-        if (!zip.file('pack.mcmeta')) {
-          invalid.push(`${file.name}: Missing pack.mcmeta in root`);
+        const hasAssets = Object.keys(zip.files).some(f => f.startsWith('assets/'));
+        const hasMcmeta = !!zip.file('pack.mcmeta');
+        if (!hasAssets || !hasMcmeta) {
+          invalidFiles.push(file.name);
+          continue;
+        }
+        // Check duplicate by sanitized name
+        const sanitized = this.sanitizeName(file.name.replace('.zip', '')).toLowerCase();
+        if (existingNames.has(sanitized)) {
+          duplicateFiles.push(file.name);
           continue;
         }
         valid.push(file);
       } catch (e) {
-        invalid.push(`${file.name}: Invalid zip file`);
+        invalidFiles.push(file.name);
       }
     }
 
-    if (invalid.length > 0) {
-      this.showInvalidFiles(invalid);
-    }
-
+    // If nothing to upload, show result immediately
     if (valid.length === 0) {
-      this.showMessage('No valid files to upload', 'error');
+      this.showUploadResult([], invalidFiles, duplicateFiles, null);
       return;
     }
-
-    if (!await this.confirm(`Upload ${valid.length} pack(s)?`)) return;
 
     this.showMessage('Uploading...', 'success');
 
     try {
-      // Get latest commit and tree SHA
       const refRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/main`, {
         headers: { Authorization: `token ${token}` }
       });
@@ -312,10 +322,9 @@ class Admin {
       if (!commitRes.ok) throw new Error('Failed to get commit');
       const baseTreeSha = (await commitRes.json()).tree.sha;
 
-      // Create blobs sequentially to avoid conflicts
       const uploadedNames = [];
       const successFiles = [];
-      const failedFiles = [];
+      const uploadFailedFiles = [];
       const treeItems = [];
 
       for (let i = 0; i < valid.length; i++) {
@@ -328,16 +337,16 @@ class Admin {
             headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ content, encoding: 'base64' })
           });
-          if (!blobRes.ok) { failedFiles.push(file.name); continue; }
+          if (!blobRes.ok) { uploadFailedFiles.push(file.name); continue; }
           const blob = await blobRes.json();
           treeItems.push({ path: `resourcepacks/${file.name}`, mode: '100644', type: 'blob', sha: blob.sha });
           uploadedNames.push(this.sanitizeName(file.name.replace('.zip', '')));
           successFiles.push(file.name);
-        } catch (e) { failedFiles.push(file.name); continue; }
+        } catch (e) { uploadFailedFiles.push(file.name); continue; }
       }
 
       if (treeItems.length === 0) {
-        this.showMessage('All uploads failed', 'error');
+        this.showUploadResult([], [...invalidFiles, ...uploadFailedFiles], duplicateFiles, null);
         return;
       }
 
@@ -366,7 +375,6 @@ class Admin {
         } catch (e) {}
       }
 
-      // Single commit with all files
       this.showMessage('Creating commit...', 'success');
       const treeRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees`, {
         method: 'POST',
@@ -391,11 +399,10 @@ class Admin {
       });
       if (!updateRefRes.ok) throw new Error('Failed to update branch');
 
-      const success = uploadedNames.length;
-      const failed = valid.length - success;
       fileInput.value = '';
-      this.showUploadResult(successFiles, failedFiles);
-      if (success > 0) await this.trackBuildProgress(token);
+      // Combine invalid files from validation and upload failures
+      const allInvalid = [...invalidFiles, ...uploadFailedFiles].sort((a, b) => a.localeCompare(b));
+      this.showUploadResult(successFiles, allInvalid, duplicateFiles, token);
     } catch (e) {
       this.showMessage(`Upload error: ${e.message}`, 'error');
     }
@@ -405,51 +412,134 @@ class Admin {
     return name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
   }
 
-  showUploadResult(successFiles, failedFiles) {
+  showUploadResult(successFiles, invalidFiles, duplicateFiles, token) {
+    const sorted = (arr) => [...arr].sort((a, b) => a.localeCompare(b));
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
       <div class="modal-content" style="max-width:500px;">
         <h2>Upload Result</h2>
-        ${successFiles.length > 0 ? `
-          <p style="color:#060;font-weight:bold;">Uploaded (${successFiles.length})</p>
-          <div style="max-height:150px;overflow-y:auto;margin-bottom:12px;font-size:13px;">
-            ${successFiles.map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
-          </div>
-        ` : ''}
-        ${failedFiles.length > 0 ? `
-          <p style="color:#c00;font-weight:bold;">Failed (${failedFiles.length})</p>
-          <div style="max-height:150px;overflow-y:auto;margin-bottom:12px;font-size:13px;">
-            ${failedFiles.map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
-          </div>
-        ` : ''}
-        <div class="modal-buttons">
-          <button class="btn btn-secondary" id="close-result">OK</button>
+        <div id="upload-result-list" style="max-height:400px;overflow-y:auto;">
+          ${successFiles.length > 0 ? `
+            <p style="color:#060;font-weight:bold;">Uploaded (${successFiles.length})</p>
+            <div style="margin-bottom:12px;font-size:13px;">
+              ${sorted(successFiles).map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+            </div>
+          ` : ''}
+          ${invalidFiles.length > 0 ? `
+            <p style="color:#c00;font-weight:bold;">Failed - Invalid (${invalidFiles.length})</p>
+            <div style="margin-bottom:12px;font-size:13px;">
+              ${sorted(invalidFiles).map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+            </div>
+          ` : ''}
+          ${duplicateFiles.length > 0 ? `
+            <p style="color:#c80;font-weight:bold;">Failed - Duplicate (${duplicateFiles.length})</p>
+            <div style="margin-bottom:12px;font-size:13px;">
+              ${sorted(duplicateFiles).map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+        <div id="build-section"></div>
+        <div class="modal-buttons" id="result-buttons">
+          ${successFiles.length === 0 ? '<button class="btn btn-secondary" id="close-result">OK</button>' : ''}
         </div>
       </div>
     `;
     document.body.appendChild(modal);
-    modal.querySelector('#close-result').onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+    if (successFiles.length === 0) {
+      modal.querySelector('#close-result').onclick = () => modal.remove();
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+      return;
+    }
+
+    // Auto-start build tracking
+    if (token) {
+      this.trackBuildInModal(token, modal);
+    }
   }
 
-  showInvalidFiles(invalid) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal-content" style="max-width:500px;">
-        <h2>Invalid Files</h2>
-        <div style="color:#c00;max-height:200px;overflow-y:auto;">
-          ${invalid.map(s => `<p>${s}</p>`).join('')}
-        </div>
-        <div class="modal-buttons">
-          <button class="btn btn-secondary" id="close-invalid">OK</button>
-        </div>
+  async trackBuildInModal(token, modal) {
+    const buildSection = modal.querySelector('#build-section');
+    const buttonsDiv = modal.querySelector('#result-buttons');
+
+    buildSection.innerHTML = `
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
+        <p id="modal-build-status" style="margin-bottom:8px;font-size:13px;">Waiting for build...</p>
+        <div style="background:#eee;height:6px;"><div id="modal-build-bar" style="background:#000;height:100%;width:10%;transition:width 0.3s;"></div></div>
+        <p id="modal-build-time" style="font-size:12px;color:#666;margin-top:4px;"></p>
       </div>
     `;
-    document.body.appendChild(modal);
-    modal.querySelector('#close-invalid').onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+    const statusEl = buildSection.querySelector('#modal-build-status');
+    const barEl = buildSection.querySelector('#modal-build-bar');
+    const timeEl = buildSection.querySelector('#modal-build-time');
+    const startTime = Date.now();
+    const timer = setInterval(() => { timeEl.textContent = `${Math.floor((Date.now() - startTime) / 1000)}s`; }, 1000);
+
+    try {
+      barEl.style.width = '20%';
+      await new Promise(r => setTimeout(r, 3000));
+
+      let runId = null;
+      for (let i = 0; i < 10; i++) {
+        const runsRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/build.yml/runs?per_page=1`, {
+          headers: { Authorization: `token ${token}` }
+        });
+        const runs = await runsRes.json();
+        if (runs.workflow_runs?.[0]?.status !== 'completed') {
+          runId = runs.workflow_runs?.[0]?.id;
+          break;
+        }
+        await new Promise(r => setTimeout(r, 2000));
+      }
+
+      if (!runId) {
+        clearInterval(timer);
+        statusEl.textContent = 'Build may have completed quickly';
+        barEl.style.width = '100%';
+        buttonsDiv.innerHTML = '<button class="btn btn-primary" id="refresh-page-btn">REFRESH PAGE</button>';
+        buttonsDiv.querySelector('#refresh-page-btn').onclick = () => location.reload();
+        return;
+      }
+
+      statusEl.textContent = 'Building...';
+      barEl.style.width = '40%';
+
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 5000));
+        const runRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/runs/${runId}`, {
+          headers: { Authorization: `token ${token}` }
+        });
+        const run = await runRes.json();
+        barEl.style.width = `${Math.min(40 + i * 2, 90)}%`;
+
+        if (run.status === 'completed') {
+          clearInterval(timer);
+          if (run.conclusion === 'success') {
+            statusEl.textContent = 'Build complete!';
+            barEl.style.width = '100%';
+          } else {
+            statusEl.textContent = `Build failed: ${run.conclusion}`;
+            barEl.style.background = '#c00';
+            barEl.style.width = '100%';
+          }
+          buttonsDiv.innerHTML = '<button class="btn btn-primary" id="refresh-page-btn">REFRESH PAGE</button>';
+          buttonsDiv.querySelector('#refresh-page-btn').onclick = () => location.reload();
+          return;
+        }
+      }
+
+      clearInterval(timer);
+      statusEl.textContent = 'Build timed out. Check GitHub Actions.';
+      buttonsDiv.innerHTML = '<button class="btn btn-primary" id="refresh-page-btn">REFRESH PAGE</button>';
+      buttonsDiv.querySelector('#refresh-page-btn').onclick = () => location.reload();
+    } catch (e) {
+      clearInterval(timer);
+      statusEl.textContent = `Error: ${e.message}`;
+      buttonsDiv.innerHTML = '<button class="btn btn-primary" id="refresh-page-btn">REFRESH PAGE</button>';
+      buttonsDiv.querySelector('#refresh-page-btn').onclick = () => location.reload();
+    }
   }
 
   async deletePack(name) {
@@ -528,7 +618,12 @@ class Admin {
         clearInterval(timer);
         statusEl.textContent = 'Build may have completed quickly';
         barEl.style.width = '100%';
-        setTimeout(() => { modal.remove(); location.reload(); }, 1500);
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'btn btn-primary';
+        refreshBtn.textContent = 'REFRESH PAGE';
+        refreshBtn.style.marginTop = '16px';
+        refreshBtn.onclick = () => location.reload();
+        modal.querySelector('.modal-content').appendChild(refreshBtn);
         return;
       }
 
@@ -549,7 +644,12 @@ class Admin {
           if (run.conclusion === 'success') {
             statusEl.textContent = 'Build complete!';
             barEl.style.width = '100%';
-            setTimeout(() => { modal.remove(); location.reload(); }, 1500);
+            const refreshBtn = document.createElement('button');
+            refreshBtn.className = 'btn btn-primary';
+            refreshBtn.textContent = 'REFRESH PAGE';
+            refreshBtn.style.marginTop = '16px';
+            refreshBtn.onclick = () => location.reload();
+            modal.querySelector('.modal-content').appendChild(refreshBtn);
           } else {
             statusEl.textContent = `Build failed: ${run.conclusion}`;
             barEl.style.background = '#c00';

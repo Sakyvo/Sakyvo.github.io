@@ -221,6 +221,7 @@ class ArmorViewer {
     }
 
     this.group.rotation.x = 0.1;
+    this.group.rotation.y = -Math.PI / 2;
   }
 
   animate() {

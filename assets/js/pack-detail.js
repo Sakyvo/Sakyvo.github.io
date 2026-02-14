@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <h2>Preview</h2>
         <div class="preview-grid">
           <div class="preview-card texture-grid">
-            <div class="grid-row">${img('diamond_sword.png')}${img('ender_pearl.png')}${img('splash_potion_of_healing.png')}${img('steak.png')}</div>
+            <div class="grid-row">${img('diamond_sword.png')}${img('ender_pearl.png')}<canvas id="potion-canvas" class="potion-canvas"></canvas>${img('steak.png')}</div>
             <div class="grid-row">${img('iron_sword.png')}${img('fishing_rod_uncast.png')}${img('apple_golden.png')}${img('golden_carrot.png')}</div>
             <div class="grid-row">${img('grass_side.png')}${img('stone.png')}${img('cobblestone.png')}${img('wool_colored_white.png')}</div>
             <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
@@ -198,8 +198,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     };
 
-    // Setup animated textures
+    // Setup animated textures - hide until loaded to prevent flash
     document.querySelectorAll('.texture-grid img').forEach(img => {
+      img.style.visibility = 'hidden';
       img.onload = async function() {
         if (this.naturalHeight > this.naturalWidth) {
           const frames = this.naturalHeight / this.naturalWidth;
@@ -209,8 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             wrapper.style.backgroundImage = `url(${this.src})`;
             wrapper.style.backgroundSize = `100% ${frames * 100}%`;
 
-            // Try to load mcmeta
-            let frameTime = 2; // default 2 ticks = 100ms
+            let frameTime = 2;
             try {
               const mcmeta = await fetch(this.src + '.mcmeta').then(r => r.json());
               if (mcmeta.animation?.frametime) frameTime = mcmeta.animation.frametime;
@@ -220,13 +220,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             setInterval(() => {
               currentFrame = (currentFrame + 1) % frames;
               wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
-            }, frameTime * 50); // 1 tick = 50ms
+            }, frameTime * 50);
 
             this.parentNode.replaceChild(wrapper, this);
+            return;
           }
         }
+        this.style.visibility = 'visible';
       };
     });
+
+    // Potion dynamic rendering
+    const potionCanvas = document.getElementById('potion-canvas');
+    if (potionCanvas && window.renderPotion) {
+      renderPotion(potionCanvas, `${base}potion_overlay.png`, `${base}potion_bottle_splash.png`, POTION_COLORS.instant_health);
+    }
 
     const container = document.getElementById('armor-viewer');
     if (container && window.ArmorViewer) {

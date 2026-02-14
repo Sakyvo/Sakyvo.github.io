@@ -51,6 +51,15 @@ const KEY_TEXTURES = {
   particle: [['assets/minecraft/textures/particle/particles.png']],
 };
 
+// Extract first frame from animated texture (height > width vertical strip)
+async function getFirstFrame(buffer) {
+  const meta = await sharp(buffer).metadata();
+  if (meta.height > meta.width && meta.height % meta.width === 0) {
+    return sharp(buffer).extract({ left: 0, top: 0, width: meta.width, height: meta.width }).toBuffer();
+  }
+  return buffer;
+}
+
 function cleanMinecraftText(text) {
   if (!text) return '';
   return text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').trim();
@@ -125,6 +134,10 @@ async function extractPack(zipPath) {
 
         if (bottleBuffer && overlayBuffer) {
           const [r, g, b] = alternatives.color;
+
+          // Extract first frame if animated
+          bottleBuffer = await getFirstFrame(bottleBuffer);
+          overlayBuffer = await getFirstFrame(overlayBuffer);
 
           // Normalize both textures to the same size
           const bottleMeta = await sharp(bottleBuffer).metadata();
@@ -502,7 +515,8 @@ async function generateCover(packId, textures, outputDir) {
   for (let i = 0; i < itemTextures.length; i++) {
     const inputPath = path.join(outputDir, itemTextures[i]);
     if (fs.existsSync(inputPath)) {
-      const resized = await sharp(inputPath).resize(64, 64, { kernel: 'nearest' }).toBuffer();
+      const firstFrame = await getFirstFrame(fs.readFileSync(inputPath));
+      const resized = await sharp(firstFrame).resize(64, 64, { kernel: 'nearest' }).toBuffer();
       composites.push({
         input: resized,
         left: (i % 4) * 64,
@@ -528,11 +542,25 @@ async function main() {
 
   const files = fs.readdirSync(packsDir).filter(f => f.endsWith('.zip'));
   const results = [];
+  const usedIds = new Set();
 
   for (const file of files) {
     console.log(`Processing: ${file}`);
     try {
       const result = await extractPack(path.join(packsDir, file));
+      // Deduplicate packId
+      let id = result.packId;
+      if (usedIds.has(id)) {
+        let suffix = 2;
+        while (usedIds.has(`${id}_${suffix}`)) suffix++;
+        const newId = `${id}_${suffix}`;
+        const newDir = path.join('thumbnails', newId);
+        fs.renameSync(result.outputDir, newDir);
+        result.packId = newId;
+        result.outputDir = newDir;
+        console.log(`  Renamed to: ${newId} (duplicate)`);
+      }
+      usedIds.add(result.packId);
       results.push(result);
       console.log(`  Extracted: ${result.packId}`);
     } catch (err) {

@@ -344,10 +344,22 @@ footer {
   border: 1px solid #ddd;
 }
 
+.grid-row .potion-canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+  border: 1px solid #ddd;
+}
+
 .animated-texture {
   width: 100%;
   aspect-ratio: 1;
   border: 1px solid #ddd;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.animated-cover {
   background-repeat: no-repeat;
   image-rendering: pixelated;
 }
