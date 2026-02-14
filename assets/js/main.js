@@ -52,22 +52,21 @@ class PackSearch {
 
     this.resultsContainer.querySelectorAll('.cover').forEach(img => {
       img.onload = function() {
-        if (this.naturalHeight > this.naturalWidth) {
-          const frames = this.naturalHeight / this.naturalWidth;
-          if (Number.isInteger(frames) && frames > 1) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'cover animated-cover';
-            wrapper.style.backgroundImage = `url(${this.src})`;
-            wrapper.style.backgroundSize = `100% ${frames * 100}%`;
-            wrapper.style.imageRendering = 'pixelated';
-            let currentFrame = 0;
-            setInterval(() => {
-              currentFrame = (currentFrame + 1) % frames;
-              wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
-            }, 100);
-            this.replaceWith(wrapper);
-            return;
-          }
+        const frameH = this.naturalWidth / 2;
+        const frames = this.naturalHeight / frameH;
+        if (Number.isInteger(frames) && frames > 1) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'cover animated-cover';
+          wrapper.style.backgroundImage = `url(${this.src})`;
+          wrapper.style.backgroundSize = `100% ${frames * 100}%`;
+          wrapper.style.imageRendering = 'pixelated';
+          let currentFrame = 0;
+          setInterval(() => {
+            currentFrame = (currentFrame + 1) % frames;
+            wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
+          }, 100);
+          this.replaceWith(wrapper);
+          return;
         }
         this.style.visibility = 'visible';
       };

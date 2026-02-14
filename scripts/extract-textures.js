@@ -511,25 +511,58 @@ async function generateCover(packId, textures, outputDir) {
   const itemTextures = textures.items.slice(0, 8);
   if (itemTextures.length === 0) return;
 
-  const composites = [];
-  for (let i = 0; i < itemTextures.length; i++) {
-    const inputPath = path.join(outputDir, itemTextures[i]);
+  // Analyze each texture for animation frames
+  const texData = [];
+  let maxFrames = 1;
+  for (const tex of itemTextures) {
+    const inputPath = path.join(outputDir, tex);
     if (fs.existsSync(inputPath)) {
-      const firstFrame = await getFirstFrame(fs.readFileSync(inputPath));
-      const resized = await sharp(firstFrame).resize(64, 64, { kernel: 'nearest' }).toBuffer();
-      composites.push({
-        input: resized,
-        left: (i % 4) * 64,
-        top: Math.floor(i / 4) * 64,
-      });
+      const buf = fs.readFileSync(inputPath);
+      const meta = await sharp(buf).metadata();
+      let frames = 1;
+      if (meta.height > meta.width && meta.height % meta.width === 0) {
+        frames = meta.height / meta.width;
+      }
+      texData.push({ buf, frames, size: meta.width });
+      maxFrames = Math.max(maxFrames, frames);
+    } else {
+      texData.push(null);
     }
   }
 
-  if (composites.length > 0) {
-    await sharp({ create: { width: 256, height: 128, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-      .composite(composites)
-      .png()
-      .toFile(path.join(outputDir, 'cover.png'));
+  // Generate each cover frame
+  const frameBuffers = [];
+  for (let f = 0; f < maxFrames; f++) {
+    const composites = [];
+    for (let i = 0; i < texData.length; i++) {
+      const td = texData[i];
+      if (!td) continue;
+      const fi = f % td.frames;
+      let frameBuf;
+      if (td.frames > 1) {
+        frameBuf = await sharp(td.buf)
+          .extract({ left: 0, top: fi * td.size, width: td.size, height: td.size })
+          .resize(64, 64, { kernel: 'nearest' }).toBuffer();
+      } else {
+        frameBuf = await sharp(td.buf).resize(64, 64, { kernel: 'nearest' }).toBuffer();
+      }
+      composites.push({ input: frameBuf, left: (i % 4) * 64, top: Math.floor(i / 4) * 64 });
+    }
+    if (composites.length > 0) {
+      frameBuffers.push(await sharp({
+        create: { width: 256, height: 128, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+      }).composite(composites).png().toBuffer());
+    }
+  }
+
+  if (frameBuffers.length === 1) {
+    fs.writeFileSync(path.join(outputDir, 'cover.png'), frameBuffers[0]);
+  } else if (frameBuffers.length > 1) {
+    // Stack frames vertically into animation strip
+    await sharp({
+      create: { width: 256, height: 128 * frameBuffers.length, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+    }).composite(frameBuffers.map((buf, i) => ({ input: buf, left: 0, top: i * 128 })))
+      .png().toFile(path.join(outputDir, 'cover.png'));
   }
 }
 
