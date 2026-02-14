@@ -137,12 +137,35 @@ class Admin {
           <a href="/p/${p.name}/" class="admin-pack-name">${p.displayName}</a>
         </div>
         <div class="admin-pack-row2">
-          <img class="admin-texture" src="/thumbnails/${p.name}/diamond_sword.png" onerror="this.style.display='none'">
-          <img class="admin-texture" src="/thumbnails/${p.name}/ender_pearl.png" onerror="this.style.display='none'">
+          <img class="admin-texture" src="/thumbnails/${p.name}/diamond_sword.png" onerror="this.style.display='none'" style="visibility:hidden">
+          <img class="admin-texture" src="/thumbnails/${p.name}/ender_pearl.png" onerror="this.style.display='none'" style="visibility:hidden">
           <button class="admin-delete-btn ${this.multiSelectMode ? 'disabled' : ''}" data-name="${p.name}">DELETE</button>
         </div>
       </div>
     `).join('') || '<p>No packs found</p>';
+
+    // Animated texture handling for admin textures
+    listEl.querySelectorAll('.admin-texture').forEach(img => {
+      img.onload = function() {
+        if (this.naturalHeight > this.naturalWidth) {
+          const frames = this.naturalHeight / this.naturalWidth;
+          if (Number.isInteger(frames) && frames > 1) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'admin-texture animated-admin-texture';
+            wrapper.style.backgroundImage = `url(${this.src})`;
+            wrapper.style.backgroundSize = `100% ${frames * 100}%`;
+            let currentFrame = 0;
+            setInterval(() => {
+              currentFrame = (currentFrame + 1) % frames;
+              wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
+            }, 100);
+            this.replaceWith(wrapper);
+            return;
+          }
+        }
+        this.style.visibility = 'visible';
+      };
+    });
 
     listEl.querySelectorAll('.admin-pack-icon').forEach(img => {
       img.onclick = () => this.toggleSelect(img.dataset.name);

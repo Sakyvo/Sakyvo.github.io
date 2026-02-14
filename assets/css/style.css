@@ -789,6 +789,13 @@ footer {
   image-rendering: pixelated;
 }
 
+.animated-admin-texture {
+  width: 32px;
+  height: 32px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
 .admin-delete-btn {
   margin-left: auto;
   padding: 4px 12px;
