@@ -74,11 +74,17 @@ class ArmorViewer {
       }
     });
 
-    // Touch events
+    // Touch events - only rotate when dragging center 1/3 of canvas
     el.addEventListener('touchstart', e => {
-      this.isDragging = true;
-      this.prevX = e.touches[0].clientX;
-      this.prevY = e.touches[0].clientY;
+      const touch = e.touches[0];
+      const rect = el.getBoundingClientRect();
+      const relX = touch.clientX - rect.left;
+      const third = rect.width / 3;
+      if (relX > third && relX < third * 2) {
+        this.isDragging = true;
+        this.prevX = touch.clientX;
+        this.prevY = touch.clientY;
+      }
     }, { passive: true });
 
     el.addEventListener('touchend', () => {
@@ -87,13 +93,14 @@ class ArmorViewer {
 
     el.addEventListener('touchmove', e => {
       if (this.isDragging) {
+        e.preventDefault();
         this.group.rotation.y += (e.touches[0].clientX - this.prevX) * 0.01;
         this.group.rotation.x += (e.touches[0].clientY - this.prevY) * 0.01;
         this.group.rotation.x = Math.max(-1, Math.min(1, this.group.rotation.x));
         this.prevX = e.touches[0].clientX;
         this.prevY = e.touches[0].clientY;
       }
-    }, { passive: true });
+    }, { passive: false });
   }
 
   loadTextures() {

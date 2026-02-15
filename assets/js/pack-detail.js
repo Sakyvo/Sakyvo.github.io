@@ -11,12 +11,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pack = await fetch(`/data/packs/${packName}.json`).then(r => r.json());
     document.title = `${pack.displayName} - VALE`;
 
-    // Set pack.png as favicon
+    // Set pack.png as favicon (center-crop to 1:1 if needed)
     const favicon = document.getElementById('favicon');
     if (favicon) {
+      const setFavicon = (src) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const w = img.naturalWidth, h = img.naturalHeight;
+          if (w === h) { favicon.href = src; return; }
+          const size = Math.min(w, h);
+          const c = document.createElement('canvas');
+          c.width = size; c.height = size;
+          c.getContext('2d').drawImage(img, (w - size) / 2, (h - size) / 2, size, size, 0, 0, size, size);
+          favicon.href = c.toDataURL('image/png');
+        };
+        img.src = src;
+      };
       const testImg = new Image();
-      testImg.onload = () => { favicon.href = pack.packPng; };
-      testImg.onerror = () => { favicon.href = '/Default_Texture/pack.png'; };
+      testImg.onload = () => setFavicon(pack.packPng);
+      testImg.onerror = () => setFavicon('/Default_Texture/pack.png');
       testImg.src = pack.packPng;
     }
 
