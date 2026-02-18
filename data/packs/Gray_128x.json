@@ -1,0 +1,60 @@
+{
+  "id": "! Gray 128x",
+  "name": "Gray_128x",
+  "displayName": "Gray 128x",
+  "coloredName": "Gray 128x",
+  "description": "recolored by qunc",
+  "cover": "/thumbnails/Gray_128x/cover.png",
+  "packPng": "/thumbnails/Gray_128x/pack.png",
+  "icon": null,
+  "file": "resourcepacks/! Gray 128x.zip",
+  "fileSize": "39.2MB",
+  "uploadDate": "2026-02-18",
+  "lists": [
+    "iil pf v1"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20Gray%20128x.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20Gray%20128x.zip"
+  }
+}

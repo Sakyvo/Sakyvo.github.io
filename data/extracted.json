@@ -414,6 +414,98 @@
     "description": "-Latenci"
   },
   {
+    "packId": "Eum3_FPS",
+    "originalName": "! Eum3 FPS",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/Eum3_FPS",
+    "description": "Arbaz x Apexay"
+  },
+  {
+    "packId": "Gray_128x",
+    "originalName": "! Gray 128x",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/Gray_128x",
+    "description": "recolored by qunc"
+  },
+  {
     "packId": "Nasty_Red",
     "originalName": "! Nasty Red",
     "extracted": {
