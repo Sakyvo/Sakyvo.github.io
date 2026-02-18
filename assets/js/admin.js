@@ -304,25 +304,25 @@ class Admin {
         invalidFiles.push(file.name);
         continue;
       }
-      try {
-        const zip = await JSZip.loadAsync(file);
-        const hasAssets = Object.keys(zip.files).some(f => f.startsWith('assets/'));
-        const hasMcmeta = !!zip.file('pack.mcmeta');
-        if (!hasAssets || !hasMcmeta) {
-          invalidFiles.push(file.name);
-          continue;
+      if (file.size < 35 * 1024 * 1024) {
+        try {
+          const zip = await JSZip.loadAsync(file);
+          const hasAssets = Object.keys(zip.files).some(f => f.startsWith('assets/'));
+          const hasMcmeta = !!zip.file('pack.mcmeta');
+          if (!hasAssets || !hasMcmeta) {
+            invalidFiles.push(file.name);
+            continue;
+          }
+        } catch (e) {
+          // JSZip failed; still allow upload, server-side build validates
         }
-      } catch (e) {
-        // JSZip may fail on large files; still allow upload, server-side build validates
       }
-      {
-        const sanitized = this.sanitizeName(file.name.replace('.zip', '')).toLowerCase();
-        if (existingNames.has(sanitized)) {
-          duplicateFiles.push(file.name);
-          continue;
-        }
-        valid.push(file);
+      const sanitized = this.sanitizeName(file.name.replace('.zip', '')).toLowerCase();
+      if (existingNames.has(sanitized)) {
+        duplicateFiles.push(file.name);
+        continue;
       }
+      valid.push(file);
     }
 
     // If nothing to upload, show result immediately
