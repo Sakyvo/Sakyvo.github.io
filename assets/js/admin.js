@@ -312,15 +312,16 @@ class Admin {
           invalidFiles.push(file.name);
           continue;
         }
-        // Check duplicate by sanitized name
+      } catch (e) {
+        // JSZip may fail on large files; still allow upload, server-side build validates
+      }
+      {
         const sanitized = this.sanitizeName(file.name.replace('.zip', '')).toLowerCase();
         if (existingNames.has(sanitized)) {
           duplicateFiles.push(file.name);
           continue;
         }
         valid.push(file);
-      } catch (e) {
-        invalidFiles.push(file.name);
       }
     }
 
