@@ -1,0 +1,58 @@
+{
+  "id": "yokabi edit",
+  "name": "yokabi_edit",
+  "displayName": "yokabi edit",
+  "coloredName": "yokabi edit",
+  "description": "Name it whatever you want fag -Dualzz",
+  "cover": "/thumbnails/yokabi_edit/cover.png",
+  "packPng": "/thumbnails/yokabi_edit/pack.png",
+  "icon": null,
+  "file": "resourcepacks/yokabi edit.zip",
+  "fileSize": "48.5MB",
+  "uploadDate": "2026-02-19",
+  "lists": [],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/yokabi%20edit.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/yokabi%20edit.zip"
+  }
+}

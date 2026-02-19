@@ -1,0 +1,58 @@
+{
+  "id": "Nakoso Eum3 edit",
+  "name": "Nakoso_Eum3_edit",
+  "displayName": "Nakoso Eum3 edit",
+  "coloredName": "Nakoso Eum3 edit",
+  "description": "By Acruse for Nakoso",
+  "cover": "/thumbnails/Nakoso_Eum3_edit/cover.png",
+  "packPng": "/thumbnails/Nakoso_Eum3_edit/pack.png",
+  "icon": null,
+  "file": "resourcepacks/Nakoso Eum3 edit.zip",
+  "fileSize": "40.4MB",
+  "uploadDate": "2026-02-19",
+  "lists": [],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Nakoso%20Eum3%20edit.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Nakoso%20Eum3%20edit.zip"
+  }
+}
