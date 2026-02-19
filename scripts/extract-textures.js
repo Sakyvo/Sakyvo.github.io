@@ -76,7 +76,7 @@ function parseDescription(desc) {
 }
 
 function sanitizeName(name) {
-  return name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
+  return name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff]+/, '').trim().replace(/\s+/g, '_');
 }
 
 async function extractPack(zipPath) {

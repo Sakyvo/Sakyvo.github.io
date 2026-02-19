@@ -12,12 +12,12 @@ const MC_COLORS = {
 
 function cleanMinecraftText(text) {
   if (!text) return '';
-  return text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').trim();
+  return text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff]+/, '').trim();
 }
 
 function toColoredHtml(text) {
   if (!text) return '';
-  const cleaned = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').trim();
+  const cleaned = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/^[^0-9a-zA-Z\u4e00-\u9fff§]+/, '').trim();
   let result = '', color = null;
   for (let i = 0; i < cleaned.length; i++) {
     if (cleaned[i] === '§' && i + 1 < cleaned.length) {
