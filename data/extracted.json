@@ -368,7 +368,7 @@
     "description": "Ricardoh x Spores x Prez"
   },
   {
-    "packId": "§_ShiroPack_by_Mellor",
+    "packId": "ShiroPack_by_Mellor",
     "originalName": "! # § ShiroPack by Mellor",
     "extracted": {
       "items": [
@@ -410,7 +410,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/§_ShiroPack_by_Mellor",
+    "outputDir": "thumbnails/ShiroPack_by_Mellor",
     "description": "by Mellor"
   },
   {
