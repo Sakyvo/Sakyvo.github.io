@@ -1,0 +1,60 @@
+{
+  "id": "§4§ORUSOS §8§OPLAST",
+  "name": "RUSOS_PLAST",
+  "displayName": "RUSOS PLAST",
+  "coloredName": "<span style=\"color:#AA0000\">R</span><span style=\"color:#AA0000\">U</span><span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\">O</span><span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\"> </span><span style=\"color:#555555\">P</span><span style=\"color:#555555\">L</span><span style=\"color:#555555\">A</span><span style=\"color:#555555\">S</span><span style=\"color:#555555\">T</span>",
+  "description": "RUSOS>ALL",
+  "cover": "/thumbnails/RUSOS_PLAST/cover.png",
+  "packPng": "/thumbnails/RUSOS_PLAST/pack.png",
+  "icon": null,
+  "file": "resourcepacks/§4§ORUSOS §8§OPLAST.zip",
+  "fileSize": "16.6MB",
+  "uploadDate": "2026-02-19",
+  "lists": [
+    "iil pf v2"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74%C2%A7ORUSOS%20%C2%A78%C2%A7OPLAST.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74%C2%A7ORUSOS%20%C2%A78%C2%A7OPLAST.zip"
+  }
+}

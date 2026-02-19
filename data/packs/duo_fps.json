@@ -1,0 +1,60 @@
+{
+  "id": "duo fps",
+  "name": "duo_fps",
+  "displayName": "duo fps",
+  "coloredName": "duo fps",
+  "description": "edited by vodka",
+  "cover": "/thumbnails/duo_fps/cover.png",
+  "packPng": "/thumbnails/duo_fps/pack.png",
+  "icon": null,
+  "file": "resourcepacks/duo fps.zip",
+  "fileSize": "8.5MB",
+  "uploadDate": "2026-02-19",
+  "lists": [
+    "iil pf v2"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/duo%20fps.zip",
+    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/duo%20fps.zip"
+  }
+}
