@@ -372,7 +372,7 @@ class Admin {
       }
 
       if (treeItems.length === 0) {
-        this.showUploadResult([], [...invalidFiles, ...uploadFailedFiles], duplicateFiles, warnFiles, null);
+        this.showUploadResult([], invalidFiles, duplicateFiles, warnFiles, uploadFailedFiles, null);
         return;
       }
 
@@ -426,9 +426,7 @@ class Admin {
       if (!updateRefRes.ok) throw new Error('Failed to update branch');
 
       fileInput.value = '';
-      // Combine invalid files from validation and upload failures
-      const allInvalid = [...invalidFiles, ...uploadFailedFiles].sort((a, b) => a.localeCompare(b));
-      this.showUploadResult(successFiles, allInvalid, duplicateFiles, warnFiles, token);
+      this.showUploadResult(successFiles, invalidFiles, duplicateFiles, warnFiles, uploadFailedFiles, token);
     } catch (e) {
       this.showMessage(`Upload error: ${e.message}`, 'error');
     }
@@ -438,7 +436,7 @@ class Admin {
     return name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
   }
 
-  showUploadResult(successFiles, invalidFiles, duplicateFiles, warnFiles, token) {
+  showUploadResult(successFiles, invalidFiles, duplicateFiles, warnFiles, oversizedFiles, token) {
     const sorted = (arr) => [...arr].sort((a, b) => a.localeCompare(b));
     // Split warnFiles into uploaded (in successFiles) and not uploaded
     const warnUploaded = warnFiles.filter(f => successFiles.includes(f));
@@ -459,6 +457,13 @@ class Admin {
             <div style="margin-bottom:12px;font-size:13px;color:#996;">
               ${sorted(warnUploaded).map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
               <p style="margin-top:4px;font-size:12px;color:#888;">Could not validate client-side; will be verified during build</p>
+            </div>
+          ` : ''}
+          ${oversizedFiles.length > 0 ? `
+            <p style="color:#c00;font-weight:bold;">Failed - Too Large for API (${oversizedFiles.length})</p>
+            <div style="margin-bottom:12px;font-size:13px;">
+              ${sorted(oversizedFiles).map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+              <p style="margin-top:4px;font-size:12px;color:#888;">Files >40MB must be uploaded via local git push</p>
             </div>
           ` : ''}
           ${invalidFiles.length > 0 ? `
