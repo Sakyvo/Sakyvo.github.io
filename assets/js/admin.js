@@ -298,6 +298,7 @@ class Admin {
     const valid = [];
     const invalidFiles = [];
     const duplicateFiles = [];
+    const warnFiles = [];
 
     for (const file of files) {
       if (!file.name.endsWith('.zip')) {
@@ -310,12 +311,13 @@ class Admin {
           const hasAssets = Object.keys(zip.files).some(f => f.startsWith('assets/'));
           const hasMcmeta = !!zip.file('pack.mcmeta');
           if (!hasAssets || !hasMcmeta) {
-            invalidFiles.push(file.name);
-            continue;
+            warnFiles.push(file.name);
           }
         } catch (e) {
-          // JSZip failed; still allow upload, server-side build validates
+          warnFiles.push(file.name);
         }
+      } else {
+        warnFiles.push(file.name);
       }
       const sanitized = this.sanitizeName(file.name.replace('.zip', '')).toLowerCase();
       if (existingNames.has(sanitized)) {
@@ -327,7 +329,7 @@ class Admin {
 
     // If nothing to upload, show result immediately
     if (valid.length === 0) {
-      this.showUploadResult([], invalidFiles, duplicateFiles, null);
+      this.showUploadResult([], invalidFiles, duplicateFiles, warnFiles, null);
       return;
     }
 
@@ -370,7 +372,7 @@ class Admin {
       }
 
       if (treeItems.length === 0) {
-        this.showUploadResult([], [...invalidFiles, ...uploadFailedFiles], duplicateFiles, null);
+        this.showUploadResult([], [...invalidFiles, ...uploadFailedFiles], duplicateFiles, warnFiles, null);
         return;
       }
 
@@ -426,7 +428,7 @@ class Admin {
       fileInput.value = '';
       // Combine invalid files from validation and upload failures
       const allInvalid = [...invalidFiles, ...uploadFailedFiles].sort((a, b) => a.localeCompare(b));
-      this.showUploadResult(successFiles, allInvalid, duplicateFiles, token);
+      this.showUploadResult(successFiles, allInvalid, duplicateFiles, warnFiles, token);
     } catch (e) {
       this.showMessage(`Upload error: ${e.message}`, 'error');
     }
@@ -436,8 +438,10 @@ class Admin {
     return name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`]/g, '').trim().replace(/\s+/g, '_');
   }
 
-  showUploadResult(successFiles, invalidFiles, duplicateFiles, token) {
+  showUploadResult(successFiles, invalidFiles, duplicateFiles, warnFiles, token) {
     const sorted = (arr) => [...arr].sort((a, b) => a.localeCompare(b));
+    // Split warnFiles into uploaded (in successFiles) and not uploaded
+    const warnUploaded = warnFiles.filter(f => successFiles.includes(f));
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
@@ -448,6 +452,13 @@ class Admin {
             <p style="color:#060;font-weight:bold;">Uploaded (${successFiles.length})</p>
             <div style="margin-bottom:12px;font-size:13px;">
               ${sorted(successFiles).map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+            </div>
+          ` : ''}
+          ${warnUploaded.length > 0 ? `
+            <p style="color:#b80;font-weight:bold;">⚠ Warning - Unverified (${warnUploaded.length})</p>
+            <div style="margin-bottom:12px;font-size:13px;color:#996;">
+              ${sorted(warnUploaded).map(f => `<p style="margin:2px 0;">${f}</p>`).join('')}
+              <p style="margin-top:4px;font-size:12px;color:#888;">Could not validate client-side; will be verified during build</p>
             </div>
           ` : ''}
           ${invalidFiles.length > 0 ? `
