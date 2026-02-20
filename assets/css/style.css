@@ -36,6 +36,10 @@ nav { display: flex; gap: 12px; }
   font-size: 14px;
 }
 
+.nav-btn:active {
+  background: #444;
+}
+
 .hero {
   text-align: center;
   padding: 60px 20px;
@@ -71,13 +75,22 @@ nav { display: flex; gap: 12px; }
 }
 
 .search-btn {
-  padding: 12px 24px;
+  padding: 0;
+  aspect-ratio: 1;
   background: #000;
   color: #fff;
   border: 2px solid #000;
   font-weight: bold;
   cursor: pointer;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+}
+
+.search-btn:active {
+  background: #444;
 }
 
 .explore-section {
@@ -298,10 +311,19 @@ footer {
   border: 2px solid #000;
 }
 
+.btn-primary:active {
+  background: #444;
+  border-color: #444;
+}
+
 .btn-secondary {
   background: #fff;
   color: #000;
   border: 2px solid #000;
+}
+
+.btn-secondary:active {
+  background: #ddd;
 }
 
 .preview-section { margin-bottom: 32px; }
@@ -594,6 +616,12 @@ footer {
   color: #fff;
 }
 
+.sort-btn:active {
+  background: #444;
+  color: #fff;
+  border-color: #444;
+}
+
 .tab-btn {
   font-size: 14px;
   font-weight: bold;
@@ -818,6 +846,11 @@ footer {
   background: #c00;
   color: #fff;
   border: 2px solid #c00;
+}
+
+.btn-danger:active {
+  background: #900;
+  border-color: #900;
 }
 
 /* Admin list selector */

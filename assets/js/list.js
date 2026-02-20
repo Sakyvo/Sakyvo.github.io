@@ -17,12 +17,6 @@ const LIST_PAGE_HTML = `<!DOCTYPE html>
     <a href="/" class="logo">VALE</a>
     <nav></nav>
   </header>
-  <section class="hero" style="padding:40px 0;">
-    <div class="search-box">
-      <input type="text" id="list-search" placeholder="Search lists..." style="display:none;">
-      <button class="search-btn" style="display:none;">🔍</button>
-    </div>
-  </section>
   <section class="explore-section">
     <div class="section-header">
       <div class="section-tabs">
@@ -412,6 +406,9 @@ async function loadListDetail(listId) {
   }
 
   document.title = `${list.name} - VALE`;
+
+  const heroEl = document.querySelector('.hero');
+  if (heroEl) heroEl.style.display = 'none';
 
   if (allPacks.length === 0) {
     try {
