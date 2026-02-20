@@ -1,5 +1,5 @@
 {
-  "total": 71,
+  "total": 77,
   "pageSize": 50,
   "pages": 2,
   "items": [
@@ -28,6 +28,18 @@
       "packPng": "/thumbnails/32_ocn_new_particles/pack.png"
     },
     {
+      "id": "9kiro",
+      "name": "9kiro",
+      "displayName": "9kiro",
+      "coloredName": "9kiro",
+      "description": "By Kyzuko & Verzide edit by iil",
+      "lists": [
+        "iil pf v2"
+      ],
+      "cover": "/thumbnails/9kiro/cover.png",
+      "packPng": "/thumbnails/9kiro/pack.png"
+    },
+    {
       "id": "!    #§bAerick §7Faith",
       "name": "Aerick_Faith",
       "displayName": "Aerick Faith",
@@ -52,13 +64,26 @@
       "packPng": "/thumbnails/Amaranth/pack.png"
     },
     {
+      "id": "arissi red smoothful",
+      "name": "arissi_red_smoothful",
+      "displayName": "arissi red smoothful",
+      "coloredName": "arissi red smoothful",
+      "description": "By Arissi for M0DIFIER <3",
+      "lists": [
+        "iil pf v2"
+      ],
+      "cover": "/thumbnails/arissi_red_smoothful/cover.png",
+      "packPng": "/thumbnails/arissi_red_smoothful/pack.png"
+    },
+    {
       "id": "!           Aspecti 250 subs pack",
       "name": "Aspecti_250_subs_pack",
       "displayName": "Aspecti 250 subs pack",
       "coloredName": "Aspecti 250 subs pack",
       "description": "",
       "lists": [
-        "iil pf v1"
+        "iil pf v1",
+        "iil pf v2"
       ],
       "cover": "/thumbnails/Aspecti_250_subs_pack/cover.png",
       "packPng": "/thumbnails/Aspecti_250_subs_pack/pack.png"
@@ -108,6 +133,18 @@
       ],
       "cover": "/thumbnails/Blue1234/cover.png",
       "packPng": "/thumbnails/Blue1234/pack.png"
+    },
+    {
+      "id": "boxing 128",
+      "name": "boxing_128",
+      "displayName": "boxing 128",
+      "coloredName": "boxing 128",
+      "description": "",
+      "lists": [
+        "iil pf v2"
+      ],
+      "cover": "/thumbnails/boxing_128/cover.png",
+      "packPng": "/thumbnails/boxing_128/pack.png"
     },
     {
       "id": "cayden revamp",
@@ -222,7 +259,8 @@
       "coloredName": "Eum3 Blue Edit - Fawokh",
       "description": "WE ARE THE CHAMPIONS",
       "lists": [
-        "iil pf v1"
+        "iil pf v1",
+        "iil pf v2"
       ],
       "cover": "/thumbnails/Eum3_Blue_Edit_-_Fawokh/cover.png",
       "packPng": "/thumbnails/Eum3_Blue_Edit_-_Fawokh/pack.png"
@@ -368,6 +406,18 @@
       "packPng": "/thumbnails/HUU_Red_HCF/pack.png"
     },
     {
+      "id": "isparkzuko",
+      "name": "isparkzuko",
+      "displayName": "isparkzuko",
+      "coloredName": "isparkzuko",
+      "description": "By Kyzuko & iSparkton -edit by iil",
+      "lists": [
+        "iil pf v2"
+      ],
+      "cover": "/thumbnails/isparkzuko/cover.png",
+      "packPng": "/thumbnails/isparkzuko/pack.png"
+    },
+    {
       "id": "!     §1Jewdah §9Private",
       "name": "Jewdah_Private",
       "displayName": "Jewdah Private",
@@ -478,7 +528,8 @@
       "coloredName": "Nasty Red",
       "description": "clllare mashup",
       "lists": [
-        "iil pf v1"
+        "iil pf v1",
+        "iil pf v2"
       ],
       "cover": "/thumbnails/Nasty_Red/cover.png",
       "packPng": "/thumbnails/Nasty_Red/pack.png"
@@ -506,6 +557,30 @@
       ],
       "cover": "/thumbnails/no_color_red_sky_and_glint_overlay/cover.png",
       "packPng": "/thumbnails/no_color_red_sky_and_glint_overlay/pack.png"
+    },
+    {
+      "id": "otaku",
+      "name": "otaku",
+      "displayName": "otaku",
+      "coloredName": "otaku",
+      "description": "300 Subs Pack by Tweety2O. edit by iil",
+      "lists": [
+        "iil pf v2"
+      ],
+      "cover": "/thumbnails/otaku/cover.png",
+      "packPng": "/thumbnails/otaku/pack.png"
+    },
+    {
+      "id": "otb red fps edit",
+      "name": "otb_red_fps_edit",
+      "displayName": "otb red fps edit",
+      "coloredName": "otb red fps edit",
+      "description": "",
+      "lists": [
+        "iil pf v2"
+      ],
+      "cover": "/thumbnails/otb_red_fps_edit/cover.png",
+      "packPng": "/thumbnails/otb_red_fps_edit/pack.png"
     },
     {
       "id": "powrot",

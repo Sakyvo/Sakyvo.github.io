@@ -2,6 +2,366 @@
   "page": 2,
   "items": [
     {
+      "id": "! §5Purple §d128x",
+      "name": "Purple_128x",
+      "displayName": "Purple 128x",
+      "coloredName": "<span style=\"color:#AA00AA\">P</span><span style=\"color:#AA00AA\">u</span><span style=\"color:#AA00AA\">r</span><span style=\"color:#AA00AA\">p</span><span style=\"color:#AA00AA\">l</span><span style=\"color:#AA00AA\">e</span><span style=\"color:#AA00AA\"> </span><span style=\"color:#FF55FF\">1</span><span style=\"color:#FF55FF\">2</span><span style=\"color:#FF55FF\">8</span><span style=\"color:#FF55FF\">x</span>",
+      "description": "-Original by Latenci, �5Edited by Scandic",
+      "cover": "/thumbnails/Purple_128x/cover.png",
+      "packPng": "/thumbnails/Purple_128x/pack.png",
+      "icon": null,
+      "file": "resourcepacks/! §5Purple §d128x.zip",
+      "fileSize": "39.2MB",
+      "uploadDate": "2026-02-20",
+      "lists": [
+        "iil pf v1"
+      ],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A75Purple%20%C2%A7d128x.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A75Purple%20%C2%A7d128x.zip"
+      }
+    },
+    {
+      "id": "ran4",
+      "name": "ran4",
+      "displayName": "ran4",
+      "coloredName": "ran4",
+      "description": "",
+      "cover": "/thumbnails/ran4/cover.png",
+      "packPng": "/thumbnails/ran4/pack.png",
+      "icon": null,
+      "file": "resourcepacks/ran4.zip",
+      "fileSize": "17.2MB",
+      "uploadDate": "2026-02-20",
+      "lists": [
+        "iil pf v2"
+      ],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/ran4.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/ran4.zip"
+      }
+    },
+    {
+      "id": "! §4Red §c128x",
+      "name": "Red_128x",
+      "displayName": "Red 128x",
+      "coloredName": "<span style=\"color:#AA0000\">R</span><span style=\"color:#AA0000\">e</span><span style=\"color:#AA0000\">d</span><span style=\"color:#AA0000\"> </span><span style=\"color:#FF5555\">1</span><span style=\"color:#FF5555\">2</span><span style=\"color:#FF5555\">8</span><span style=\"color:#FF5555\">x</span>",
+      "description": "Original by Latenci, �4Edited by Scandic",
+      "cover": "/thumbnails/Red_128x/cover.png",
+      "packPng": "/thumbnails/Red_128x/pack.png",
+      "icon": null,
+      "file": "resourcepacks/! §4Red §c128x.zip",
+      "fileSize": "39.2MB",
+      "uploadDate": "2026-02-20",
+      "lists": [
+        "iil pf v1"
+      ],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A74Red%20%C2%A7c128x.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A74Red%20%C2%A7c128x.zip"
+      }
+    },
+    {
+      "id": "red xetha edit",
+      "name": "red_xetha_edit",
+      "displayName": "red xetha edit",
+      "coloredName": "red xetha edit",
+      "description": "Apexay, iil edit",
+      "cover": "/thumbnails/red_xetha_edit/cover.png",
+      "packPng": "/thumbnails/red_xetha_edit/pack.png",
+      "icon": null,
+      "file": "resourcepacks/red xetha edit.zip",
+      "fileSize": "32.1MB",
+      "uploadDate": "2026-02-20",
+      "lists": [
+        "iil pf v2"
+      ],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/red%20xetha%20edit.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/red%20xetha%20edit.zip"
+      }
+    },
+    {
+      "id": "!     §4RedDust §8[§464x§8]",
+      "name": "RedDust_64x",
+      "displayName": "RedDust [64x]",
+      "coloredName": "<span style=\"color:#AA0000\">R</span><span style=\"color:#AA0000\">e</span><span style=\"color:#AA0000\">d</span><span style=\"color:#AA0000\">D</span><span style=\"color:#AA0000\">u</span><span style=\"color:#AA0000\">s</span><span style=\"color:#AA0000\">t</span><span style=\"color:#AA0000\"> </span><span style=\"color:#555555\">[</span><span style=\"color:#AA0000\">6</span><span style=\"color:#AA0000\">4</span><span style=\"color:#AA0000\">x</span><span style=\"color:#555555\">]</span>",
+      "description": "By FreeSoups",
+      "cover": "/thumbnails/RedDust_64x/cover.png",
+      "packPng": "/thumbnails/RedDust_64x/pack.png",
+      "icon": null,
+      "file": "resourcepacks/!     §4RedDust §8[§464x§8].zip",
+      "fileSize": "12.1MB",
+      "uploadDate": "2026-02-20",
+      "lists": [
+        "iil pf v1"
+      ],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A74RedDust%20%C2%A78%5B%C2%A7464x%C2%A78%5D.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%20%C2%A74RedDust%20%C2%A78%5B%C2%A7464x%C2%A78%5D.zip"
+      }
+    },
+    {
+      "id": "!  §5Rosea §cRevamp",
+      "name": "Rosea_Revamp",
+      "displayName": "Rosea Revamp",
+      "coloredName": "<span style=\"color:#AA00AA\">R</span><span style=\"color:#AA00AA\">o</span><span style=\"color:#AA00AA\">s</span><span style=\"color:#AA00AA\">e</span><span style=\"color:#AA00AA\">a</span><span style=\"color:#AA00AA\"> </span><span style=\"color:#FF5555\">R</span><span style=\"color:#FF5555\">e</span><span style=\"color:#FF5555\">v</span><span style=\"color:#FF5555\">a</span><span style=\"color:#FF5555\">m</span><span style=\"color:#FF5555\">p</span>",
+      "description": "Ricardoh x Spores x Prez",
+      "cover": "/thumbnails/Rosea_Revamp/cover.png",
+      "packPng": "/thumbnails/Rosea_Revamp/pack.png",
+      "icon": null,
+      "file": "resourcepacks/!  §5Rosea §cRevamp.zip",
+      "fileSize": "19.8MB",
+      "uploadDate": "2026-02-20",
+      "lists": [
+        "iil pf v1"
+      ],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%C2%A75Rosea%20%C2%A7cRevamp.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%C2%A75Rosea%20%C2%A7cRevamp.zip"
+      }
+    },
+    {
       "id": "§4§ORUSOS §8§OPLAST",
       "name": "RUSOS_PLAST",
       "displayName": "RUSOS PLAST",
@@ -12,7 +372,7 @@
       "icon": null,
       "file": "resourcepacks/§4§ORUSOS §8§OPLAST.zip",
       "fileSize": "16.6MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v2"
       ],
@@ -58,7 +418,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74%C2%A7ORUSOS%20%C2%A78%C2%A7OPLAST.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74%C2%A7ORUSOS%20%C2%A78%C2%A7OPLAST.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74%C2%A7ORUSOS%20%C2%A78%C2%A7OPLAST.zip"
       }
     },
     {
@@ -72,7 +432,7 @@
       "icon": null,
       "file": "resourcepacks/! # § ShiroPack by Mellor.zip",
       "fileSize": "45.5MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [],
       "textures": {
         "items": [
@@ -116,7 +476,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%23%20%C2%A7%20ShiroPack%20by%20Mellor.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%23%20%C2%A7%20ShiroPack%20by%20Mellor.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%23%20%C2%A7%20ShiroPack%20by%20Mellor.zip"
       }
     },
     {
@@ -130,7 +490,7 @@
       "icon": null,
       "file": "resourcepacks/shyguys edit.zip",
       "fileSize": "19.3MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -176,7 +536,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/shyguys%20edit.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/shyguys%20edit.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/shyguys%20edit.zip"
       }
     },
     {
@@ -190,7 +550,7 @@
       "icon": null,
       "file": "resourcepacks/sky & glint overlay.zip",
       "fileSize": "15.0MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v2"
       ],
@@ -236,7 +596,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/sky%20%26%20glint%20overlay.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/sky%20%26%20glint%20overlay.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/sky%20%26%20glint%20overlay.zip"
       }
     },
     {
@@ -250,7 +610,7 @@
       "icon": null,
       "file": "resourcepacks/§4SLAU§blight.zip",
       "fileSize": "49.4MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [],
       "textures": {
         "items": [
@@ -294,7 +654,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74SLAU%C2%A7blight.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74SLAU%C2%A7blight.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74SLAU%C2%A7blight.zip"
       }
     },
     {
@@ -308,7 +668,7 @@
       "icon": null,
       "file": "resourcepacks/Spectrum [✔].zip",
       "fileSize": "24.8MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -354,7 +714,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Spectrum%20%5B%E2%9C%94%5D.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Spectrum%20%5B%E2%9C%94%5D.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Spectrum%20%5B%E2%9C%94%5D.zip"
       }
     },
     {
@@ -368,7 +728,7 @@
       "icon": null,
       "file": "resourcepacks/!    §bStimpy Waar Paack.zip",
       "fileSize": "28.6MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [],
       "textures": {
         "items": [
@@ -412,7 +772,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%C2%A7bStimpy%20Waar%20Paack.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%C2%A7bStimpy%20Waar%20Paack.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%C2%A7bStimpy%20Waar%20Paack.zip"
       }
     },
     {
@@ -426,7 +786,7 @@
       "icon": null,
       "file": "resourcepacks/! surprise pack.zip",
       "fileSize": "24.5MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -472,7 +832,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20surprise%20pack.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20surprise%20pack.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20surprise%20pack.zip"
       }
     },
     {
@@ -486,7 +846,7 @@
       "icon": null,
       "file": "resourcepacks/!!§3@t3lus on twitters priv pack.zip",
       "fileSize": "20.6MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -532,7 +892,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!!%C2%A73%40t3lus%20on%20twitters%20priv%20pack.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!!%C2%A73%40t3lus%20on%20twitters%20priv%20pack.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!!%C2%A73%40t3lus%20on%20twitters%20priv%20pack.zip"
       }
     },
     {
@@ -546,7 +906,7 @@
       "icon": null,
       "file": "resourcepacks/TeaserOnTour Private.zip",
       "fileSize": "12.7MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v2"
       ],
@@ -592,7 +952,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/TeaserOnTour%20Private.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/TeaserOnTour%20Private.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/TeaserOnTour%20Private.zip"
       }
     },
     {
@@ -606,7 +966,7 @@
       "icon": null,
       "file": "resourcepacks/tory eum 3 ping.zip",
       "fileSize": "20.2MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -652,7 +1012,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/tory%20eum%203%20ping.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/tory%20eum%203%20ping.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/tory%20eum%203%20ping.zip"
       }
     },
     {
@@ -666,7 +1026,7 @@
       "icon": null,
       "file": "resourcepacks/USA CANT HANG.zip",
       "fileSize": "26.9MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v2"
       ],
@@ -712,7 +1072,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/USA%20CANT%20HANG.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/USA%20CANT%20HANG.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/USA%20CANT%20HANG.zip"
       }
     },
     {
@@ -726,7 +1086,7 @@
       "icon": null,
       "file": "resourcepacks/! §eVene §932x §cRevamp.zip",
       "fileSize": "42.0MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [],
       "textures": {
         "items": [
@@ -770,7 +1130,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A7eVene%20%C2%A7932x%20%C2%A7cRevamp.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A7eVene%20%C2%A7932x%20%C2%A7cRevamp.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A7eVene%20%C2%A7932x%20%C2%A7cRevamp.zip"
       }
     },
     {
@@ -784,7 +1144,7 @@
       "icon": null,
       "file": "resourcepacks/! §4Verzide v3 §l§f[New Particles].zip",
       "fileSize": "18.3MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -830,7 +1190,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A74Verzide%20v3%20%C2%A7l%C2%A7f%5BNew%20Particles%5D.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A74Verzide%20v3%20%C2%A7l%C2%A7f%5BNew%20Particles%5D.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A74Verzide%20v3%20%C2%A7l%C2%A7f%5BNew%20Particles%5D.zip"
       }
     },
     {
@@ -844,7 +1204,7 @@
       "icon": null,
       "file": "resourcepacks/xeno p open.zip",
       "fileSize": "7.4MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v2"
       ],
@@ -890,7 +1250,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/xeno%20p%20open.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/xeno%20p%20open.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/xeno%20p%20open.zip"
       }
     },
     {
@@ -904,7 +1264,7 @@
       "icon": null,
       "file": "resourcepacks/!§bXenon §716x.zip",
       "fileSize": "19.0MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [],
       "textures": {
         "items": [
@@ -948,7 +1308,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%C2%A7bXenon%20%C2%A7716x.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%C2%A7bXenon%20%C2%A7716x.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%C2%A7bXenon%20%C2%A7716x.zip"
       }
     },
     {
@@ -962,7 +1322,7 @@
       "icon": null,
       "file": "resourcepacks/!    §4Xetha§2Faith§4C§2E §cV2.zip",
       "fileSize": "22.4MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -1008,7 +1368,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%C2%A74Xetha%C2%A72Faith%C2%A74C%C2%A72E%20%C2%A7cV2.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%C2%A74Xetha%C2%A72Faith%C2%A74C%C2%A72E%20%C2%A7cV2.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%20%20%20%C2%A74Xetha%C2%A72Faith%C2%A74C%C2%A72E%20%C2%A7cV2.zip"
       }
     },
     {
@@ -1022,7 +1382,7 @@
       "icon": null,
       "file": "resourcepacks/! §1XethaHD v2.zip",
       "fileSize": "26.6MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -1068,7 +1428,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A71XethaHD%20v2.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A71XethaHD%20v2.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A71XethaHD%20v2.zip"
       }
     },
     {
@@ -1082,7 +1442,7 @@
       "icon": null,
       "file": "resourcepacks/xTroll Edit Edit.zip",
       "fileSize": "35.9MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v2"
       ],
@@ -1128,7 +1488,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/xTroll%20Edit%20Edit.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/xTroll%20Edit%20Edit.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/xTroll%20Edit%20Edit.zip"
       }
     },
     {
@@ -1142,7 +1502,7 @@
       "icon": null,
       "file": "resourcepacks/yokabi edit.zip",
       "fileSize": "48.5MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [],
       "textures": {
         "items": [
@@ -1186,7 +1546,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/yokabi%20edit.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/yokabi%20edit.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/yokabi%20edit.zip"
       }
     },
     {
@@ -1200,7 +1560,7 @@
       "icon": null,
       "file": "resourcepacks/#§cZukos 128x.zip",
       "fileSize": "32.5MB",
-      "uploadDate": "2026-02-19",
+      "uploadDate": "2026-02-20",
       "lists": [
         "iil pf v1"
       ],
@@ -1246,7 +1606,7 @@
       },
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23%C2%A7cZukos%20128x.zip",
-        "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23%C2%A7cZukos%20128x.zip"
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23%C2%A7cZukos%20128x.zip"
       }
     }
   ]

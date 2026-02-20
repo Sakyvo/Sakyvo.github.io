@@ -231,7 +231,7 @@ Sakyvo.github.io/
   },
   "downloads": {
     "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Xenon_16x.zip",
-    "mirror": "https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Xenon_16x.zip"
+    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Xenon_16x.zip"
   }
 }
 ```
@@ -574,7 +574,7 @@ function getDownloadLinks(packId) {
   const base = `https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/packs/${packId}.zip`;
   return {
     github: base,
-    mirror: `https://ghproxy.com/${base}`
+    mirror: `https://ghfast.top/${base}`
   };
 }
 ```

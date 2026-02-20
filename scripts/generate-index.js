@@ -88,7 +88,7 @@ function main() {
       textures: e.extracted,
       downloads: {
         github: `https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodeURIComponent(e.originalName)}.zip`,
-        mirror: `https://ghproxy.com/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodeURIComponent(e.originalName)}.zip`
+        mirror: `https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodeURIComponent(e.originalName)}.zip`
       }
     };
   });
