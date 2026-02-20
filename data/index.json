@@ -5,15 +5,15 @@
   "items": [
     {
       "id": "1_1Infera_Blue",
-      "name": "1Inferalue",
-      "displayName": "1Inferalue",
-      "coloredName": "1<span style=\"color:#0000AA\">I</span><span style=\"color:#0000AA\">n</span><span style=\"color:#0000AA\">f</span><span style=\"color:#0000AA\">e</span><span style=\"color:#0000AA\">r</span><span style=\"color:#0000AA\">a</span><span style=\"color:#55FFFF\">l</span><span style=\"color:#55FFFF\">u</span><span style=\"color:#55FFFF\">e</span>",
+      "name": "Infera_Blue",
+      "displayName": "Infera Blue",
+      "coloredName": "Infera <span style=\"color:#0000AA\">B</span><span style=\"color:#0000AA\">l</span><span style=\"color:#0000AA\">u</span><span style=\"color:#0000AA\">e</span>",
       "description": "By iSparkton edit by Dilnat",
       "lists": [
         "iil pf v2"
       ],
-      "cover": "/thumbnails/1Inferalue/cover.png",
-      "packPng": "/thumbnails/1Inferalue/pack.png"
+      "cover": "/thumbnails/Infera_Blue/cover.png",
+      "packPng": "/thumbnails/Infera_Blue/pack.png"
     },
     {
       "id": "32 ocn new particles",

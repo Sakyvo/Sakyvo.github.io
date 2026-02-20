@@ -60,8 +60,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
       <div class="download-section">
         <h2>DOWNLOAD</h2>
-        <a class="btn btn-primary" href="${pack.downloads.github}" download>GitHub</a>
-        <a class="btn btn-secondary" href="${pack.downloads.mirror}" download>Mirror</a>
+        <a class="btn btn-primary" href="${pack.downloads.github}" target="_blank" download>GitHub</a>
+        <a class="btn btn-secondary" href="${pack.downloads.mirror}" target="_blank" download>Mirror</a>
       </div>
       <div class="preview-section">
         <h2>Preview</h2>
