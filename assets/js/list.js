@@ -454,8 +454,8 @@ async function loadListDetail(listId) {
         ${list.description ? `<p class="list-description">${list.description}</p>` : ''}
         <p class="meta">${list.packs.length} packs</p>
       </div>
-      <div class="search-box" style="margin-bottom:24px;">
-        <input type="text" id="list-pack-search" placeholder="Search packs..." value="${searchQuery}">
+      <div class="search-box" style="margin:0 0 24px;max-width:calc((100% - 48px) / 3);justify-content:stretch;">
+        <input type="text" id="list-pack-search" placeholder="Search packs..." value="${searchQuery}" style="flex:1;padding:12px 16px;border:2px solid #000;font-size:14px;outline:none;">
         <button class="search-btn">🔍</button>
       </div>
       ${isAdmin ? `
