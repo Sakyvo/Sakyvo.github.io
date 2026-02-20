@@ -42,7 +42,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Aspecti_250_subs_pack",
+    "outputDir": "thumbnails/Aspecti_250_subs_pack",
     "description": ""
   },
   {
@@ -88,7 +88,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Eum3Blue_Revamp",
+    "outputDir": "thumbnails/Eum3Blue_Revamp",
     "description": "by Metar0X"
   },
   {
@@ -134,7 +134,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Jewdah_Private",
+    "outputDir": "thumbnails/Jewdah_Private",
     "description": "by Metar0X"
   },
   {
@@ -180,7 +180,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\RedDust_64x",
+    "outputDir": "thumbnails/RedDust_64x",
     "description": "By FreeSoups"
   },
   {
@@ -226,7 +226,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Aerick_Faith",
+    "outputDir": "thumbnails/Aerick_Faith",
     "description": "Ping"
   },
   {
@@ -272,7 +272,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\XethaFaithCE_V2",
+    "outputDir": "thumbnails/XethaFaithCE_V2",
     "description": "XethaFaith - By: Apexay"
   },
   {
@@ -318,7 +318,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Stimpy_Waar_Paack",
+    "outputDir": "thumbnails/Stimpy_Waar_Paack",
     "description": "Remade by cibay"
   },
   {
@@ -364,7 +364,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Nasty_purple",
+    "outputDir": "thumbnails/Nasty_purple",
     "description": "By Shiro"
   },
   {
@@ -410,7 +410,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Rosea_Revamp",
+    "outputDir": "thumbnails/Rosea_Revamp",
     "description": "Ricardoh x Spores x Prez"
   },
   {
@@ -456,7 +456,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\ShiroPack_by_Mellor",
+    "outputDir": "thumbnails/ShiroPack_by_Mellor",
     "description": "by Mellor"
   },
   {
@@ -502,7 +502,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Blue_128x",
+    "outputDir": "thumbnails/Blue_128x",
     "description": "-Latenci"
   },
   {
@@ -548,7 +548,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Eum3_FPS",
+    "outputDir": "thumbnails/Eum3_FPS",
     "description": "Arbaz x Apexay"
   },
   {
@@ -594,7 +594,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Eum3315_Blue_Revamp",
+    "outputDir": "thumbnails/Eum3315_Blue_Revamp",
     "description": "BY ARISSI WOOOOOOOOOO TYE SUCKS"
   },
   {
@@ -640,7 +640,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Gray_128x",
+    "outputDir": "thumbnails/Gray_128x",
     "description": "recolored by qunc"
   },
   {
@@ -686,7 +686,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Nasty_Red",
+    "outputDir": "thumbnails/Nasty_Red",
     "description": "clllare mashup"
   },
   {
@@ -732,54 +732,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\surprise_pack",
+    "outputDir": "thumbnails/surprise_pack",
     "description": "Happy birthday <3 - Arissi"
-  },
-  {
-    "packId": "heures_Dark_Blue_128x_Edit",
-    "originalName": "! §1heures §9Dark Blue 128x §bEdit",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\heures_Dark_Blue_128x_Edit",
-    "description": "-Latenci"
   },
   {
     "packId": "XethaHD_v2",
@@ -824,8 +778,54 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\XethaHD_v2",
+    "outputDir": "thumbnails/XethaHD_v2",
     "description": "Latenci x Apexay"
+  },
+  {
+    "packId": "heures_Dark_Blue_128x_Edit",
+    "originalName": "! §1heures §9Dark Blue 128x §bEdit",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/heures_Dark_Blue_128x_Edit",
+    "description": "-Latenci"
   },
   {
     "packId": "Red_128x",
@@ -870,7 +870,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Red_128x",
+    "outputDir": "thumbnails/Red_128x",
     "description": "Original by Latenci, �4Edited by Scandic"
   },
   {
@@ -916,7 +916,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Verzide_v3_New_Particles",
+    "outputDir": "thumbnails/Verzide_v3_New_Particles",
     "description": "by Tory"
   },
   {
@@ -962,7 +962,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Purple_128x",
+    "outputDir": "thumbnails/Purple_128x",
     "description": "-Original by Latenci, �5Edited by Scandic"
   },
   {
@@ -1008,7 +1008,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Bloo",
+    "outputDir": "thumbnails/Bloo",
     "description": "by Elleptical"
   },
   {
@@ -1054,7 +1054,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Vene_32x_Revamp",
+    "outputDir": "thumbnails/Vene_32x_Revamp",
     "description": "-Latenci"
   },
   {
@@ -1100,7 +1100,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\t3lus_on_twitters_priv_pack",
+    "outputDir": "thumbnails/t3lus_on_twitters_priv_pack",
     "description": "Naisu pack T_T"
   },
   {
@@ -1146,7 +1146,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Dynamic_Duo_By_Brakeless",
+    "outputDir": "thumbnails/Dynamic_Duo_By_Brakeless",
     "description": "Dynamic Duo 32x By Brakeless (Zevy and Hermes Help me)"
   },
   {
@@ -1192,7 +1192,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Xenon_16x",
+    "outputDir": "thumbnails/Xenon_16x",
     "description": ""
   },
   {
@@ -1238,7 +1238,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\CoolPvp",
+    "outputDir": "thumbnails/CoolPvp",
     "description": "Sectioned MC"
   },
   {
@@ -1284,54 +1284,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Eum3_Blue_Edit_-_Fawokh",
+    "outputDir": "thumbnails/Eum3_Blue_Edit_-_Fawokh",
     "description": "WE ARE THE CHAMPIONS"
-  },
-  {
-    "packId": "eum3edit",
-    "originalName": "#eum3edit",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\eum3edit",
-    "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
     "packId": "FaithYellow",
@@ -1376,8 +1330,54 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\FaithYellow",
+    "outputDir": "thumbnails/FaithYellow",
     "description": "by Scolded."
+  },
+  {
+    "packId": "eum3edit",
+    "originalName": "#eum3edit",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/eum3edit",
+    "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
     "packId": "Zukos_128x",
@@ -1422,7 +1422,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Zukos_128x",
+    "outputDir": "thumbnails/Zukos_128x",
     "description": "Looking for revenge… // By Kyzuko"
   },
   {
@@ -1468,7 +1468,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\1Inferalue",
+    "outputDir": "thumbnails/1Inferalue",
     "description": "By iSparkton edit by Dilnat"
   },
   {
@@ -1514,7 +1514,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\32_ocn_new_particles",
+    "outputDir": "thumbnails/32_ocn_new_particles",
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
@@ -1560,7 +1560,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\9kiro",
+    "outputDir": "thumbnails/9kiro",
     "description": "By Kyzuko & Verzide edit by iil"
   },
   {
@@ -1606,100 +1606,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Amaranth",
+    "outputDir": "thumbnails/Amaranth",
     "description": "by Dualzz"
-  },
-  {
-    "packId": "arissi_red_smoothful",
-    "originalName": "arissi red smoothful",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\arissi_red_smoothful",
-    "description": "By Arissi for M0DIFIER <3"
-  },
-  {
-    "packId": "blue_32",
-    "originalName": "blue 32",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\blue_32",
-    "description": "-Zef"
   },
   {
     "packId": "Blue1234",
@@ -1744,100 +1652,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Blue1234",
+    "outputDir": "thumbnails/Blue1234",
     "description": "Mashed by kx"
-  },
-  {
-    "packId": "boxing_128",
-    "originalName": "boxing 128",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\boxing_128",
-    "description": ""
-  },
-  {
-    "packId": "cayden_revamp",
-    "originalName": "cayden revamp",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\cayden_revamp",
-    "description": "-iil edit"
   },
   {
     "packId": "Chriiii_Private",
@@ -1882,7 +1698,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Chriiii_Private",
+    "outputDir": "thumbnails/Chriiii_Private",
     "description": "By Chriiii & Umbyyy"
   },
   {
@@ -1928,7 +1744,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\CrimZon",
+    "outputDir": "thumbnails/CrimZon",
     "description": "Arnebra"
   },
   {
@@ -1974,100 +1790,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Demon_Edit",
+    "outputDir": "thumbnails/Demon_Edit",
     "description": "made by Dallas edit by iil"
-  },
-  {
-    "packId": "duo_fps",
-    "originalName": "duo fps",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\duo_fps",
-    "description": "edited by vodka"
-  },
-  {
-    "packId": "erosek_pack",
-    "originalName": "erosek pack",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\erosek_pack",
-    "description": ""
   },
   {
     "packId": "Eum3_Fps_Revamp",
@@ -2112,100 +1836,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Eum3_Fps_Revamp",
+    "outputDir": "thumbnails/Eum3_Fps_Revamp",
     "description": "-Revamped By Sivyl"
-  },
-  {
-    "packId": "eum3blue128",
-    "originalName": "eum3blue128",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\eum3blue128",
-    "description": "Eum3's PvP Faithful 32x Edit"
-  },
-  {
-    "packId": "faith_red_128",
-    "originalName": "faith red 128",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\faith_red_128",
-    "description": "FAITHFUL EDIT"
   },
   {
     "packId": "HUU_Red_HCF",
@@ -2250,54 +1882,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\HUU_Red_HCF",
+    "outputDir": "thumbnails/HUU_Red_HCF",
     "description": "r3dddd claIre"
-  },
-  {
-    "packId": "isparkzuko",
-    "originalName": "isparkzuko",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\isparkzuko",
-    "description": "By Kyzuko & iSparkton -edit by iil"
   },
   {
     "packId": "Latenci_FPS",
@@ -2342,53 +1928,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Latenci_FPS",
-    "description": "-Latenci"
-  },
-  {
-    "packId": "methodic_eum3_fps",
-    "originalName": "methodic eum3 fps",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\methodic_eum3_fps",
+    "outputDir": "thumbnails/Latenci_FPS",
     "description": "-Latenci"
   },
   {
@@ -2434,7 +1974,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Nakoso_Eum3_edit",
+    "outputDir": "thumbnails/Nakoso_Eum3_edit",
     "description": "By Acruse for Nakoso"
   },
   {
@@ -2480,422 +2020,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Nakoso_Kiro",
+    "outputDir": "thumbnails/Nakoso_Kiro",
     "description": "By Acruse for Nakoso"
-  },
-  {
-    "packId": "no_color_purple_sky_and_glint_overlay",
-    "originalName": "no color purple sky and glint overlay",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\no_color_purple_sky_and_glint_overlay",
-    "description": "OVERLAY V... BIBLIOKLEPT edit by iil"
-  },
-  {
-    "packId": "no_color_red_sky_and_glint_overlay",
-    "originalName": "no color red sky and glint overlay",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\no_color_red_sky_and_glint_overlay",
-    "description": "OVERLAY V... BIBLIOKLEPT edit by iil"
-  },
-  {
-    "packId": "otaku",
-    "originalName": "otaku",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\otaku",
-    "description": "300 Subs Pack by Tweety2O. edit by iil"
-  },
-  {
-    "packId": "otb_red_fps_edit",
-    "originalName": "otb red fps edit",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\otb_red_fps_edit",
-    "description": ""
-  },
-  {
-    "packId": "powrot",
-    "originalName": "powrot",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\powrot",
-    "description": "by bula ;D"
-  },
-  {
-    "packId": "ran4",
-    "originalName": "ran4",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\ran4",
-    "description": ""
-  },
-  {
-    "packId": "red_xetha_edit",
-    "originalName": "red xetha edit",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\red_xetha_edit",
-    "description": "Apexay, iil edit"
-  },
-  {
-    "packId": "shyguys_edit",
-    "originalName": "shyguys edit",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\shyguys_edit",
-    "description": "- holffi"
-  },
-  {
-    "packId": "sky_glint_overlay",
-    "originalName": "sky & glint overlay",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\sky_glint_overlay",
-    "description": "By iil"
   },
   {
     "packId": "Spectrum_✔",
@@ -2940,7 +2066,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Spectrum_✔",
+    "outputDir": "thumbnails/Spectrum_✔",
     "description": "(Spectrum 256x) by Glory"
   },
   {
@@ -2986,54 +2112,8 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\TeaserOnTour_Private",
+    "outputDir": "thumbnails/TeaserOnTour_Private",
     "description": "Mashuped by Qunc & Teaser edit by iil"
-  },
-  {
-    "packId": "tory_eum_3_ping",
-    "originalName": "tory eum 3 ping",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\tory_eum_3_ping",
-    "description": "by qunc"
   },
   {
     "packId": "USA_CANT_HANG",
@@ -3078,12 +2158,12 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\USA_CANT_HANG",
+    "outputDir": "thumbnails/USA_CANT_HANG",
     "description": "koala im not eu speedah"
   },
   {
-    "packId": "xeno_p_open",
-    "originalName": "xeno p open",
+    "packId": "arissi_red_smoothful",
+    "originalName": "arissi red smoothful",
     "extracted": {
       "items": [
         "diamond_sword.png",
@@ -3124,8 +2204,882 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\xeno_p_open",
-    "description": "kokaine"
+    "outputDir": "thumbnails/arissi_red_smoothful",
+    "description": "By Arissi for M0DIFIER <3"
+  },
+  {
+    "packId": "blue_32",
+    "originalName": "blue 32",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/blue_32",
+    "description": "-Zef"
+  },
+  {
+    "packId": "boxing_128",
+    "originalName": "boxing 128",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/boxing_128",
+    "description": ""
+  },
+  {
+    "packId": "cayden_revamp",
+    "originalName": "cayden revamp",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/cayden_revamp",
+    "description": "-iil edit"
+  },
+  {
+    "packId": "duo_fps",
+    "originalName": "duo fps",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/duo_fps",
+    "description": "edited by vodka"
+  },
+  {
+    "packId": "erosek_pack",
+    "originalName": "erosek pack",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/erosek_pack",
+    "description": ""
+  },
+  {
+    "packId": "eum3blue128",
+    "originalName": "eum3blue128",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/eum3blue128",
+    "description": "Eum3's PvP Faithful 32x Edit"
+  },
+  {
+    "packId": "faith_red_128",
+    "originalName": "faith red 128",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/faith_red_128",
+    "description": "FAITHFUL EDIT"
+  },
+  {
+    "packId": "isparkzuko",
+    "originalName": "isparkzuko",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/isparkzuko",
+    "description": "By Kyzuko & iSparkton -edit by iil"
+  },
+  {
+    "packId": "methodic_eum3_fps",
+    "originalName": "methodic eum3 fps",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/methodic_eum3_fps",
+    "description": "-Latenci"
+  },
+  {
+    "packId": "no_color_purple_sky_and_glint_overlay",
+    "originalName": "no color purple sky and glint overlay",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/no_color_purple_sky_and_glint_overlay",
+    "description": "OVERLAY V... BIBLIOKLEPT edit by iil"
+  },
+  {
+    "packId": "no_color_red_sky_and_glint_overlay",
+    "originalName": "no color red sky and glint overlay",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/no_color_red_sky_and_glint_overlay",
+    "description": "OVERLAY V... BIBLIOKLEPT edit by iil"
+  },
+  {
+    "packId": "otaku",
+    "originalName": "otaku",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/otaku",
+    "description": "300 Subs Pack by Tweety2O. edit by iil"
+  },
+  {
+    "packId": "otb_red_fps_edit",
+    "originalName": "otb red fps edit",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/otb_red_fps_edit",
+    "description": ""
+  },
+  {
+    "packId": "powrot",
+    "originalName": "powrot",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/powrot",
+    "description": "by bula ;D"
+  },
+  {
+    "packId": "ran4",
+    "originalName": "ran4",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/ran4",
+    "description": ""
+  },
+  {
+    "packId": "red_xetha_edit",
+    "originalName": "red xetha edit",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/red_xetha_edit",
+    "description": "Apexay, iil edit"
+  },
+  {
+    "packId": "shyguys_edit",
+    "originalName": "shyguys edit",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/shyguys_edit",
+    "description": "- holffi"
+  },
+  {
+    "packId": "sky_glint_overlay",
+    "originalName": "sky & glint overlay",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/sky_glint_overlay",
+    "description": "By iil"
+  },
+  {
+    "packId": "tory_eum_3_ping",
+    "originalName": "tory eum 3 ping",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/tory_eum_3_ping",
+    "description": "by qunc"
   },
   {
     "packId": "xTroll_Edit_Edit",
@@ -3170,8 +3124,54 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\xTroll_Edit_Edit",
+    "outputDir": "thumbnails/xTroll_Edit_Edit",
     "description": "iil remake"
+  },
+  {
+    "packId": "xeno_p_open",
+    "originalName": "xeno p open",
+    "extracted": {
+      "items": [
+        "diamond_sword.png",
+        "ender_pearl.png",
+        "splash_potion_of_healing.png",
+        "steak.png",
+        "iron_sword.png",
+        "fishing_rod_uncast.png",
+        "apple_golden.png",
+        "golden_carrot.png"
+      ],
+      "blocks": [
+        "grass_side.png",
+        "stone.png",
+        "cobblestone.png",
+        "wool_colored_white.png",
+        "dirt.png",
+        "planks_oak.png",
+        "log_oak.png",
+        "diamond_ore.png"
+      ],
+      "armor": [
+        "diamond_layer_1.png",
+        "diamond_layer_2.png"
+      ],
+      "gui": [
+        "icons.png",
+        "widgets.png",
+        "inventory.png"
+      ],
+      "font": [
+        "ascii.png"
+      ],
+      "skin": [
+        "steve.png"
+      ],
+      "particle": [
+        "particles.png"
+      ]
+    },
+    "outputDir": "thumbnails/xeno_p_open",
+    "description": "kokaine"
   },
   {
     "packId": "yokabi_edit",
@@ -3216,7 +3216,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\yokabi_edit",
+    "outputDir": "thumbnails/yokabi_edit",
     "description": "Name it whatever you want fag -Dualzz"
   },
   {
@@ -3262,7 +3262,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Kiro_FPS_V5",
+    "outputDir": "thumbnails/Kiro_FPS_V5",
     "description": "FPS PVP T_T"
   },
   {
@@ -3308,7 +3308,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\SLAUlight",
+    "outputDir": "thumbnails/SLAUlight",
     "description": "zefff"
   },
   {
@@ -3354,7 +3354,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\RUSOS_PLAST",
+    "outputDir": "thumbnails/RUSOS_PLAST",
     "description": "RUSOS>ALL"
   },
   {
@@ -3400,7 +3400,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Chromatic_64x",
+    "outputDir": "thumbnails/Chromatic_64x",
     "description": "Made by Airbus"
   },
   {
@@ -3446,7 +3446,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Krathios_Private",
+    "outputDir": "thumbnails/Krathios_Private",
     "description": "By Warriohh"
   },
   {
@@ -3492,7 +3492,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\Kiro",
+    "outputDir": "thumbnails/Kiro",
     "description": "By Kyzuko & Verzide"
   },
   {
@@ -3538,7 +3538,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\HUU_Mint",
+    "outputDir": "thumbnails/HUU_Mint",
     "description": "-HUU"
   }
 ]
