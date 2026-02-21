@@ -289,15 +289,16 @@ class Admin {
     this.showMessage('Validating files...', 'success');
 
     // Load existing pack names for duplicate detection
-    const existingNames = new Set();
+    const existingNames = new Map();
     try {
       const idx = await fetch('/data/index.json?t=' + Date.now()).then(r => r.json());
-      idx.items.forEach(p => existingNames.add(p.name.toLowerCase()));
+      idx.items.forEach(p => existingNames.set(p.name.toLowerCase(), p.name));
     } catch(e) {}
 
     const valid = [];
     const invalidFiles = [];
     const duplicateFiles = [];
+    const duplicatePackNames = [];
     const warnFiles = [];
 
     for (const file of files) {
@@ -322,13 +323,17 @@ class Admin {
       const sanitized = this.sanitizeName(file.name.replace('.zip', '')).toLowerCase();
       if (existingNames.has(sanitized)) {
         duplicateFiles.push(file.name);
+        duplicatePackNames.push(existingNames.get(sanitized));
         continue;
       }
       valid.push(file);
     }
 
-    // If nothing to upload, show result immediately
+    // If nothing to upload, still add duplicates to lists if selected
     if (valid.length === 0) {
+      if (selectedLists.length > 0 && duplicatePackNames.length > 0) {
+        await this.addPacksToLists(duplicatePackNames, selectedLists, token);
+      }
       this.showUploadResult([], invalidFiles, duplicateFiles, warnFiles, null);
       return;
     }
@@ -377,12 +382,13 @@ class Admin {
       }
 
       // Include lists.json update in the same commit
-      if (selectedLists.length > 0 && uploadedNames.length > 0) {
+      const allPackNames = [...uploadedNames, ...duplicatePackNames];
+      if (selectedLists.length > 0 && allPackNames.length > 0) {
         const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
         selectedLists.forEach(listName => {
           const list = lists.find(l => l.name === listName);
           if (list) {
-            uploadedNames.forEach(name => {
+            allPackNames.forEach(name => {
               if (!list.packs.includes(name)) list.packs.push(name);
             });
           }
@@ -430,6 +436,35 @@ class Admin {
     } catch (e) {
       this.showMessage(`Upload error: ${e.message}`, 'error');
     }
+  }
+
+  async addPacksToLists(packNames, listNames, token) {
+    const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
+    let changed = false;
+    listNames.forEach(listName => {
+      const list = lists.find(l => l.name === listName);
+      if (list) {
+        packNames.forEach(name => {
+          if (!list.packs.includes(name)) { list.packs.push(name); changed = true; }
+        });
+      }
+    });
+    if (!changed) return;
+    localStorage.setItem('vale_lists', JSON.stringify(lists));
+    if (!token) return;
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(lists, null, 2))));
+    let sha;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/l/lists.json`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (res.ok) sha = (await res.json()).sha;
+    } catch (e) {}
+    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/l/lists.json`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Add existing packs to lists', content, sha })
+    });
   }
 
   sanitizeName(name) {
