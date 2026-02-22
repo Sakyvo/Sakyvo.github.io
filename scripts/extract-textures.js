@@ -2,6 +2,7 @@ const AdmZip = require('adm-zip');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // 粒子图集裁剪映射 (16x16 网格, index = x + y * 16)
 const PARTICLE_TILES = {
@@ -83,7 +84,90 @@ function sanitizeName(name) {
   return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim().replace(/\s+/g, '_');
 }
 
+function fixNestedArchive(zipPath) {
+  const zip = new AdmZip(zipPath);
+  const entries = zip.getEntries();
+  const hasAssets = entries.some(e => e.entryName.startsWith('assets/'));
+  if (hasAssets) return zipPath;
+
+  const innerArchive = entries.find(e =>
+    !e.isDirectory && (e.entryName.endsWith('.zip') || e.entryName.endsWith('.rar'))
+  );
+  if (!innerArchive) return zipPath;
+
+  console.log(`  Nested archive detected: ${innerArchive.entryName}`);
+  const tmpDir = path.join('tmp_nested_' + Date.now());
+  fs.mkdirSync(tmpDir, { recursive: true });
+
+  try {
+    const innerPath = path.join(tmpDir, 'inner' + path.extname(innerArchive.entryName));
+    fs.writeFileSync(innerPath, innerArchive.getData());
+
+    const extractDir = path.join(tmpDir, 'extracted');
+    fs.mkdirSync(extractDir, { recursive: true });
+
+    if (innerPath.endsWith('.rar')) {
+      execSync(`7z x "${innerPath}" -o"${extractDir}" -y`, { stdio: 'pipe' });
+    } else {
+      const innerZip = new AdmZip(innerPath);
+      innerZip.extractAllTo(extractDir, true);
+    }
+
+    const newZip = new AdmZip();
+    function addDir(dir, zipDir) {
+      for (const item of fs.readdirSync(dir)) {
+        const full = path.join(dir, item);
+        const rel = zipDir ? zipDir + '/' + item : item;
+        if (fs.statSync(full).isDirectory()) {
+          addDir(full, rel);
+        } else {
+          newZip.addFile(rel, fs.readFileSync(full));
+        }
+      }
+    }
+    addDir(extractDir, '');
+    newZip.writeZip(zipPath);
+    console.log(`  Rebuilt zip: ${path.basename(zipPath)}`);
+    return zipPath;
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+function convertRarToZip(rarPath) {
+  const baseName = path.basename(rarPath, '.rar');
+  const zipPath = path.join(path.dirname(rarPath), baseName + '.zip');
+  if (fs.existsSync(zipPath)) return zipPath;
+
+  const tmpDir = path.join('tmp_rar_' + Date.now());
+  fs.mkdirSync(tmpDir, { recursive: true });
+
+  try {
+    execSync(`7z x "${rarPath}" -o"${tmpDir}" -y`, { stdio: 'pipe' });
+
+    const newZip = new AdmZip();
+    function addDir(dir, zipDir) {
+      for (const item of fs.readdirSync(dir)) {
+        const full = path.join(dir, item);
+        const rel = zipDir ? zipDir + '/' + item : item;
+        if (fs.statSync(full).isDirectory()) {
+          addDir(full, rel);
+        } else {
+          newZip.addFile(rel, fs.readFileSync(full));
+        }
+      }
+    }
+    addDir(tmpDir, '');
+    newZip.writeZip(zipPath);
+    console.log(`  Converted rar to zip: ${baseName}.zip`);
+    return zipPath;
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
 async function extractPack(zipPath) {
+  zipPath = fixNestedArchive(zipPath);
   const originalName = path.basename(zipPath, '.zip');
   const packId = sanitizeName(originalName);
   const zip = new AdmZip(zipPath);
@@ -577,14 +661,18 @@ async function main() {
     return;
   }
 
-  const files = fs.readdirSync(packsDir).filter(f => f.endsWith('.zip'));
+  const files = fs.readdirSync(packsDir).filter(f => f.endsWith('.zip') || f.endsWith('.rar'));
   const results = [];
   const usedIds = new Set();
 
   for (const file of files) {
     console.log(`Processing: ${file}`);
     try {
-      const result = await extractPack(path.join(packsDir, file));
+      let zipPath = path.join(packsDir, file);
+      if (file.endsWith('.rar')) {
+        zipPath = convertRarToZip(zipPath);
+      }
+      const result = await extractPack(zipPath);
       if (usedIds.has(result.packId)) {
         console.log(`  Skipped: ${result.packId} (duplicate of existing)`);
         fs.rmSync(result.outputDir, { recursive: true, force: true });

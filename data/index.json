@@ -29,13 +29,15 @@
     },
     {
       "id": "1_1Infera_Blue",
-      "name": "1_1Infera_Blue",
+      "name": "Infera_Blue",
       "displayName": "1_1Infera_Blue",
       "coloredName": "1_1Infera_Blue",
       "description": "By iSparkton edit by Dilnat",
-      "lists": [],
-      "cover": "/thumbnails/1_1Infera_Blue/cover.png",
-      "packPng": "/thumbnails/1_1Infera_Blue/pack.png"
+      "lists": [
+        "iil pf v2"
+      ],
+      "cover": "/thumbnails/Infera_Blue/cover.png",
+      "packPng": "/thumbnails/Infera_Blue/pack.png"
     },
     {
       "id": "128x Purple Pack",
@@ -243,13 +245,15 @@
     },
     {
       "id": "#§3AMARANTH",
-      "name": "AMARANTH",
+      "name": "AMARANTH_v2",
       "displayName": "AMARANTH",
       "coloredName": "<span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">M</span><span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">R</span><span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">N</span><span style=\"color:#00AAAA\">T</span><span style=\"color:#00AAAA\">H</span>",
       "description": "Edit by Topu",
-      "lists": [],
-      "cover": "/thumbnails/AMARANTH/cover.png",
-      "packPng": "/thumbnails/AMARANTH/pack.png"
+      "lists": [
+        "Jewdah pf"
+      ],
+      "cover": "/thumbnails/AMARANTH_v2/cover.png",
+      "packPng": "/thumbnails/AMARANTH_v2/pack.png"
     },
     {
       "id": "§9Amaranth §f§l[32x] §9Blue",
@@ -1818,13 +1822,15 @@
     },
     {
       "id": "§4SoupSkidz4LIFE",
-      "name": "SoupSkidz4LIFE",
+      "name": "SoupSkidz4LIFE_v2",
       "displayName": "SoupSkidz4LIFE",
       "coloredName": "<span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\">o</span><span style=\"color:#AA0000\">u</span><span style=\"color:#AA0000\">p</span><span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\">k</span><span style=\"color:#AA0000\">i</span><span style=\"color:#AA0000\">d</span><span style=\"color:#AA0000\">z</span><span style=\"color:#AA0000\">4</span><span style=\"color:#AA0000\">L</span><span style=\"color:#AA0000\">I</span><span style=\"color:#AA0000\">F</span><span style=\"color:#AA0000\">E</span>",
       "description": "SoupSkidz Pack by Stimpay",
-      "lists": [],
-      "cover": "/thumbnails/SoupSkidz4LIFE/cover.png",
-      "packPng": "/thumbnails/SoupSkidz4LIFE/pack.png"
+      "lists": [
+        "Jewdah pf"
+      ],
+      "cover": "/thumbnails/SoupSkidz4LIFE_v2/cover.png",
+      "packPng": "/thumbnails/SoupSkidz4LIFE_v2/pack.png"
     },
     {
       "id": "Spectrum [✔]",
