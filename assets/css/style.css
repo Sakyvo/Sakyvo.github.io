@@ -72,6 +72,7 @@ nav { display: flex; gap: 12px; }
   border: 2px solid #000;
   font-size: 14px;
   outline: none;
+  background: #d0e4f0;
 }
 
 .search-btn {
@@ -507,6 +508,7 @@ footer {
   padding: 12px;
   border: 2px solid #000;
   font-size: 14px;
+  background: #d0e4f0;
 }
 
 .pack-list {
@@ -665,6 +667,7 @@ footer {
   padding: 8px 12px;
   border: 2px solid #000;
   font-size: 14px;
+  background: #d0e4f0;
 }
 
 .tag-list {
