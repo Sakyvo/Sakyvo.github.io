@@ -78,6 +78,12 @@ function parseDescription(desc) {
   return '';
 }
 
+const PACK_ID_OVERRIDES = {
+  'AMARANTH': { check: name => name === '#§3AMARANTH', id: 'AMARANTH_v2' },
+  'SoupSkidz4LIFE': { check: name => name === '§4SoupSkidz4LIFE', id: 'SoupSkidz4LIFE_v2' },
+  '1_1Infera_Blue': { check: () => true, id: 'Infera_Blue' },
+};
+
 function sanitizeName(name) {
   let r = name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_$])/, '');
   if (name.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
@@ -169,7 +175,11 @@ function convertRarToZip(rarPath) {
 async function extractPack(zipPath) {
   zipPath = fixNestedArchive(zipPath);
   const originalName = path.basename(zipPath, '.zip');
-  const packId = sanitizeName(originalName);
+  let packId = sanitizeName(originalName);
+  const override = PACK_ID_OVERRIDES[packId];
+  if (override && override.check(originalName)) {
+    packId = override.id;
+  }
   const zip = new AdmZip(zipPath);
   const outputDir = path.join('thumbnails', packId);
   fs.mkdirSync(outputDir, { recursive: true });

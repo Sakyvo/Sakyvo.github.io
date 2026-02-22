@@ -3772,7 +3772,7 @@
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
-    "packId": "AMARANTH",
+    "packId": "AMARANTH_v2",
     "originalName": "#§3AMARANTH",
     "extracted": {
       "items": [
@@ -3814,7 +3814,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/AMARANTH",
+    "outputDir": "thumbnails/AMARANTH_v2",
     "description": "Edit by Topu"
   },
   {
@@ -4048,7 +4048,7 @@
     "description": "By iSparkton"
   },
   {
-    "packId": "1_1Infera_Blue",
+    "packId": "Infera_Blue",
     "originalName": "1_1Infera_Blue",
     "extracted": {
       "items": [
@@ -4090,7 +4090,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/1_1Infera_Blue",
+    "outputDir": "thumbnails/Infera_Blue",
     "description": "By iSparkton edit by Dilnat"
   },
   {
@@ -7958,7 +7958,7 @@
     "description": "zefff"
   },
   {
-    "packId": "SoupSkidz4LIFE",
+    "packId": "SoupSkidz4LIFE_v2",
     "originalName": "§4SoupSkidz4LIFE",
     "extracted": {
       "items": [
@@ -8000,7 +8000,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/SoupSkidz4LIFE",
+    "outputDir": "thumbnails/SoupSkidz4LIFE_v2",
     "description": "SoupSkidz Pack by Stimpay"
   },
   {
