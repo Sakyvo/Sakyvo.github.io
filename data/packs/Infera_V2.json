@@ -1,0 +1,60 @@
+{
+  "id": "§8! §aInfera §8V2",
+  "name": "Infera_V2",
+  "displayName": "Infera V2",
+  "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#55FF55\">I</span><span style=\"color:#55FF55\">n</span><span style=\"color:#55FF55\">f</span><span style=\"color:#55FF55\">e</span><span style=\"color:#55FF55\">r</span><span style=\"color:#55FF55\">a</span><span style=\"color:#55FF55\"> </span><span style=\"color:#555555\">V</span><span style=\"color:#555555\">2</span>",
+  "description": "By iSparkton",
+  "cover": "/thumbnails/Infera_V2/cover.png",
+  "packPng": "/thumbnails/Infera_V2/pack.png",
+  "icon": null,
+  "file": "resourcepacks/§8! §aInfera §8V2.zip",
+  "fileSize": "13.3MB",
+  "uploadDate": "2026-02-22",
+  "lists": [
+    "Jewdah pf"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A78!%20%C2%A7aInfera%20%C2%A78V2.zip",
+    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A78!%20%C2%A7aInfera%20%C2%A78V2.zip"
+  }
+}

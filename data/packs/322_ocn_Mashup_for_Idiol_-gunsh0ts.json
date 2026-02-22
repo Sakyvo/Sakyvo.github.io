@@ -1,0 +1,60 @@
+{
+  "id": "32^2 ocn Mashup for Idiol -gunsh0ts",
+  "name": "322_ocn_Mashup_for_Idiol_-gunsh0ts",
+  "displayName": "32^2 ocn Mashup for Idiol -gunsh0ts",
+  "coloredName": "32^2 ocn Mashup for Idiol -gunsh0ts",
+  "description": "Nutty Mineman Idiol",
+  "cover": "/thumbnails/322_ocn_Mashup_for_Idiol_-gunsh0ts/cover.png",
+  "packPng": "/thumbnails/322_ocn_Mashup_for_Idiol_-gunsh0ts/pack.png",
+  "icon": null,
+  "file": "resourcepacks/32^2 ocn Mashup for Idiol -gunsh0ts.zip",
+  "fileSize": "6.9MB",
+  "uploadDate": "2026-02-22",
+  "lists": [
+    "Jewdah pf"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/32%5E2%20ocn%20Mashup%20for%20Idiol%20-gunsh0ts.zip",
+    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/32%5E2%20ocn%20Mashup%20for%20Idiol%20-gunsh0ts.zip"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "id": "! §6DBZ Eum3",
+  "name": "DBZ_Eum3",
+  "displayName": "DBZ Eum3",
+  "coloredName": "<span style=\"color:#FFAA00\">D</span><span style=\"color:#FFAA00\">B</span><span style=\"color:#FFAA00\">Z</span><span style=\"color:#FFAA00\"> </span><span style=\"color:#FFAA00\">E</span><span style=\"color:#FFAA00\">u</span><span style=\"color:#FFAA00\">m</span><span style=\"color:#FFAA00\">3</span>",
+  "description": "",
+  "cover": "/thumbnails/DBZ_Eum3/cover.png",
+  "packPng": "/thumbnails/DBZ_Eum3/pack.png",
+  "icon": null,
+  "file": "resourcepacks/! §6DBZ Eum3.zip",
+  "fileSize": "28.8MB",
+  "uploadDate": "2026-02-22",
+  "lists": [
+    "Jewdah pf"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A76DBZ%20Eum3.zip",
+    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%C2%A76DBZ%20Eum3.zip"
+  }
+}

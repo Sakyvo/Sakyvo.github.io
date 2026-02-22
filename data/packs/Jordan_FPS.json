@@ -1,0 +1,60 @@
+{
+  "id": "#§3Jordan FPS",
+  "name": "Jordan_FPS",
+  "displayName": "Jordan FPS",
+  "coloredName": "<span style=\"color:#00AAAA\">J</span><span style=\"color:#00AAAA\">o</span><span style=\"color:#00AAAA\">r</span><span style=\"color:#00AAAA\">d</span><span style=\"color:#00AAAA\">a</span><span style=\"color:#00AAAA\">n</span><span style=\"color:#00AAAA\"> </span><span style=\"color:#00AAAA\">F</span><span style=\"color:#00AAAA\">P</span><span style=\"color:#00AAAA\">S</span>",
+  "description": "For Jordan by Airbus",
+  "cover": "/thumbnails/Jordan_FPS/cover.png",
+  "packPng": "/thumbnails/Jordan_FPS/pack.png",
+  "icon": null,
+  "file": "resourcepacks/#§3Jordan FPS.zip",
+  "fileSize": "12.2MB",
+  "uploadDate": "2026-02-22",
+  "lists": [
+    "Jewdah pf"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23%C2%A73Jordan%20FPS.zip",
+    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23%C2%A73Jordan%20FPS.zip"
+  }
+}

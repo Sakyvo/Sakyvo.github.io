@@ -1,0 +1,60 @@
+{
+  "id": "! ! §c§lFuchsia 128",
+  "name": "Fuchsia_128",
+  "displayName": "Fuchsia 128",
+  "coloredName": "<span style=\"color:#FF5555\">F</span><span style=\"color:#FF5555\">u</span><span style=\"color:#FF5555\">c</span><span style=\"color:#FF5555\">h</span><span style=\"color:#FF5555\">s</span><span style=\"color:#FF5555\">i</span><span style=\"color:#FF5555\">a</span><span style=\"color:#FF5555\"> </span><span style=\"color:#FF5555\">1</span><span style=\"color:#FF5555\">2</span><span style=\"color:#FF5555\">8</span>",
+  "description": "Made by Airbus",
+  "cover": "/thumbnails/Fuchsia_128/cover.png",
+  "packPng": "/thumbnails/Fuchsia_128/pack.png",
+  "icon": null,
+  "file": "resourcepacks/! ! §c§lFuchsia 128.zip",
+  "fileSize": "17.8MB",
+  "uploadDate": "2026-02-22",
+  "lists": [
+    "Jewdah pf"
+  ],
+  "textures": {
+    "items": [
+      "diamond_sword.png",
+      "ender_pearl.png",
+      "splash_potion_of_healing.png",
+      "steak.png",
+      "iron_sword.png",
+      "fishing_rod_uncast.png",
+      "apple_golden.png",
+      "golden_carrot.png"
+    ],
+    "blocks": [
+      "grass_side.png",
+      "stone.png",
+      "cobblestone.png",
+      "wool_colored_white.png",
+      "dirt.png",
+      "planks_oak.png",
+      "log_oak.png",
+      "diamond_ore.png"
+    ],
+    "armor": [
+      "diamond_layer_1.png",
+      "diamond_layer_2.png"
+    ],
+    "gui": [
+      "icons.png",
+      "widgets.png",
+      "inventory.png"
+    ],
+    "font": [
+      "ascii.png"
+    ],
+    "skin": [
+      "steve.png"
+    ],
+    "particle": [
+      "particles.png"
+    ]
+  },
+  "downloads": {
+    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20!%20%C2%A7c%C2%A7lFuchsia%20128.zip",
+    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20!%20%C2%A7c%C2%A7lFuchsia%20128.zip"
+  }
+}

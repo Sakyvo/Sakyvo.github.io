@@ -9,8 +9,10 @@
   "icon": null,
   "file": "resourcepacks/! §eVene §932x §cRevamp.zip",
   "fileSize": "42.0MB",
-  "uploadDate": "2026-02-20",
-  "lists": [],
+  "uploadDate": "2026-02-22",
+  "lists": [
+    "Jewdah pf"
+  ],
   "textures": {
     "items": [
       "diamond_sword.png",
