@@ -3309,7 +3309,7 @@
       ]
     },
     "outputDir": "thumbnails/43",
-    "description": ""
+    "description": "By Johkeh"
   },
   {
     "packId": "CoolPvp",
@@ -3772,7 +3772,7 @@
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
-    "packId": "AMARANTH_v2",
+    "packId": "AMARANTH",
     "originalName": "#§3AMARANTH",
     "extracted": {
       "items": [
@@ -3814,7 +3814,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/AMARANTH_v2",
+    "outputDir": "thumbnails/AMARANTH",
     "description": "Edit by Topu"
   },
   {
@@ -4048,7 +4048,7 @@
     "description": "By iSparkton"
   },
   {
-    "packId": "Infera_Blue",
+    "packId": "1_1Infera_Blue",
     "originalName": "1_1Infera_Blue",
     "extracted": {
       "items": [
@@ -4090,7 +4090,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Infera_Blue",
+    "outputDir": "thumbnails/1_1Infera_Blue",
     "description": "By iSparkton edit by Dilnat"
   },
   {
@@ -7958,7 +7958,7 @@
     "description": "zefff"
   },
   {
-    "packId": "SoupSkidz4LIFE_v2",
+    "packId": "SoupSkidz4LIFE",
     "originalName": "§4SoupSkidz4LIFE",
     "extracted": {
       "items": [
@@ -8000,7 +8000,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/SoupSkidz4LIFE_v2",
+    "outputDir": "thumbnails/SoupSkidz4LIFE",
     "description": "SoupSkidz Pack by Stimpay"
   },
   {
