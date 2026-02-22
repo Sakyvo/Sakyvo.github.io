@@ -3772,7 +3772,7 @@
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
-    "packId": "AMARANTH",
+    "packId": "AMARANTH_v2",
     "originalName": "#§3AMARANTH",
     "extracted": {
       "items": [
@@ -3814,7 +3814,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/AMARANTH",
+    "outputDir": "thumbnails/undefined",
     "description": "Edit by Topu"
   },
   {
@@ -3956,7 +3956,7 @@
     "description": "Looking for revenge… // By Kyzuko"
   },
   {
-    "packId": "hyGuy",
+    "packId": "$hyGuy$",
     "originalName": "$hyGuy$",
     "extracted": {
       "items": [
@@ -3998,7 +3998,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/hyGuy",
+    "outputDir": "thumbnails/$hyGuy$",
     "description": "made by telus and goose mostly telus [@t3lus on twitter]"
   },
   {
@@ -4508,7 +4508,7 @@
     "description": "by Dualzz"
   },
   {
-    "packId": "Aphoticlue6x",
+    "packId": "Aphotic_Blue_16x",
     "originalName": "Aphotic_Blue_16x",
     "extracted": {
       "items": [
@@ -4550,11 +4550,11 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Aphoticlue6x",
+    "outputDir": "thumbnails/Aphotic_Blue_16x",
     "description": "lol dreamer"
   },
   {
-    "packId": "Aphoticed6x",
+    "packId": "Aphotic_Red_16x",
     "originalName": "Aphotic_Red_16x",
     "extracted": {
       "items": [
@@ -4596,7 +4596,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Aphoticed6x",
+    "outputDir": "thumbnails/Aphotic_Red_16x",
     "description": "lol dreamer"
   },
   {
@@ -7958,7 +7958,7 @@
     "description": "zefff"
   },
   {
-    "packId": "SoupSkidz4LIFE",
+    "packId": "SoupSkidz4LIFE_v2",
     "originalName": "§4SoupSkidz4LIFE",
     "extracted": {
       "items": [
@@ -8000,7 +8000,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/SoupSkidz4LIFE",
+    "outputDir": "thumbnails/undefined",
     "description": "SoupSkidz Pack by Stimpay"
   },
   {
@@ -8924,7 +8924,7 @@
     "description": "Apexay"
   },
   {
-    "packId": "hyGuy_V2",
+    "packId": "$hyGuy$_V2",
     "originalName": "§b$§chyGuy§b$ §8§o[§b§oV§c§o2§8§o]",
     "extracted": {
       "items": [
@@ -8966,7 +8966,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/hyGuy_V2",
+    "outputDir": "thumbnails/$hyGuy$_V2",
     "description": "By BlastyMineman"
   },
   {

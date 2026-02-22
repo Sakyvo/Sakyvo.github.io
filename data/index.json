@@ -4,6 +4,40 @@
   "pages": 4,
   "items": [
     {
+      "id": "$hyGuy$",
+      "name": "$hyGuy$",
+      "displayName": "$hyGuy$",
+      "coloredName": "$hyGuy$",
+      "description": "made by telus and goose mostly telus [@t3lus on twitter]",
+      "lists": [
+        "Jewdah pf"
+      ],
+      "cover": "/thumbnails/$hyGuy$/cover.png",
+      "packPng": "/thumbnails/$hyGuy$/pack.png"
+    },
+    {
+      "id": "§b$§chyGuy§b$ §8§o[§b§oV§c§o2§8§o]",
+      "name": "$hyGuy$_V2",
+      "displayName": "$hyGuy$ [V2]",
+      "coloredName": "<span style=\"color:#55FFFF\">$</span><span style=\"color:#FF5555\">h</span><span style=\"color:#FF5555\">y</span><span style=\"color:#FF5555\">G</span><span style=\"color:#FF5555\">u</span><span style=\"color:#FF5555\">y</span><span style=\"color:#55FFFF\">$</span><span style=\"color:#55FFFF\"> </span><span style=\"color:#555555\">[</span><span style=\"color:#55FFFF\">V</span><span style=\"color:#FF5555\">2</span><span style=\"color:#555555\">]</span>",
+      "description": "By BlastyMineman",
+      "lists": [
+        "Jewdah pf"
+      ],
+      "cover": "/thumbnails/$hyGuy$_V2/cover.png",
+      "packPng": "/thumbnails/$hyGuy$_V2/pack.png"
+    },
+    {
+      "id": "1_1Infera_Blue",
+      "name": "1Inferalue",
+      "displayName": "1_1Infera_Blue",
+      "coloredName": "1_1Infera_Blue",
+      "description": "By iSparkton edit by Dilnat",
+      "lists": [],
+      "cover": "/thumbnails/1Inferalue/cover.png",
+      "packPng": "/thumbnails/1Inferalue/pack.png"
+    },
+    {
       "id": "128x Purple Pack",
       "name": "128x_Purple_Pack",
       "displayName": "128x Purple Pack",
@@ -26,16 +60,6 @@
       ],
       "cover": "/thumbnails/128x_Smooth_Blue/cover.png",
       "packPng": "/thumbnails/128x_Smooth_Blue/pack.png"
-    },
-    {
-      "id": "1_1Infera_Blue",
-      "name": "1Inferalue",
-      "displayName": "1Inferalue",
-      "coloredName": "1<span style=\"color:#0000AA\">I</span><span style=\"color:#0000AA\">n</span><span style=\"color:#0000AA\">f</span><span style=\"color:#0000AA\">e</span><span style=\"color:#0000AA\">r</span><span style=\"color:#0000AA\">a</span><span style=\"color:#55FFFF\">l</span><span style=\"color:#55FFFF\">u</span><span style=\"color:#55FFFF\">e</span>",
-      "description": "By iSparkton edit by Dilnat",
-      "lists": [],
-      "cover": "/thumbnails/1Inferalue/cover.png",
-      "packPng": "/thumbnails/1Inferalue/pack.png"
     },
     {
       "id": "Stimpy Prankedgg#2 Remake",
@@ -219,15 +243,15 @@
     },
     {
       "id": "#§3AMARANTH",
-      "name": "AMARANTH",
+      "name": "AMARANTH_v2",
       "displayName": "AMARANTH",
       "coloredName": "<span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">M</span><span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">R</span><span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">N</span><span style=\"color:#00AAAA\">T</span><span style=\"color:#00AAAA\">H</span>",
       "description": "Edit by Topu",
       "lists": [
         "Jewdah pf"
       ],
-      "cover": "/thumbnails/AMARANTH/cover.png",
-      "packPng": "/thumbnails/AMARANTH/pack.png"
+      "cover": "/thumbnails/AMARANTH_v2/cover.png",
+      "packPng": "/thumbnails/AMARANTH_v2/pack.png"
     },
     {
       "id": "§9Amaranth §f§l[32x] §9Blue",
@@ -266,28 +290,28 @@
       "packPng": "/thumbnails/Aphotic_128x/pack.png"
     },
     {
-      "id": "Aphotic_Red_16x",
-      "name": "Aphoticed6x",
-      "displayName": "Aphoticed6x",
-      "coloredName": "Aphoticed<span style=\"color:#0000AA\">6</span><span style=\"color:#0000AA\">x</span>",
+      "id": "Aphotic_Blue_16x",
+      "name": "Aphotic_Blue_16x",
+      "displayName": "Aphotic_Blue_16x",
+      "coloredName": "Aphotic_Blue_16x",
       "description": "lol dreamer",
       "lists": [
         "Jewdah pf"
       ],
-      "cover": "/thumbnails/Aphoticed6x/cover.png",
-      "packPng": "/thumbnails/Aphoticed6x/pack.png"
+      "cover": "/thumbnails/Aphotic_Blue_16x/cover.png",
+      "packPng": "/thumbnails/Aphotic_Blue_16x/pack.png"
     },
     {
-      "id": "Aphotic_Blue_16x",
-      "name": "Aphoticlue6x",
-      "displayName": "Aphoticlue6x",
-      "coloredName": "Aphotic<span style=\"color:#55FFFF\">l</span><span style=\"color:#55FFFF\">u</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#0000AA\">6</span><span style=\"color:#0000AA\">x</span>",
+      "id": "Aphotic_Red_16x",
+      "name": "Aphotic_Red_16x",
+      "displayName": "Aphotic_Red_16x",
+      "coloredName": "Aphotic_Red_16x",
       "description": "lol dreamer",
       "lists": [
         "Jewdah pf"
       ],
-      "cover": "/thumbnails/Aphoticlue6x/cover.png",
-      "packPng": "/thumbnails/Aphoticlue6x/pack.png"
+      "cover": "/thumbnails/Aphotic_Red_16x/cover.png",
+      "packPng": "/thumbnails/Aphotic_Red_16x/pack.png"
     },
     {
       "id": "arissi red smoothful",
@@ -1019,30 +1043,6 @@
       ],
       "cover": "/thumbnails/Hydros/cover.png",
       "packPng": "/thumbnails/Hydros/pack.png"
-    },
-    {
-      "id": "$hyGuy$",
-      "name": "hyGuy",
-      "displayName": "hyGuy$",
-      "coloredName": "hyGuy$",
-      "description": "made by telus and goose mostly telus [@t3lus on twitter]",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/hyGuy/cover.png",
-      "packPng": "/thumbnails/hyGuy/pack.png"
-    },
-    {
-      "id": "§b$§chyGuy§b$ §8§o[§b§oV§c§o2§8§o]",
-      "name": "hyGuy_V2",
-      "displayName": "hyGuy$ [V2]",
-      "coloredName": "<span style=\"color:#55FFFF\">$</span><span style=\"color:#FF5555\">h</span><span style=\"color:#FF5555\">y</span><span style=\"color:#FF5555\">G</span><span style=\"color:#FF5555\">u</span><span style=\"color:#FF5555\">y</span><span style=\"color:#55FFFF\">$</span><span style=\"color:#55FFFF\"> </span><span style=\"color:#555555\">[</span><span style=\"color:#55FFFF\">V</span><span style=\"color:#FF5555\">2</span><span style=\"color:#555555\">]</span>",
-      "description": "By BlastyMineman",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/hyGuy_V2/cover.png",
-      "packPng": "/thumbnails/hyGuy_V2/pack.png"
     },
     {
       "id": "Idiol Snow v4",
@@ -1820,15 +1820,15 @@
     },
     {
       "id": "§4SoupSkidz4LIFE",
-      "name": "SoupSkidz4LIFE",
+      "name": "SoupSkidz4LIFE_v2",
       "displayName": "SoupSkidz4LIFE",
       "coloredName": "<span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\">o</span><span style=\"color:#AA0000\">u</span><span style=\"color:#AA0000\">p</span><span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\">k</span><span style=\"color:#AA0000\">i</span><span style=\"color:#AA0000\">d</span><span style=\"color:#AA0000\">z</span><span style=\"color:#AA0000\">4</span><span style=\"color:#AA0000\">L</span><span style=\"color:#AA0000\">I</span><span style=\"color:#AA0000\">F</span><span style=\"color:#AA0000\">E</span>",
       "description": "SoupSkidz Pack by Stimpay",
       "lists": [
         "Jewdah pf"
       ],
-      "cover": "/thumbnails/SoupSkidz4LIFE/cover.png",
-      "packPng": "/thumbnails/SoupSkidz4LIFE/pack.png"
+      "cover": "/thumbnails/SoupSkidz4LIFE_v2/cover.png",
+      "packPng": "/thumbnails/SoupSkidz4LIFE_v2/pack.png"
     },
     {
       "id": "Spectrum [✔]",

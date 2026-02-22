@@ -62,7 +62,9 @@ async function getFirstFrame(buffer) {
 
 function cleanMinecraftText(text) {
   if (!text) return '';
-  return text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').trim();
+  let r = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_$])/, '');
+  if (text.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
+  return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[§]/g, '').trim();
 }
 
 function parseDescription(desc) {
@@ -76,7 +78,9 @@ function parseDescription(desc) {
 }
 
 function sanitizeName(name) {
-  return name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#$%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff]+/, '').trim().replace(/\s+/g, '_');
+  let r = name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_$])/, '');
+  if (name.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
+  return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim().replace(/\s+/g, '_');
 }
 
 async function extractPack(zipPath) {

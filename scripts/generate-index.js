@@ -12,12 +12,16 @@ const MC_COLORS = {
 
 function cleanMinecraftText(text) {
   if (!text) return '';
-  return text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/§[0-9a-fk-or]/gi, '').replace(/[§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff]+/, '').trim();
+  let r = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_$])/, '');
+  if (text.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
+  return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim();
 }
 
 function toColoredHtml(text) {
   if (!text) return '';
-  const cleaned = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_])/, '').replace(/_([0-9a-fk-or])/gi, '§$1').replace(/^[^0-9a-zA-Z\u4e00-\u9fff§]+/, '').trim();
+  let cleaned = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_$])/, '');
+  if (text.includes('§')) cleaned = cleaned.replace(/_([0-9a-fk-or])/gi, '§$1');
+  cleaned = cleaned.replace(/^[^0-9a-zA-Z\u4e00-\u9fff§$]+/, '').trim();
   let result = '', color = null;
   for (let i = 0; i < cleaned.length; i++) {
     if (cleaned[i] === '§' && i + 1 < cleaned.length) {
