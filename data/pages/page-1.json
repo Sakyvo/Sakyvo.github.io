@@ -123,12 +123,12 @@
     },
     {
       "id": "1_1Infera_Blue",
-      "name": "1Inferalue",
+      "name": "1_1Infera_Blue",
       "displayName": "1_1Infera_Blue",
       "coloredName": "1_1Infera_Blue",
       "description": "By iSparkton edit by Dilnat",
-      "cover": "/thumbnails/1Inferalue/cover.png",
-      "packPng": "/thumbnails/1Inferalue/pack.png",
+      "cover": "/thumbnails/1_1Infera_Blue/cover.png",
+      "packPng": "/thumbnails/1_1Infera_Blue/pack.png",
       "icon": null,
       "file": "resourcepacks/1_1Infera_Blue.zip",
       "fileSize": "28.3MB",
@@ -1201,19 +1201,17 @@
     },
     {
       "id": "#§3AMARANTH",
-      "name": "AMARANTH_v2",
+      "name": "AMARANTH",
       "displayName": "AMARANTH",
       "coloredName": "<span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">M</span><span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">R</span><span style=\"color:#00AAAA\">A</span><span style=\"color:#00AAAA\">N</span><span style=\"color:#00AAAA\">T</span><span style=\"color:#00AAAA\">H</span>",
       "description": "Edit by Topu",
-      "cover": "/thumbnails/AMARANTH_v2/cover.png",
-      "packPng": "/thumbnails/AMARANTH_v2/pack.png",
+      "cover": "/thumbnails/AMARANTH/cover.png",
+      "packPng": "/thumbnails/AMARANTH/pack.png",
       "icon": null,
       "file": "resourcepacks/#§3AMARANTH.zip",
       "fileSize": "12.4MB",
       "uploadDate": "2026-02-22",
-      "lists": [
-        "Jewdah pf"
-      ],
+      "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",
