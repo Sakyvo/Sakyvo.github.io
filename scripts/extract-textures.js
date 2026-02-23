@@ -63,7 +63,7 @@ async function getFirstFrame(buffer) {
 
 function cleanMinecraftText(text) {
   if (!text) return '';
-  let r = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff§_$])/, '');
+  let r = text.replace(/^(?:§[0-9a-fk-or])*[!#]+\s*/gi, '');
   if (text.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
   return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[§]/g, '').trim();
 }
@@ -85,7 +85,7 @@ const PACK_ID_OVERRIDES = {
 };
 
 function sanitizeName(name) {
-  let r = name.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_$])/, '');
+  let r = name.replace(/^(?:§[0-9a-fk-or])*[!#]+\s*/gi, '');
   if (name.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
   return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim().replace(/\s+/g, '_');
 }
@@ -113,6 +113,7 @@ function fixNestedArchive(zipPath) {
     });
 
     if (innerArchive) {
+      const innerBaseName = path.basename(innerArchive.entryName, path.extname(innerArchive.entryName));
       console.log(`  Nested archive detected: ${innerArchive.entryName}`);
       const tmpDir = path.join('tmp_nested_' + Date.now());
       fs.mkdirSync(tmpDir, { recursive: true });
@@ -141,9 +142,11 @@ function fixNestedArchive(zipPath) {
           }
         }
         addClean(extractDir, '');
-        newZip.writeZip(zipPath);
-        console.log(`  Rebuilt from nested archive: ${path.basename(zipPath)}`);
-        return zipPath;
+        const newZipPath = path.join(path.dirname(zipPath), innerBaseName + '.zip');
+        newZip.writeZip(newZipPath);
+        if (newZipPath !== zipPath) fs.rmSync(zipPath, { force: true });
+        console.log(`  Rebuilt as: ${path.basename(newZipPath)}`);
+        return newZipPath;
       } finally {
         fs.rmSync(tmpDir, { recursive: true, force: true });
       }

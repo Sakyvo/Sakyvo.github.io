@@ -12,14 +12,14 @@ const MC_COLORS = {
 
 function cleanMinecraftText(text) {
   if (!text) return '';
-  let r = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_$])/, '');
+  let r = text.replace(/^(?:§[0-9a-fk-or])*[!#]+\s*/gi, '');
   if (text.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
   return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim();
 }
 
 function toColoredHtml(text) {
   if (!text) return '';
-  let cleaned = text.replace(/^.*?[!#]+\s*(?=[0-9a-zA-Z\u4e00-\u9fff_$])/, '');
+  let cleaned = text.replace(/^(?:§[0-9a-fk-or])*[!#]+\s*/gi, '');
   if (text.includes('§')) cleaned = cleaned.replace(/_([0-9a-fk-or])/gi, '§$1');
   cleaned = cleaned.replace(/^[^0-9a-zA-Z\u4e00-\u9fff§$]+/, '').trim();
   let result = '', color = null;

@@ -1,18 +1,16 @@
 {
   "id": "Stimpy Prankedgg#2 Remake",
-  "name": "2_Remake",
-  "displayName": "2 Remake",
-  "coloredName": "2 Remake",
+  "name": "Stimpy_Prankedgg2_Remake",
+  "displayName": "Stimpy Prankedgg#2 Remake",
+  "coloredName": "Stimpy Prankedgg#2 Remake",
   "description": "",
-  "cover": "/thumbnails/2_Remake/cover.png",
-  "packPng": "/thumbnails/2_Remake/pack.png",
+  "cover": "/thumbnails/Stimpy_Prankedgg2_Remake/cover.png",
+  "packPng": "/thumbnails/Stimpy_Prankedgg2_Remake/pack.png",
   "icon": null,
   "file": "resourcepacks/Stimpy Prankedgg#2 Remake.zip",
   "fileSize": "15.2MB",
   "uploadDate": "2026-02-23",
-  "lists": [
-    "Jewdah pf"
-  ],
+  "lists": [],
   "textures": {
     "items": [
       "diamond_sword.png",

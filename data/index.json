@@ -1,5 +1,5 @@
 {
-  "total": 198,
+  "total": 197,
   "pageSize": 50,
   "pages": 4,
   "items": [
@@ -64,18 +64,6 @@
       "packPng": "/thumbnails/128x_Smooth_Blue/pack.png"
     },
     {
-      "id": "Stimpy Prankedgg#2 Remake",
-      "name": "2_Remake",
-      "displayName": "2 Remake",
-      "coloredName": "2 Remake",
-      "description": "",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/2_Remake/cover.png",
-      "packPng": "/thumbnails/2_Remake/pack.png"
-    },
-    {
       "id": "32 ocn new particles",
       "name": "32_ocn_new_particles",
       "displayName": "32 ocn new particles",
@@ -122,18 +110,6 @@
       ],
       "cover": "/thumbnails/32Blue_v2_-_Original_Resolution/cover.png",
       "packPng": "/thumbnails/32Blue_v2_-_Original_Resolution/pack.png"
-    },
-    {
-      "id": "#43",
-      "name": "43",
-      "displayName": "43",
-      "coloredName": "43",
-      "description": "By Johkeh",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/43/cover.png",
-      "packPng": "/thumbnails/43/pack.png"
     },
     {
       "id": "4RedBlur",
@@ -1074,7 +1050,7 @@
       "id": "§8! §aInfera",
       "name": "Infera",
       "displayName": "Infera",
-      "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#55FF55\">I</span><span style=\"color:#55FF55\">n</span><span style=\"color:#55FF55\">f</span><span style=\"color:#55FF55\">e</span><span style=\"color:#55FF55\">r</span><span style=\"color:#55FF55\">a</span>",
+      "coloredName": "<span style=\"color:#55FF55\">I</span><span style=\"color:#55FF55\">n</span><span style=\"color:#55FF55\">f</span><span style=\"color:#55FF55\">e</span><span style=\"color:#55FF55\">r</span><span style=\"color:#55FF55\">a</span>",
       "description": "",
       "lists": [
         "Jewdah pf"
@@ -1098,7 +1074,7 @@
       "id": "§8! §aInfera §8V2",
       "name": "Infera_V2",
       "displayName": "Infera V2",
-      "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#55FF55\">I</span><span style=\"color:#55FF55\">n</span><span style=\"color:#55FF55\">f</span><span style=\"color:#55FF55\">e</span><span style=\"color:#55FF55\">r</span><span style=\"color:#55FF55\">a</span><span style=\"color:#55FF55\"> </span><span style=\"color:#555555\">V</span><span style=\"color:#555555\">2</span>",
+      "coloredName": "<span style=\"color:#55FF55\">I</span><span style=\"color:#55FF55\">n</span><span style=\"color:#55FF55\">f</span><span style=\"color:#55FF55\">e</span><span style=\"color:#55FF55\">r</span><span style=\"color:#55FF55\">a</span><span style=\"color:#55FF55\"> </span><span style=\"color:#555555\">V</span><span style=\"color:#555555\">2</span>",
       "description": "By iSparkton",
       "lists": [
         "Jewdah pf"
@@ -1131,7 +1107,7 @@
       "packPng": "/thumbnails/Jewdah_Private/pack.png"
     },
     {
-      "id": "!  Johkeh Default",
+      "id": "Johkeh Default",
       "name": "Johkeh_Default",
       "displayName": "Johkeh Default",
       "coloredName": "Johkeh Default",
@@ -1527,7 +1503,7 @@
       "id": "§7!  §4PotPvP §8Revamp",
       "name": "PotPvP_Revamp",
       "displayName": "PotPvP Revamp",
-      "coloredName": "<span style=\"color:#AAAAAA\">!</span><span style=\"color:#AAAAAA\"> </span><span style=\"color:#AAAAAA\"> </span><span style=\"color:#AA0000\">P</span><span style=\"color:#AA0000\">o</span><span style=\"color:#AA0000\">t</span><span style=\"color:#AA0000\">P</span><span style=\"color:#AA0000\">v</span><span style=\"color:#AA0000\">P</span><span style=\"color:#AA0000\"> </span><span style=\"color:#555555\">R</span><span style=\"color:#555555\">e</span><span style=\"color:#555555\">v</span><span style=\"color:#555555\">a</span><span style=\"color:#555555\">m</span><span style=\"color:#555555\">p</span>",
+      "coloredName": "<span style=\"color:#AA0000\">P</span><span style=\"color:#AA0000\">o</span><span style=\"color:#AA0000\">t</span><span style=\"color:#AA0000\">P</span><span style=\"color:#AA0000\">v</span><span style=\"color:#AA0000\">P</span><span style=\"color:#AA0000\"> </span><span style=\"color:#555555\">R</span><span style=\"color:#555555\">e</span><span style=\"color:#555555\">v</span><span style=\"color:#555555\">a</span><span style=\"color:#555555\">m</span><span style=\"color:#555555\">p</span>",
       "description": "By iSparkton",
       "lists": [
         "Jewdah pf"
@@ -1893,6 +1869,16 @@
       "packPng": "/thumbnails/Stimpy_Eum3_edit/pack.png"
     },
     {
+      "id": "Stimpy Prankedgg#2 Remake",
+      "name": "Stimpy_Prankedgg2_Remake",
+      "displayName": "Stimpy Prankedgg#2 Remake",
+      "coloredName": "Stimpy Prankedgg#2 Remake",
+      "description": "",
+      "lists": [],
+      "cover": "/thumbnails/Stimpy_Prankedgg2_Remake/cover.png",
+      "packPng": "/thumbnails/Stimpy_Prankedgg2_Remake/pack.png"
+    },
+    {
       "id": "!    §bStimpy Waar Paack",
       "name": "Stimpy_Waar_Paack",
       "displayName": "Stimpy Waar Paack",
@@ -2134,7 +2120,7 @@
       "id": "§8! §bVenetian",
       "name": "Venetian",
       "displayName": "Venetian",
-      "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#55FFFF\">V</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">n</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">t</span><span style=\"color:#55FFFF\">i</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">n</span>",
+      "coloredName": "<span style=\"color:#55FFFF\">V</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">n</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">t</span><span style=\"color:#55FFFF\">i</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">n</span>",
       "description": "4K Bundle | 6xth",
       "lists": [
         "Jewdah pf"

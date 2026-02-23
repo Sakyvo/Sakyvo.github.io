@@ -921,7 +921,7 @@
   },
   {
     "packId": "Johkeh_Default",
-    "originalName": "!  Johkeh Default",
+    "originalName": "Johkeh Default",
     "extracted": {
       "items": [
         "diamond_sword.png",
@@ -3266,8 +3266,8 @@
     "description": ""
   },
   {
-    "packId": "43",
-    "originalName": "#43",
+    "packId": "Johkeh_Default",
+    "originalName": "Johkeh Default",
     "extracted": {
       "items": [
         "diamond_sword.png",
@@ -3308,7 +3308,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/43",
+    "outputDir": "thumbnails/Johkeh_Default",
     "description": "By Johkeh"
   },
   {
@@ -5750,7 +5750,7 @@
     "description": "Edited by: Tee"
   },
   {
-    "packId": "2_Remake",
+    "packId": "Stimpy_Prankedgg2_Remake",
     "originalName": "Stimpy Prankedgg#2 Remake",
     "extracted": {
       "items": [
@@ -5792,7 +5792,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/2_Remake",
+    "outputDir": "thumbnails/Stimpy_Prankedgg2_Remake",
     "description": ""
   },
   {

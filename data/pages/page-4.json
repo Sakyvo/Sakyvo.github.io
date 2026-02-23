@@ -2,126 +2,6 @@
   "page": 4,
   "items": [
     {
-      "id": "§aSoupSkidz Map 7 Pack",
-      "name": "SoupSkidz_Map_7_Pack",
-      "displayName": "SoupSkidz Map 7 Pack",
-      "coloredName": "<span style=\"color:#55FF55\">S</span><span style=\"color:#55FF55\">o</span><span style=\"color:#55FF55\">u</span><span style=\"color:#55FF55\">p</span><span style=\"color:#55FF55\">S</span><span style=\"color:#55FF55\">k</span><span style=\"color:#55FF55\">i</span><span style=\"color:#55FF55\">d</span><span style=\"color:#55FF55\">z</span><span style=\"color:#55FF55\"> </span><span style=\"color:#55FF55\">M</span><span style=\"color:#55FF55\">a</span><span style=\"color:#55FF55\">p</span><span style=\"color:#55FF55\"> </span><span style=\"color:#55FF55\">7</span><span style=\"color:#55FF55\"> </span><span style=\"color:#55FF55\">P</span><span style=\"color:#55FF55\">a</span><span style=\"color:#55FF55\">c</span><span style=\"color:#55FF55\">k</span>",
-      "description": "",
-      "cover": "/thumbnails/SoupSkidz_Map_7_Pack/cover.png",
-      "packPng": "/thumbnails/SoupSkidz_Map_7_Pack/pack.png",
-      "icon": null,
-      "file": "resourcepacks/§aSoupSkidz Map 7 Pack.zip",
-      "fileSize": "27.6MB",
-      "uploadDate": "2026-02-23",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "textures": {
-        "items": [
-          "diamond_sword.png",
-          "ender_pearl.png",
-          "splash_potion_of_healing.png",
-          "steak.png",
-          "iron_sword.png",
-          "fishing_rod_uncast.png",
-          "apple_golden.png",
-          "golden_carrot.png"
-        ],
-        "blocks": [
-          "grass_side.png",
-          "stone.png",
-          "cobblestone.png",
-          "wool_colored_white.png",
-          "dirt.png",
-          "planks_oak.png",
-          "log_oak.png",
-          "diamond_ore.png"
-        ],
-        "armor": [
-          "diamond_layer_1.png",
-          "diamond_layer_2.png"
-        ],
-        "gui": [
-          "icons.png",
-          "widgets.png",
-          "inventory.png"
-        ],
-        "font": [
-          "ascii.png"
-        ],
-        "skin": [
-          "steve.png"
-        ],
-        "particle": [
-          "particles.png"
-        ]
-      },
-      "downloads": {
-        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A7aSoupSkidz%20Map%207%20Pack.zip",
-        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A7aSoupSkidz%20Map%207%20Pack.zip"
-      }
-    },
-    {
-      "id": "#SoupSkidz4Life",
-      "name": "SoupSkidz4Life",
-      "displayName": "SoupSkidz4Life",
-      "coloredName": "SoupSkidz4Life",
-      "description": "YoloPack",
-      "cover": "/thumbnails/SoupSkidz4Life/cover.png",
-      "packPng": "/thumbnails/SoupSkidz4Life/pack.png",
-      "icon": null,
-      "file": "resourcepacks/#SoupSkidz4Life.zip",
-      "fileSize": "11.0MB",
-      "uploadDate": "2026-02-23",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "textures": {
-        "items": [
-          "diamond_sword.png",
-          "ender_pearl.png",
-          "splash_potion_of_healing.png",
-          "steak.png",
-          "iron_sword.png",
-          "fishing_rod_uncast.png",
-          "apple_golden.png",
-          "golden_carrot.png"
-        ],
-        "blocks": [
-          "grass_side.png",
-          "stone.png",
-          "cobblestone.png",
-          "wool_colored_white.png",
-          "dirt.png",
-          "planks_oak.png",
-          "log_oak.png",
-          "diamond_ore.png"
-        ],
-        "armor": [
-          "diamond_layer_1.png",
-          "diamond_layer_2.png"
-        ],
-        "gui": [
-          "icons.png",
-          "widgets.png",
-          "inventory.png"
-        ],
-        "font": [
-          "ascii.png"
-        ],
-        "skin": [
-          "steve.png"
-        ],
-        "particle": [
-          "particles.png"
-        ]
-      },
-      "downloads": {
-        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23SoupSkidz4Life.zip",
-        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23SoupSkidz4Life.zip"
-      }
-    },
-    {
       "id": "§4SoupSkidz4LIFE",
       "name": "SoupSkidz4LIFE_v2",
       "displayName": "SoupSkidz4LIFE",
@@ -479,6 +359,64 @@
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20Stimpy%20Eum3%20edit.zip",
         "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20Stimpy%20Eum3%20edit.zip"
+      }
+    },
+    {
+      "id": "Stimpy Prankedgg#2 Remake",
+      "name": "Stimpy_Prankedgg2_Remake",
+      "displayName": "Stimpy Prankedgg#2 Remake",
+      "coloredName": "Stimpy Prankedgg#2 Remake",
+      "description": "",
+      "cover": "/thumbnails/Stimpy_Prankedgg2_Remake/cover.png",
+      "packPng": "/thumbnails/Stimpy_Prankedgg2_Remake/pack.png",
+      "icon": null,
+      "file": "resourcepacks/Stimpy Prankedgg#2 Remake.zip",
+      "fileSize": "15.2MB",
+      "uploadDate": "2026-02-23",
+      "lists": [],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Stimpy%20Prankedgg%232%20Remake.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Stimpy%20Prankedgg%232%20Remake.zip"
       }
     },
     {
@@ -1683,7 +1621,7 @@
       "id": "§8! §bVenetian",
       "name": "Venetian",
       "displayName": "Venetian",
-      "coloredName": "<span style=\"color:#555555\">!</span><span style=\"color:#555555\"> </span><span style=\"color:#55FFFF\">V</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">n</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">t</span><span style=\"color:#55FFFF\">i</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">n</span>",
+      "coloredName": "<span style=\"color:#55FFFF\">V</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">n</span><span style=\"color:#55FFFF\">e</span><span style=\"color:#55FFFF\">t</span><span style=\"color:#55FFFF\">i</span><span style=\"color:#55FFFF\">a</span><span style=\"color:#55FFFF\">n</span>",
       "description": "4K Bundle | 6xth",
       "cover": "/thumbnails/Venetian/cover.png",
       "packPng": "/thumbnails/Venetian/pack.png",
