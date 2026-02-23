@@ -90,54 +90,115 @@ function sanitizeName(name) {
   return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim().replace(/\s+/g, '_');
 }
 
+const JUNK_FILES = /(?:^|\/)(thumbs\.db|\.ds_store|desktop\.ini)$/i;
+
+function isJunk(name) { return JUNK_FILES.test(name); }
+
 function fixNestedArchive(zipPath) {
   const zip = new AdmZip(zipPath);
   const entries = zip.getEntries();
   const hasAssets = entries.some(e => e.entryName.startsWith('assets/'));
-  if (hasAssets) return zipPath;
+  let needsRebuild = false;
 
-  const innerArchive = entries.find(e =>
-    !e.isDirectory && (e.entryName.endsWith('.zip') || e.entryName.endsWith('.rar'))
-  );
-  if (!innerArchive) return zipPath;
+  // Case 1: nested archive (zip/rar inside zip, no top-level assets/)
+  if (!hasAssets) {
+    const innerArchive = entries.find(e =>
+      !e.isDirectory && (e.entryName.endsWith('.zip') || e.entryName.endsWith('.rar'))
+    );
 
-  console.log(`  Nested archive detected: ${innerArchive.entryName}`);
-  const tmpDir = path.join('tmp_nested_' + Date.now());
-  fs.mkdirSync(tmpDir, { recursive: true });
+    // Case 2: nested same-name folder containing assets/
+    const nestedFolder = !innerArchive && entries.find(e => {
+      const parts = e.entryName.split('/');
+      return parts.length > 2 && parts[1] === 'assets';
+    });
 
-  try {
-    const innerPath = path.join(tmpDir, 'inner' + path.extname(innerArchive.entryName));
-    fs.writeFileSync(innerPath, innerArchive.getData());
-
-    const extractDir = path.join(tmpDir, 'extracted');
-    fs.mkdirSync(extractDir, { recursive: true });
-
-    if (innerPath.endsWith('.rar')) {
-      execSync(`7z x "${innerPath}" -o"${extractDir}" -y`, { stdio: 'pipe' });
-    } else {
-      const innerZip = new AdmZip(innerPath);
-      innerZip.extractAllTo(extractDir, true);
-    }
-
-    const newZip = new AdmZip();
-    function addDir(dir, zipDir) {
-      for (const item of fs.readdirSync(dir)) {
-        const full = path.join(dir, item);
-        const rel = zipDir ? zipDir + '/' + item : item;
-        if (fs.statSync(full).isDirectory()) {
-          addDir(full, rel);
+    if (innerArchive) {
+      console.log(`  Nested archive detected: ${innerArchive.entryName}`);
+      const tmpDir = path.join('tmp_nested_' + Date.now());
+      fs.mkdirSync(tmpDir, { recursive: true });
+      try {
+        const innerPath = path.join(tmpDir, 'inner' + path.extname(innerArchive.entryName));
+        fs.writeFileSync(innerPath, innerArchive.getData());
+        const extractDir = path.join(tmpDir, 'extracted');
+        fs.mkdirSync(extractDir, { recursive: true });
+        if (innerPath.endsWith('.rar')) {
+          execSync(`7z x "${innerPath}" -o"${extractDir}" -y`, { stdio: 'pipe' });
         } else {
-          newZip.addFile(rel, fs.readFileSync(full));
+          new AdmZip(innerPath).extractAllTo(extractDir, true);
         }
+        const newZip = new AdmZip();
+        function addClean(dir, zipDir) {
+          for (const item of fs.readdirSync(dir)) {
+            const full = path.join(dir, item);
+            const rel = zipDir ? zipDir + '/' + item : item;
+            if (isJunk(rel)) continue;
+            if (fs.statSync(full).isDirectory()) {
+              if (['assets'].includes(item) || zipDir) addClean(full, rel);
+            } else {
+              if (!zipDir && !['pack.mcmeta', 'pack.png'].includes(item)) continue;
+              newZip.addFile(rel, fs.readFileSync(full));
+            }
+          }
+        }
+        addClean(extractDir, '');
+        newZip.writeZip(zipPath);
+        console.log(`  Rebuilt from nested archive: ${path.basename(zipPath)}`);
+        return zipPath;
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
       }
     }
-    addDir(extractDir, '');
-    newZip.writeZip(zipPath);
-    console.log(`  Rebuilt zip: ${path.basename(zipPath)}`);
+
+    if (nestedFolder) {
+      const prefix = nestedFolder.entryName.split('/')[0] + '/';
+      console.log(`  Nested folder detected: ${prefix}`);
+      const newZip = new AdmZip();
+      for (const e of entries) {
+        if (e.isDirectory || !e.entryName.startsWith(prefix)) continue;
+        const rel = e.entryName.slice(prefix.length);
+        if (!rel || isJunk(rel)) continue;
+        const top = rel.split('/')[0];
+        if (rel.includes('/')) {
+          if (top !== 'assets') continue;
+        } else {
+          if (!['pack.mcmeta', 'pack.png'].includes(rel.toLowerCase()) && top !== 'assets') continue;
+        }
+        newZip.addFile(rel, e.getData());
+      }
+      newZip.writeZip(zipPath);
+      console.log(`  Rebuilt from nested folder: ${path.basename(zipPath)}`);
+      return zipPath;
+    }
+
     return zipPath;
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
+
+  // Case 3: has assets/ at root but may contain junk files or non-pack files at root
+  const hasJunk = entries.some(e => isJunk(e.entryName));
+  const hasExtraRoot = entries.some(e => {
+    if (e.isDirectory) return false;
+    const parts = e.entryName.split('/');
+    if (parts.length === 1) {
+      return !['pack.mcmeta', 'pack.png'].includes(parts[0].toLowerCase());
+    }
+    return false;
+  });
+
+  if (hasJunk || hasExtraRoot) {
+    const newZip = new AdmZip();
+    for (const e of entries) {
+      if (e.isDirectory) continue;
+      if (isJunk(e.entryName)) continue;
+      const parts = e.entryName.split('/');
+      if (parts.length === 1 && !['pack.mcmeta', 'pack.png'].includes(parts[0].toLowerCase())) continue;
+      if (parts.length > 1 && parts[0] !== 'assets') continue;
+      newZip.addFile(e.entryName, e.getData());
+    }
+    newZip.writeZip(zipPath);
+    console.log(`  Cleaned junk from: ${path.basename(zipPath)}`);
+  }
+
+  return zipPath;
 }
 
 function convertRarToZip(rarPath) {
@@ -682,12 +743,18 @@ async function main() {
       if (file.endsWith('.rar')) {
         zipPath = convertRarToZip(zipPath);
       }
-      const result = await extractPack(zipPath);
-      if (usedIds.has(result.packId)) {
-        console.log(`  Skipped: ${result.packId} (duplicate of existing)`);
-        fs.rmSync(result.outputDir, { recursive: true, force: true });
+      // Pre-compute packId to check duplicates BEFORE extracting
+      const originalName = path.basename(zipPath, '.zip');
+      let packId = sanitizeName(originalName);
+      const override = PACK_ID_OVERRIDES[packId];
+      if (override && override.check(originalName)) {
+        packId = override.id;
+      }
+      if (usedIds.has(packId)) {
+        console.log(`  Skipped: ${packId} (duplicate of existing)`);
         continue;
       }
+      const result = await extractPack(zipPath);
       usedIds.add(result.packId);
       results.push(result);
       console.log(`  Extracted: ${result.packId}`);
