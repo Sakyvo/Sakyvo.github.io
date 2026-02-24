@@ -631,7 +631,7 @@ footer {
   background: #d0e4f0;
   color: #555;
   border: none;
-  border-radius: 20px;
+  border-radius: 0;
   cursor: pointer;
   padding: 8px 20px;
   text-decoration: none;
