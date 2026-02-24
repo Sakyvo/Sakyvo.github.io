@@ -1,18 +1,16 @@
 {
   "id": "! Tory Eum3 V2 (1)",
-  "name": "Tory_Eum3_V2_1",
+  "name": "Tory_Eum3_V2(1)",
   "displayName": "Tory Eum3 V2 (1)",
   "coloredName": "Tory Eum3 V2 (1)",
   "description": "Tory Edit V2",
-  "cover": "/thumbnails/Tory_Eum3_V2_1/cover.png",
-  "packPng": "/thumbnails/Tory_Eum3_V2_1/pack.png",
+  "cover": "/thumbnails/Tory_Eum3_V2(1)/cover.png",
+  "packPng": "/thumbnails/Tory_Eum3_V2(1)/pack.png",
   "icon": null,
   "file": "resourcepacks/! Tory Eum3 V2 (1).zip",
   "fileSize": "20.4MB",
-  "uploadDate": "2026-02-23",
-  "lists": [
-    "Jewdah pf"
-  ],
+  "uploadDate": "2026-02-24",
+  "lists": [],
   "textures": {
     "items": [
       "diamond_sword.png",

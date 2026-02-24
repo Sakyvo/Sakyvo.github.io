@@ -87,7 +87,11 @@ const PACK_ID_OVERRIDES = {
 function sanitizeName(name) {
   let r = name.replace(/^(?:§[0-9a-fk-or])*[!#]+\s*/gi, '');
   if (name.includes('§')) r = r.replace(/_([0-9a-fk-or])/gi, '§$1');
-  return r.replace(/§[0-9a-fk-or]/gi, '').replace(/[!@#%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim().replace(/\s+/g, '_');
+  r = r.replace(/§[0-9a-fk-or]/gi, '');
+  let trail = '';
+  r = r.replace(/\((\d+)\)\s*$/, (_, n) => { trail = `(${n})`; return ''; });
+  r = r.replace(/[!@#%^&*()+=\[\]{}|\\:;"'<>,?\/~`§]/g, '').replace(/^[^0-9a-zA-Z\u4e00-\u9fff$]+/, '').trim().replace(/\s+/g, '_');
+  return r + trail;
 }
 
 const JUNK_FILES = /(?:^|\/)(thumbs\.db|\.ds_store|desktop\.ini)$/i;
@@ -245,6 +249,13 @@ async function extractPack(zipPath) {
     packId = override.id;
   }
   const zip = new AdmZip(zipPath);
+
+  // Validate: must have pack.mcmeta
+  if (!zip.getEntry('pack.mcmeta')) {
+    console.log(`  Skipped: no pack.mcmeta`);
+    return null;
+  }
+
   const outputDir = path.join('thumbnails', packId);
   fs.mkdirSync(outputDir, { recursive: true });
 
@@ -758,6 +769,7 @@ async function main() {
         continue;
       }
       const result = await extractPack(zipPath);
+      if (!result) continue;
       usedIds.add(result.packId);
       results.push(result);
       console.log(`  Extracted: ${result.packId}`);

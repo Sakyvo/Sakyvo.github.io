@@ -1,18 +1,16 @@
 {
   "id": "! Stimpy Eum3 (1)",
-  "name": "Stimpy_Eum3_1",
+  "name": "Stimpy_Eum3(1)",
   "displayName": "Stimpy Eum3 (1)",
   "coloredName": "Stimpy Eum3 (1)",
   "description": "pexgay",
-  "cover": "/thumbnails/Stimpy_Eum3_1/cover.png",
-  "packPng": "/thumbnails/Stimpy_Eum3_1/pack.png",
+  "cover": "/thumbnails/Stimpy_Eum3(1)/cover.png",
+  "packPng": "/thumbnails/Stimpy_Eum3(1)/pack.png",
   "icon": null,
   "file": "resourcepacks/! Stimpy Eum3 (1).zip",
   "fileSize": "19.7MB",
-  "uploadDate": "2026-02-23",
-  "lists": [
-    "Jewdah pf"
-  ],
+  "uploadDate": "2026-02-24",
+  "lists": [],
   "textures": {
     "items": [
       "diamond_sword.png",

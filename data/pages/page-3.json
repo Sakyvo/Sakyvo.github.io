@@ -2,66 +2,6 @@
   "page": 3,
   "items": [
     {
-      "id": "Latenci FPS",
-      "name": "Latenci_FPS",
-      "displayName": "Latenci FPS",
-      "coloredName": "Latenci FPS",
-      "description": "-Latenci",
-      "cover": "/thumbnails/Latenci_FPS/cover.png",
-      "packPng": "/thumbnails/Latenci_FPS/pack.png",
-      "icon": null,
-      "file": "resourcepacks/Latenci FPS.zip",
-      "fileSize": "11.1MB",
-      "uploadDate": "2026-02-23",
-      "lists": [
-        "iil pf v1"
-      ],
-      "textures": {
-        "items": [
-          "diamond_sword.png",
-          "ender_pearl.png",
-          "splash_potion_of_healing.png",
-          "steak.png",
-          "iron_sword.png",
-          "fishing_rod_uncast.png",
-          "apple_golden.png",
-          "golden_carrot.png"
-        ],
-        "blocks": [
-          "grass_side.png",
-          "stone.png",
-          "cobblestone.png",
-          "wool_colored_white.png",
-          "dirt.png",
-          "planks_oak.png",
-          "log_oak.png",
-          "diamond_ore.png"
-        ],
-        "armor": [
-          "diamond_layer_1.png",
-          "diamond_layer_2.png"
-        ],
-        "gui": [
-          "icons.png",
-          "widgets.png",
-          "inventory.png"
-        ],
-        "font": [
-          "ascii.png"
-        ],
-        "skin": [
-          "steve.png"
-        ],
-        "particle": [
-          "particles.png"
-        ]
-      },
-      "downloads": {
-        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Latenci%20FPS.zip",
-        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/Latenci%20FPS.zip"
-      }
-    },
-    {
       "id": "!       LightMap + Clear Walls",
       "name": "LightMap_Clear_Walls",
       "displayName": "LightMap + Clear Walls",
@@ -72,7 +12,7 @@
       "icon": null,
       "file": "resourcepacks/!       LightMap + Clear Walls.zip",
       "fileSize": "4KB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -132,7 +72,7 @@
       "icon": null,
       "file": "resourcepacks/!      §fLunar §7Private §8[§f32§7x§8].zip",
       "fileSize": "13.8MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -192,7 +132,7 @@
       "icon": null,
       "file": "resourcepacks/! Maltreat 128.zip",
       "fileSize": "21.9MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -252,7 +192,7 @@
       "icon": null,
       "file": "resourcepacks/!        §bMav War.zip",
       "fileSize": "29.6MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -312,7 +252,7 @@
       "icon": null,
       "file": "resourcepacks/methodic eum3 fps.zip",
       "fileSize": "46.2MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [],
       "textures": {
         "items": [
@@ -370,7 +310,7 @@
       "icon": null,
       "file": "resourcepacks/!    §4§lMiami §8§lPrivate.zip",
       "fileSize": "14.3MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -430,7 +370,7 @@
       "icon": null,
       "file": "resourcepacks/Nakoso Eum3 edit.zip",
       "fileSize": "40.4MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [],
       "textures": {
         "items": [
@@ -488,7 +428,7 @@
       "icon": null,
       "file": "resourcepacks/Nakoso Kiro.zip",
       "fileSize": "20.9MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -548,7 +488,7 @@
       "icon": null,
       "file": "resourcepacks/!  Nasty purple.zip",
       "fileSize": "17.2MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -608,7 +548,7 @@
       "icon": null,
       "file": "resourcepacks/! Nasty Red.zip",
       "fileSize": "14.4MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v1",
         "iil pf v2"
@@ -669,7 +609,7 @@
       "icon": null,
       "file": "resourcepacks/no color purple sky and glint overlay.zip",
       "fileSize": "29.5MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -729,7 +669,7 @@
       "icon": null,
       "file": "resourcepacks/no color red sky and glint overlay.zip",
       "fileSize": "29.1MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -789,7 +729,7 @@
       "icon": null,
       "file": "resourcepacks/Oculism Remake.zip",
       "fileSize": "10.3MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -849,7 +789,7 @@
       "icon": null,
       "file": "resourcepacks/§9Old Style Blue.zip",
       "fileSize": "11.9MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -909,7 +849,7 @@
       "icon": null,
       "file": "resourcepacks/otaku.zip",
       "fileSize": "49.9MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -969,7 +909,7 @@
       "icon": null,
       "file": "resourcepacks/OTB FPS.zip",
       "fileSize": "37.7MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1029,7 +969,7 @@
       "icon": null,
       "file": "resourcepacks/OTB RED FPS.zip",
       "fileSize": "38.0MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1089,7 +1029,7 @@
       "icon": null,
       "file": "resourcepacks/otb red fps edit.zip",
       "fileSize": "58.6MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -1149,7 +1089,7 @@
       "icon": null,
       "file": "resourcepacks/§4OTF Eum3.zip",
       "fileSize": "37.9MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1208,8 +1148,8 @@
       "packPng": "/thumbnails/pax10/pack.png",
       "icon": null,
       "file": "resourcepacks/pax10.zip",
-      "fileSize": "16.7MB",
-      "uploadDate": "2026-02-23",
+      "fileSize": "15.1MB",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1269,7 +1209,7 @@
       "icon": null,
       "file": "resourcepacks/§bPax10 §L§f[§fRevamp§L].zip",
       "fileSize": "16.7MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1320,19 +1260,17 @@
     },
     {
       "id": "pax10(2)",
-      "name": "pax102",
+      "name": "pax10(2)",
       "displayName": "pax10(2)",
       "coloredName": "pax10(2)",
       "description": "",
-      "cover": "/thumbnails/pax102/cover.png",
-      "packPng": "/thumbnails/pax102/pack.png",
+      "cover": "/thumbnails/pax10(2)/cover.png",
+      "packPng": "/thumbnails/pax10(2)/pack.png",
       "icon": null,
       "file": "resourcepacks/pax10(2).zip",
-      "fileSize": "16.7MB",
-      "uploadDate": "2026-02-23",
-      "lists": [
-        "Jewdah pf"
-      ],
+      "fileSize": "15.1MB",
+      "uploadDate": "2026-02-24",
+      "lists": [],
       "textures": {
         "items": [
           "diamond_sword.png",
@@ -1389,7 +1327,7 @@
       "icon": null,
       "file": "resourcepacks/§4§lPlast §6§lPack§0.zip",
       "fileSize": "4.0MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1449,7 +1387,7 @@
       "icon": null,
       "file": "resourcepacks/!    §bPotfast 5kay.zip",
       "fileSize": "16.8MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1509,7 +1447,7 @@
       "icon": null,
       "file": "resourcepacks/§7!  §4PotPvP §8Revamp.zip",
       "fileSize": "20.9MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1569,7 +1507,7 @@
       "icon": null,
       "file": "resourcepacks/powrot.zip",
       "fileSize": "15.7MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -1629,7 +1567,7 @@
       "icon": null,
       "file": "resourcepacks/! §5Purple §d128x.zip",
       "fileSize": "39.2MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v1"
       ],
@@ -1689,7 +1627,7 @@
       "icon": null,
       "file": "resourcepacks/#Pvpmen.zip",
       "fileSize": "34.4MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -1749,7 +1687,7 @@
       "icon": null,
       "file": "resourcepacks/ran4.zip",
       "fileSize": "17.2MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -1809,7 +1747,7 @@
       "icon": null,
       "file": "resourcepacks/! §4Red §c128x.zip",
       "fileSize": "39.2MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v1"
       ],
@@ -1869,7 +1807,7 @@
       "icon": null,
       "file": "resourcepacks/red xetha edit.zip",
       "fileSize": "32.1MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -1929,7 +1867,7 @@
       "icon": null,
       "file": "resourcepacks/!     §4RedDust §8[§464x§8].zip",
       "fileSize": "11.7MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v1",
         "Jewdah pf"
@@ -1990,7 +1928,7 @@
       "icon": null,
       "file": "resourcepacks/#Rekt.zip",
       "fileSize": "15.9MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2050,7 +1988,7 @@
       "icon": null,
       "file": "resourcepacks/!Revedents Azure FaithFul.zip",
       "fileSize": "34.1MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2110,7 +2048,7 @@
       "icon": null,
       "file": "resourcepacks/Revedents Faithful.zip",
       "fileSize": "40.8MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2170,7 +2108,7 @@
       "icon": null,
       "file": "resourcepacks/! §4Rose §6Gold.zip",
       "fileSize": "21.4MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2230,7 +2168,7 @@
       "icon": null,
       "file": "resourcepacks/!   §cRose Gold Default.zip",
       "fileSize": "9.8MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2290,7 +2228,7 @@
       "icon": null,
       "file": "resourcepacks/!  §5Rosea §cRevamp.zip",
       "fileSize": "19.8MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v1"
       ],
@@ -2350,7 +2288,7 @@
       "icon": null,
       "file": "resourcepacks/§4§ORUSOS §8§OPLAST.zip",
       "fileSize": "16.6MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -2410,7 +2348,7 @@
       "icon": null,
       "file": "resourcepacks/!Scope32x.zip",
       "fileSize": "39.8MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2470,7 +2408,7 @@
       "icon": null,
       "file": "resourcepacks/Scope32x RedEdit.zip",
       "fileSize": "39.6MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2530,7 +2468,7 @@
       "icon": null,
       "file": "resourcepacks/#!Sebbyy100.zip",
       "fileSize": "44.6MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2590,7 +2528,7 @@
       "icon": null,
       "file": "resourcepacks/! # § ShiroPack by Mellor.zip",
       "fileSize": "45.5MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [],
       "textures": {
         "items": [
@@ -2648,7 +2586,7 @@
       "icon": null,
       "file": "resourcepacks/! §7Shmoked.zip",
       "fileSize": "25.1MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2708,7 +2646,7 @@
       "icon": null,
       "file": "resourcepacks/shyguys edit.zip",
       "fileSize": "19.3MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v1"
       ],
@@ -2768,7 +2706,7 @@
       "icon": null,
       "file": "resourcepacks/sky & glint overlay.zip",
       "fileSize": "15.0MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "iil pf v2"
       ],
@@ -2828,7 +2766,7 @@
       "icon": null,
       "file": "resourcepacks/§4SLAU§blight.zip",
       "fileSize": "49.4MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [],
       "textures": {
         "items": [
@@ -2886,7 +2824,7 @@
       "icon": null,
       "file": "resourcepacks/§aSoupSkidz Map 7 Pack.zip",
       "fileSize": "27.6MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2946,7 +2884,7 @@
       "icon": null,
       "file": "resourcepacks/#SoupSkidz4Life.zip",
       "fileSize": "11.0MB",
-      "uploadDate": "2026-02-23",
+      "uploadDate": "2026-02-24",
       "lists": [
         "Jewdah pf"
       ],
@@ -2993,6 +2931,66 @@
       "downloads": {
         "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23SoupSkidz4Life.zip",
         "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%23SoupSkidz4Life.zip"
+      }
+    },
+    {
+      "id": "§4SoupSkidz4LIFE",
+      "name": "SoupSkidz4LIFE_v2",
+      "displayName": "SoupSkidz4LIFE",
+      "coloredName": "<span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\">o</span><span style=\"color:#AA0000\">u</span><span style=\"color:#AA0000\">p</span><span style=\"color:#AA0000\">S</span><span style=\"color:#AA0000\">k</span><span style=\"color:#AA0000\">i</span><span style=\"color:#AA0000\">d</span><span style=\"color:#AA0000\">z</span><span style=\"color:#AA0000\">4</span><span style=\"color:#AA0000\">L</span><span style=\"color:#AA0000\">I</span><span style=\"color:#AA0000\">F</span><span style=\"color:#AA0000\">E</span>",
+      "description": "SoupSkidz Pack by Stimpay",
+      "cover": "/thumbnails/SoupSkidz4LIFE_v2/cover.png",
+      "packPng": "/thumbnails/SoupSkidz4LIFE_v2/pack.png",
+      "icon": null,
+      "file": "resourcepacks/§4SoupSkidz4LIFE.zip",
+      "fileSize": "28.5MB",
+      "uploadDate": "2026-02-24",
+      "lists": [
+        "Jewdah pf"
+      ],
+      "textures": {
+        "items": [
+          "diamond_sword.png",
+          "ender_pearl.png",
+          "splash_potion_of_healing.png",
+          "steak.png",
+          "iron_sword.png",
+          "fishing_rod_uncast.png",
+          "apple_golden.png",
+          "golden_carrot.png"
+        ],
+        "blocks": [
+          "grass_side.png",
+          "stone.png",
+          "cobblestone.png",
+          "wool_colored_white.png",
+          "dirt.png",
+          "planks_oak.png",
+          "log_oak.png",
+          "diamond_ore.png"
+        ],
+        "armor": [
+          "diamond_layer_1.png",
+          "diamond_layer_2.png"
+        ],
+        "gui": [
+          "icons.png",
+          "widgets.png",
+          "inventory.png"
+        ],
+        "font": [
+          "ascii.png"
+        ],
+        "skin": [
+          "steve.png"
+        ],
+        "particle": [
+          "particles.png"
+        ]
+      },
+      "downloads": {
+        "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74SoupSkidz4LIFE.zip",
+        "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/%C2%A74SoupSkidz4LIFE.zip"
       }
     }
   ]

@@ -1794,7 +1794,7 @@
     "description": "clllare mashup"
   },
   {
-    "packId": "Stimpy_Eum3_1",
+    "packId": "Stimpy_Eum3(1)",
     "originalName": "! Stimpy Eum3 (1)",
     "extracted": {
       "items": [
@@ -1836,7 +1836,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Stimpy_Eum3_1",
+    "outputDir": "thumbnails/Stimpy_Eum3(1)",
     "description": "pexgay"
   },
   {
@@ -1932,7 +1932,7 @@
     "description": ""
   },
   {
-    "packId": "Tory_Eum3_V2_1",
+    "packId": "Tory_Eum3_V2(1)",
     "originalName": "! Tory Eum3 V2 (1)",
     "extracted": {
       "items": [
@@ -1974,7 +1974,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/Tory_Eum3_V2_1",
+    "outputDir": "thumbnails/Tory_Eum3_V2(1)",
     "description": "Tory Edit V2"
   },
   {
@@ -6992,7 +6992,7 @@
     "description": ""
   },
   {
-    "packId": "pax102",
+    "packId": "pax10(2)",
     "originalName": "pax10(2)",
     "extracted": {
       "items": [
@@ -7034,7 +7034,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails/pax102",
+    "outputDir": "thumbnails/pax10(2)",
     "description": ""
   },
   {
@@ -8416,52 +8416,6 @@
     },
     "outputDir": "thumbnails/Infera_V2",
     "description": "By iSparkton"
-  },
-  {
-    "packId": "Infera",
-    "originalName": "§8! §aInfera",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails/Infera",
-    "description": ""
   },
   {
     "packId": "Venetian",

@@ -1,5 +1,5 @@
 {
-  "total": 197,
+  "total": 196,
   "pageSize": 50,
   "pages": 4,
   "items": [
@@ -1047,18 +1047,6 @@
       "packPng": "/thumbnails/iku_pack_w/pack.png"
     },
     {
-      "id": "§8! §aInfera",
-      "name": "Infera",
-      "displayName": "Infera",
-      "coloredName": "<span style=\"color:#55FF55\">I</span><span style=\"color:#55FF55\">n</span><span style=\"color:#55FF55\">f</span><span style=\"color:#55FF55\">e</span><span style=\"color:#55FF55\">r</span><span style=\"color:#55FF55\">a</span>",
-      "description": "",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/Infera/cover.png",
-      "packPng": "/thumbnails/Infera/pack.png"
-    },
-    {
       "id": "§aInfera §8[§764x§8]",
       "name": "Infera_64x",
       "displayName": "Infera [64x]",
@@ -1465,15 +1453,13 @@
     },
     {
       "id": "pax10(2)",
-      "name": "pax102",
+      "name": "pax10(2)",
       "displayName": "pax10(2)",
       "coloredName": "pax10(2)",
       "description": "",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/pax102/cover.png",
-      "packPng": "/thumbnails/pax102/pack.png"
+      "lists": [],
+      "cover": "/thumbnails/pax10(2)/cover.png",
+      "packPng": "/thumbnails/pax10(2)/pack.png"
     },
     {
       "id": "§4§lPlast §6§lPack§0",
@@ -1846,15 +1832,13 @@
     },
     {
       "id": "! Stimpy Eum3 (1)",
-      "name": "Stimpy_Eum3_1",
+      "name": "Stimpy_Eum3(1)",
       "displayName": "Stimpy Eum3 (1)",
       "coloredName": "Stimpy Eum3 (1)",
       "description": "pexgay",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/Stimpy_Eum3_1/cover.png",
-      "packPng": "/thumbnails/Stimpy_Eum3_1/pack.png"
+      "lists": [],
+      "cover": "/thumbnails/Stimpy_Eum3(1)/cover.png",
+      "packPng": "/thumbnails/Stimpy_Eum3(1)/pack.png"
     },
     {
       "id": "! Stimpy Eum3 edit",
@@ -2046,15 +2030,13 @@
     },
     {
       "id": "! Tory Eum3 V2 (1)",
-      "name": "Tory_Eum3_V2_1",
+      "name": "Tory_Eum3_V2(1)",
       "displayName": "Tory Eum3 V2 (1)",
       "coloredName": "Tory Eum3 V2 (1)",
       "description": "Tory Edit V2",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/Tory_Eum3_V2_1/cover.png",
-      "packPng": "/thumbnails/Tory_Eum3_V2_1/pack.png"
+      "lists": [],
+      "cover": "/thumbnails/Tory_Eum3_V2(1)/cover.png",
+      "packPng": "/thumbnails/Tory_Eum3_V2(1)/pack.png"
     },
     {
       "id": "! Tory Eum3-EDIT",
