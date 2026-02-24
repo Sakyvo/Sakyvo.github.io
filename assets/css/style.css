@@ -599,7 +599,7 @@ footer {
 
 .section-tabs {
   display: flex;
-  gap: 24px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -625,22 +625,32 @@ footer {
 }
 
 .tab-btn {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
-  letter-spacing: 4px;
-  background: none;
+  letter-spacing: 3px;
+  background: #d0e4f0;
+  color: #555;
   border: none;
+  border-radius: 20px;
   cursor: pointer;
-  padding: 4px 0;
-  border-bottom: 3px solid transparent;
+  padding: 8px 20px;
+  text-decoration: none;
+  transition: background .2s, color .2s;
 }
 
 .tab-btn.active {
-  border-bottom-color: #f00;
+  background: #000;
+  color: #fff;
 }
 
 .tab-btn:hover {
-  color: #666;
+  background: #b8d4e8;
+  color: #333;
+}
+
+.tab-btn.active:hover {
+  background: #333;
+  color: #fff;
 }
 
 /* Admin actions on pack detail */
