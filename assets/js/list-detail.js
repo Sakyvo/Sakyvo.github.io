@@ -70,6 +70,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
 
+    document.querySelectorAll('.pack-card .cover').forEach(img => {
+      img.onload = function() {
+        const frameH = this.naturalWidth / 2;
+        const frames = this.naturalHeight / frameH;
+        if (Number.isInteger(frames) && frames > 1) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'cover animated-cover';
+          wrapper.style.backgroundImage = `url(${this.src})`;
+          wrapper.style.backgroundSize = `100% ${frames * 100}%`;
+          wrapper.style.imageRendering = 'pixelated';
+          let currentFrame = 0;
+          setInterval(() => {
+            currentFrame = (currentFrame + 1) % frames;
+            wrapper.style.backgroundPosition = `0 ${(currentFrame / (frames - 1)) * 100}%`;
+          }, 100);
+          this.replaceWith(wrapper);
+        }
+      };
+    });
+
     if (isAdmin) {
       document.getElementById('add-packs-btn')?.addEventListener('click', showAddPackModal);
       document.getElementById('delete-list-btn')?.addEventListener('click', () => {
