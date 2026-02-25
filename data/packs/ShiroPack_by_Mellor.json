@@ -9,7 +9,7 @@
   "icon": null,
   "file": "resourcepacks/! # § ShiroPack by Mellor.zip",
   "fileSize": "45.5MB",
-  "uploadDate": "2026-02-24",
+  "uploadDate": "2026-02-25",
   "lists": [],
   "textures": {
     "items": [
@@ -52,7 +52,7 @@
     ]
   },
   "downloads": {
-    "github": "https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%23%20%C2%A7%20ShiroPack%20by%20Mellor.zip",
-    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/!%20%23%20%C2%A7%20ShiroPack%20by%20Mellor.zip"
+    "github": "https://raw.githubusercontent.com/Sakyvo/packs-001/main/resourcepacks/!%20%23%20%C2%A7%20ShiroPack%20by%20Mellor.zip",
+    "mirror": "https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/packs-001/main/resourcepacks/!%20%23%20%C2%A7%20ShiroPack%20by%20Mellor.zip"
   }
 }

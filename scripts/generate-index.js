@@ -53,6 +53,10 @@ function main() {
   let extracted = JSON.parse(fs.readFileSync(extractedPath, 'utf-8'));
   const today = new Date().toISOString().split('T')[0];
 
+  // Load pack registry for download URLs
+  const registryPath = 'data/pack-registry.json';
+  const registry = fs.existsSync(registryPath) ? JSON.parse(fs.readFileSync(registryPath, 'utf-8')) : null;
+
   // Load lists
   const listsPath = 'l/lists.json';
   const lists = fs.existsSync(listsPath) ? JSON.parse(fs.readFileSync(listsPath, 'utf-8')) : [];
@@ -74,25 +78,34 @@ function main() {
 
   // Generate pack details
   const packs = extracted.map(e => {
-    const zipPath = path.join('resourcepacks', `${e.originalName}.zip`);
-    const cleanName = cleanMinecraftText(e.originalName);
+    const zipName = `${e.originalName}.zip`;
+    const encodedName = encodeURIComponent(e.originalName);
+    let githubUrl, mirrorUrl;
+    if (registry && registry[zipName]) {
+      const repo = registry[zipName].repo;
+      githubUrl = `https://raw.githubusercontent.com/Sakyvo/${repo}/main/resourcepacks/${encodedName}.zip`;
+      mirrorUrl = `https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/${repo}/main/resourcepacks/${encodedName}.zip`;
+    } else {
+      githubUrl = `https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodedName}.zip`;
+      mirrorUrl = `https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodedName}.zip`;
+    }
     return {
       id: e.originalName,
       name: e.packId,
-      displayName: cleanName || e.packId,
+      displayName: cleanMinecraftText(e.originalName) || e.packId,
       coloredName: toColoredHtml(e.originalName),
       description: e.description || '',
       cover: `/thumbnails/${e.packId}/cover.png`,
       packPng: `/thumbnails/${e.packId}/pack.png`,
       icon: fs.existsSync(path.join(e.outputDir, 'icon.png')) ? `/thumbnails/${e.packId}/icon.png` : null,
       file: `resourcepacks/${e.originalName}.zip`,
-      fileSize: getFileSize(zipPath),
+      fileSize: getFileSize(path.join('resourcepacks', `${e.originalName}.zip`)),
       uploadDate: today,
       lists: packToLists[e.packId] || [],
       textures: e.extracted,
       downloads: {
-        github: `https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodeURIComponent(e.originalName)}.zip`,
-        mirror: `https://ghfast.top/https://raw.githubusercontent.com/Sakyvo/Sakyvo.github.io/main/resourcepacks/${encodeURIComponent(e.originalName)}.zip`
+        github: githubUrl,
+        mirror: mirrorUrl
       }
     };
   });
