@@ -1,12 +1,12 @@
 :root {
-  --bg: #ffffff;
-  --bg-alt: #f8f8f8;
+  --bg: #e8f0f8;
+  --bg-alt: #dce8f2;
   --bg-header: #1a1a1a;
   --text: #1a1a1a;
   --text-secondary: #666;
   --text-muted: #999;
-  --border: #e0e0e0;
-  --border-dark: #ccc;
+  --border: #1a1a1a;
+  --border-dark: #000;
   --accent: #00bcd4;
   --danger: #c00;
 }
@@ -27,7 +27,7 @@ body {
 header {
   padding: 20px 24px;
   background: var(--bg-header);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -87,7 +87,7 @@ nav { display: flex; gap: 12px; }
 #search-input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   font-size: 14px;
   outline: none;
   background: var(--bg-alt);
@@ -98,7 +98,7 @@ nav { display: flex; gap: 12px; }
   aspect-ratio: 1;
   background: var(--text);
   color: #fff;
-  border: 1px solid var(--text);
+  border: 2px solid var(--text);
   font-weight: bold;
   cursor: pointer;
   font-size: 14px;
@@ -156,7 +156,7 @@ nav { display: flex; gap: 12px; }
 }
 
 .pack-card {
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   cursor: pointer;
   transition: transform .2s, box-shadow .2s;
   color: inherit;
@@ -175,13 +175,13 @@ nav { display: flex; gap: 12px; }
   object-fit: cover;
   image-rendering: pixelated;
   display: block;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 
 .pack-card .placeholder {
   aspect-ratio: 2;
   background: #eee;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 
 .pack-card .info {
@@ -195,7 +195,7 @@ nav { display: flex; gap: 12px; }
   width: 40px;
   height: 40px;
   image-rendering: pixelated;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
 }
 
 .pack-card .name {
@@ -205,7 +205,7 @@ nav { display: flex; gap: 12px; }
 }
 
 footer {
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--border);
   text-align: center;
   padding: 24px;
   font-size: 12px;
@@ -244,7 +244,7 @@ footer {
 .main-card {
   display: flex;
   gap: 20px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   padding: 16px;
   margin-bottom: 16px;
   align-items: stretch;
@@ -254,7 +254,7 @@ footer {
   width: 80px;
   height: 80px;
   image-rendering: pixelated;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -277,7 +277,7 @@ footer {
 }
 
 .sub-card {
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
@@ -335,7 +335,7 @@ footer {
 .btn-primary {
   background: var(--text);
   color: #fff;
-  border: 1px solid var(--text);
+  border: 2px solid var(--text);
 }
 
 .btn-primary:active {
@@ -346,7 +346,7 @@ footer {
 .btn-secondary {
   background: var(--bg);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
 }
 
 .btn-secondary:active {
@@ -369,7 +369,7 @@ footer {
 .preview-grid .particles-card { grid-column: 2; grid-row: 3; }
 
 .preview-card {
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   background: #f5f5f5;
   aspect-ratio: 1;
   overflow: hidden;
@@ -634,7 +634,7 @@ footer {
   padding: 8px 16px;
   background: var(--bg-alt);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
@@ -761,7 +761,7 @@ footer {
 }
 
 .list-grid .list-item {
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   text-decoration: none;
   color: inherit;
   display: block;
@@ -780,7 +780,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   overflow: hidden;
 }
 
@@ -891,7 +891,7 @@ footer {
 .btn-danger {
   background: var(--danger);
   color: #fff;
-  border: 1px solid var(--danger);
+  border: 2px solid var(--danger);
 }
 
 .btn-danger:active {
