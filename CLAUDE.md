@@ -62,6 +62,7 @@ git add data/ thumbnails/ && git commit && git push
 - **不要**在主站 resourcepacks/ 目录保留已迁移的 zip 文件
 - 上传脚本会自动更新 `pack-registry.json`
 - 每次添加新包后必须重新运行 `generate-index.js` 更新下载链接
-- packs 仓库的本地克隆位于主站同级目录（如 `K:\packs-001\`）
+- 本地**不需要**保留 packs-NNN 仓库文件夹，上传脚本会按需临时克隆
+- `fileSize` 从 `pack-registry.json` 的 `size` 字段读取（字节），本地无 zip 文件时不影响索引生成
 - Windows 文件名大小写不敏感，注意 git 大小写冲突
 - 包名中的特殊字符（§、!、#）在 URL 中需要 encodeURIComponent

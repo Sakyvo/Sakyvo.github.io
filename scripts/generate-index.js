@@ -35,11 +35,15 @@ function toColoredHtml(text) {
   return result;
 }
 
-function getFileSize(filePath) {
+function formatSize(bytes) {
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1 ? `${mb.toFixed(1)}MB` : `${(bytes / 1024).toFixed(0)}KB`;
+}
+
+function getFileSize(filePath, registryEntry) {
+  if (registryEntry && registryEntry.size) return formatSize(registryEntry.size);
   try {
-    const stats = fs.statSync(filePath);
-    const mb = stats.size / (1024 * 1024);
-    return mb >= 1 ? `${mb.toFixed(1)}MB` : `${(stats.size / 1024).toFixed(0)}KB`;
+    return formatSize(fs.statSync(filePath).size);
   } catch { return 'Unknown'; }
 }
 
@@ -99,7 +103,7 @@ function main() {
       packPng: `/thumbnails/${e.packId}/pack.png`,
       icon: fs.existsSync(path.join(e.outputDir, 'icon.png')) ? `/thumbnails/${e.packId}/icon.png` : null,
       file: `resourcepacks/${e.originalName}.zip`,
-      fileSize: getFileSize(path.join('resourcepacks', `${e.originalName}.zip`)),
+      fileSize: getFileSize(path.join('resourcepacks', `${e.originalName}.zip`), registry && registry[zipName]),
       uploadDate: today,
       lists: packToLists[e.packId] || [],
       textures: e.extracted,
