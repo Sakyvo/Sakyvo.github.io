@@ -1,3 +1,16 @@
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f8f8f8;
+  --bg-header: #1a1a1a;
+  --text: #1a1a1a;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --border: #e0e0e0;
+  --border-dark: #ccc;
+  --accent: #00bcd4;
+  --danger: #c00;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,14 +19,15 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #e0eef6;
-  color: #000;
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
 }
 
 header {
   padding: 20px 24px;
-  border-bottom: 2px solid #000;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -23,27 +37,31 @@ header {
   font-size: 24px;
   font-weight: bold;
   text-decoration: none;
-  color: inherit;
+  color: #fff;
 }
 
 nav { display: flex; gap: 12px; }
 
 .nav-btn {
   padding: 8px 16px;
-  background: #000;
+  background: transparent;
   color: #fff;
   text-decoration: none;
   font-size: 14px;
+  transition: background .15s;
+}
+
+.nav-btn:hover {
+  background: rgba(255,255,255,0.1);
 }
 
 .nav-btn:active {
-  background: #444;
+  background: rgba(255,255,255,0.2);
 }
 
 .hero {
   text-align: center;
   padding: 60px 20px;
-  border-bottom: 2px solid #000;
 }
 
 .site-title {
@@ -55,7 +73,7 @@ nav { display: flex; gap: 12px; }
 
 .site-desc {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 32px;
 }
 
@@ -69,18 +87,18 @@ nav { display: flex; gap: 12px; }
 #search-input {
   flex: 1;
   padding: 12px 16px;
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   font-size: 14px;
   outline: none;
-  background: #d0e4f0;
+  background: var(--bg-alt);
 }
 
 .search-btn {
   padding: 0;
   aspect-ratio: 1;
-  background: #000;
+  background: var(--text);
   color: #fff;
-  border: 2px solid #000;
+  border: 1px solid var(--text);
   font-weight: bold;
   cursor: pointer;
   font-size: 14px;
@@ -88,6 +106,7 @@ nav { display: flex; gap: 12px; }
   align-items: center;
   justify-content: center;
   min-width: 48px;
+  transition: background .15s;
 }
 
 .search-btn:active {
@@ -137,14 +156,18 @@ nav { display: flex; gap: 12px; }
 }
 
 .pack-card {
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform .2s, box-shadow .2s;
   color: inherit;
   text-decoration: none;
 }
 
-.pack-card:hover { background: #d4e5f0; }
+.pack-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: var(--border-dark);
+}
 
 .pack-card .cover {
   width: 100%;
@@ -152,13 +175,13 @@ nav { display: flex; gap: 12px; }
   object-fit: cover;
   image-rendering: pixelated;
   display: block;
-  border-bottom: 2px solid #000;
+  border-bottom: 1px solid var(--border);
 }
 
 .pack-card .placeholder {
   aspect-ratio: 2;
   background: #eee;
-  border-bottom: 2px solid #000;
+  border-bottom: 1px solid var(--border);
 }
 
 .pack-card .info {
@@ -172,7 +195,7 @@ nav { display: flex; gap: 12px; }
   width: 40px;
   height: 40px;
   image-rendering: pixelated;
-  border: 1px solid #000;
+  border: 1px solid var(--border);
 }
 
 .pack-card .name {
@@ -182,10 +205,11 @@ nav { display: flex; gap: 12px; }
 }
 
 footer {
-  border-top: 2px solid #000;
+  border-top: 1px solid var(--border);
   text-align: center;
   padding: 24px;
   font-size: 12px;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 900px) { .pack-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -214,13 +238,13 @@ footer {
 .pack-cards {
   margin-bottom: 32px;
   padding-bottom: 32px;
-  border-bottom: 2px solid #000;
+  border-bottom: 1px solid var(--border);
 }
 
 .main-card {
   display: flex;
   gap: 20px;
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   padding: 16px;
   margin-bottom: 16px;
   align-items: stretch;
@@ -230,7 +254,7 @@ footer {
   width: 80px;
   height: 80px;
   image-rendering: pixelated;
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -248,12 +272,12 @@ footer {
 
 .main-card-info .description {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .sub-card {
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
@@ -262,13 +286,13 @@ footer {
 
 .sub-card .original-name {
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .sub-card .file-size {
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -305,12 +329,13 @@ footer {
   font-size: 14px;
   margin-right: 12px;
   margin-bottom: 8px;
+  transition: background .15s, color .15s;
 }
 
 .btn-primary {
-  background: #000;
+  background: var(--text);
   color: #fff;
-  border: 2px solid #000;
+  border: 1px solid var(--text);
 }
 
 .btn-primary:active {
@@ -319,13 +344,13 @@ footer {
 }
 
 .btn-secondary {
-  background: #e0eef6;
-  color: #000;
-  border: 2px solid #000;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .btn-secondary:active {
-  background: #ddd;
+  background: #eee;
 }
 
 .preview-section { margin-bottom: 32px; }
@@ -344,7 +369,7 @@ footer {
 .preview-grid .particles-card { grid-column: 2; grid-row: 3; }
 
 .preview-card {
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   background: #f5f5f5;
   aspect-ratio: 1;
   overflow: hidden;
@@ -488,7 +513,7 @@ footer {
 }
 
 .login-form, .admin-panel {
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   padding: 24px;
 }
 
@@ -507,14 +532,14 @@ footer {
 .form-group input {
   width: 100%;
   padding: 12px;
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   font-size: 14px;
-  background: #d0e4f0;
+  background: var(--bg-alt);
 }
 
 .pack-list {
   margin-top: 24px;
-  border-top: 1px solid #000;
+  border-top: 1px solid var(--border);
   padding-top: 24px;
 }
 
@@ -528,21 +553,22 @@ footer {
 
 .pack-item .delete-btn {
   background: none;
-  border: 1px solid #000;
+  border: 1px solid var(--border);
   padding: 4px 12px;
   cursor: pointer;
   font-size: 12px;
+  transition: background .15s, color .15s;
 }
 
 .pack-item .delete-btn:hover {
-  background: #000;
+  background: var(--text);
   color: #fff;
 }
 
 .message {
   padding: 12px;
   margin-bottom: 16px;
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   font-size: 14px;
 }
 
@@ -564,8 +590,8 @@ footer {
 }
 
 .modal-content {
-  background: #e0eef6;
-  border: 2px solid #000;
+  background: var(--bg);
+  border: 1px solid var(--border);
   padding: 32px;
   width: 100%;
   max-width: 400px;
@@ -584,7 +610,7 @@ footer {
 }
 
 .login-error {
-  color: #c00;
+  color: var(--danger);
   font-size: 14px;
   margin-bottom: 16px;
   min-height: 20px;
@@ -606,16 +632,17 @@ footer {
 
 .sort-btn {
   padding: 8px 16px;
-  background: #e0eef6;
-  color: #000;
-  border: 2px solid #000;
+  background: var(--bg-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
+  transition: background .15s, color .15s;
 }
 
 .sort-btn:hover {
-  background: #000;
+  background: var(--text);
   color: #fff;
 }
 
@@ -629,23 +656,23 @@ footer {
   font-size: 12px;
   font-weight: bold;
   letter-spacing: 3px;
-  background: #d0e4f0;
+  background: #f0f0f0;
   color: #555;
   border: none;
   border-radius: 0;
   cursor: pointer;
   padding: 8px 20px;
   text-decoration: none;
-  transition: background .2s, color .2s;
+  transition: background .15s, color .15s;
 }
 
 .tab-btn.active {
-  background: #000;
+  background: var(--bg-header);
   color: #fff;
 }
 
 .tab-btn:hover {
-  background: #b8d4e8;
+  background: #e0e0e0;
   color: #333;
 }
 
@@ -676,9 +703,9 @@ footer {
 .tag-input-group input {
   flex: 1;
   padding: 8px 12px;
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   font-size: 14px;
-  background: #d0e4f0;
+  background: var(--bg-alt);
 }
 
 .tag-list {
@@ -693,8 +720,8 @@ footer {
   align-items: center;
   gap: 4px;
   padding: 4px 12px;
-  background: #f0f0f0;
-  border: 1px solid #000;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
   font-size: 12px;
 }
 
@@ -705,7 +732,7 @@ footer {
 
 /* List management */
 .list-card {
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   margin-bottom: 16px;
   padding: 16px;
 }
@@ -723,7 +750,7 @@ footer {
 
 .list-card .list-count {
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 /* List grid - same as pack-grid */
@@ -734,13 +761,18 @@ footer {
 }
 
 .list-grid .list-item {
-  border: 2px solid #000;
+  border: 1px solid var(--border);
   text-decoration: none;
   color: inherit;
   display: block;
+  transition: transform .2s, box-shadow .2s;
 }
 
-.list-grid .list-item:hover { background: #d4e5f0; }
+.list-grid .list-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: var(--border-dark);
+}
 
 .list-grid .list-item .cover {
   aspect-ratio: 2;
@@ -748,7 +780,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 2px solid #000;
+  border-bottom: 1px solid var(--border);
   overflow: hidden;
 }
 
@@ -769,7 +801,7 @@ footer {
 
 .list-grid .list-item .meta {
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 900px) { .list-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -778,13 +810,13 @@ footer {
 /* List detail description italic */
 .list-description {
   font-style: italic;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
 /* Admin pack list */
 .admin-pack-item {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   padding: 12px;
   margin-bottom: 8px;
 }
@@ -800,7 +832,7 @@ footer {
   width: 40px;
   height: 40px;
   image-rendering: pixelated;
-  border: 2px solid #ddd;
+  border: 1px solid var(--border);
   cursor: pointer;
 }
 
@@ -810,7 +842,7 @@ footer {
 
 .admin-pack-name {
   font-weight: bold;
-  color: #000;
+  color: var(--text);
   text-decoration: none;
 }
 
@@ -850,16 +882,16 @@ footer {
 }
 
 .admin-delete-btn.disabled {
-  background: #e0eef6;
-  color: #000;
-  border-color: #000;
+  background: var(--bg-alt);
+  color: var(--text);
+  border-color: var(--border);
   cursor: default;
 }
 
 .btn-danger {
-  background: #c00;
+  background: var(--danger);
   color: #fff;
-  border: 2px solid #c00;
+  border: 1px solid var(--danger);
 }
 
 .btn-danger:active {
@@ -877,7 +909,7 @@ footer {
 }
 
 .admin-list-item:hover {
-  background: #d4e5f0;
+  background: var(--bg-alt);
 }
 
 .admin-list-name {
