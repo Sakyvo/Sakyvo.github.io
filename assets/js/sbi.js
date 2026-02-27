@@ -22,22 +22,30 @@ function computeDHash(imageData) {
   return bits;
 }
 
-// Histogram: skip dark pixels (background) and transparent pixels
+// Histogram: 48-bin RGB (16 per channel) + 12-bin hue = 60 bins total
 function computeHistogram(imageData, count, bgThreshold) {
-  const hist = new Float64Array(24);
+  const hist = new Float64Array(60);
   let total = 0;
   for (let i = 0; i < count; i++) {
     const r = imageData[i * 4], g = imageData[i * 4 + 1], b = imageData[i * 4 + 2];
     const a = imageData[i * 4 + 3];
     if (a < 128) continue;
-    // Skip dark background pixels from hotbar when threshold provided
     if (bgThreshold && (0.299 * r + 0.587 * g + 0.114 * b) < bgThreshold) continue;
     total++;
-    hist[Math.min(r >> 5, 7)]++;
-    hist[8 + Math.min(g >> 5, 7)]++;
-    hist[16 + Math.min(b >> 5, 7)]++;
+    hist[Math.min(r >> 4, 15)]++;
+    hist[16 + Math.min(g >> 4, 15)]++;
+    hist[32 + Math.min(b >> 4, 15)]++;
+    // Hue bin (12 bins = 30° each)
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    if (d > 10) {
+      let h;
+      if (max === r) h = ((g - b) / d + 6) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      hist[48 + Math.min(Math.floor(h * 2), 11)]++;
+    }
   }
-  if (total > 0) for (let i = 0; i < 24; i++) hist[i] /= total;
+  if (total > 0) for (let i = 0; i < 60; i++) hist[i] /= total;
   return hist;
 }
 
@@ -90,8 +98,8 @@ function compare(extracted, packTex) {
   const hammingSim = 1 - hammingDistance(dhashA, dhashB) / 64;
   const histSim = cosineSimilarity(extracted.hist, packTex.hist);
   const momentSim = colorMomentSim(extracted.moments, packTex.moments);
-  // Weights: dHash 30% (structure), histogram 40% (color dist), moments 30% (dominant color)
-  return 0.30 * hammingSim + 0.40 * histSim + 0.30 * momentSim;
+  // Weights: dHash 40% (structure, robust to compression), histogram 35% (color+hue), moments 25%
+  return 0.40 * hammingSim + 0.35 * histSim + 0.25 * momentSim;
 }
 
 // --- Region extraction helpers ---
@@ -105,7 +113,7 @@ function extractRegion(ctx, x, y, w, h, targetW, targetH) {
 }
 
 function computeFeatures(imageData, w, h, isScreenshot) {
-  const BG_THRESHOLD = isScreenshot ? 75 : 0;
+  const BG_THRESHOLD = isScreenshot ? 50 : 0;
   // Resize source to 9x8 for dHash
   const src = document.createElement('canvas');
   src.width = w; src.height = h;
@@ -122,62 +130,76 @@ function computeFeatures(imageData, w, h, isScreenshot) {
 }
 
 // --- Hotbar extraction ---
-// MC GUI Scale 3x @ any resolution, coordinates scaled by height/1080
+// Try multiple GUI scales (2x, 3x, 4x) and pick the one with most confident slots
 function extractHotbarSlots(ctx, imgW, imgH) {
-  const scale = imgH / 1080;
-  // Widget is 182 MC pixels wide; items start at x+3 with 20px step, 16px item size
-  const widgetW = 182 * 3 * scale;
-  const itemOffX = 3 * 3 * scale;   // 3 MC-px border + 1 MC-px padding
-  const itemW = 16 * 3 * scale;     // item render size
-  const slotStep = 20 * 3 * scale;  // slot pitch
-  const startX = (imgW - widgetW) / 2 + itemOffX;
-  const itemY = imgH - (22 * 3 - 3 * 3) * scale; // bottom-anchored
+  const baseScale = imgH / 1080;
+  const GUI_SCALES = [3, 2, 4];
+  let bestSlots = [], bestConfidence = 0;
 
-  const slots = [];
-  for (let i = 0; i < 9; i++) {
-    const x = Math.round(startX + i * slotStep);
-    const y = Math.round(itemY);
-    const sz = Math.round(itemW);
-    const region = extractRegion(ctx, x, y, sz, sz, 16, 16);
-    // Detect non-empty: count bright (foreground) pixels
-    let bright = 0;
-    for (let p = 0; p < 256; p++) {
-      const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
-      if (lum > 75) bright++;
+  for (const guiScale of GUI_SCALES) {
+    const scale = baseScale * guiScale / 3;
+    const widgetW = 182 * 3 * scale;
+    const itemOffX = 3 * 3 * scale;
+    const itemW = 16 * 3 * scale;
+    const slotStep = 20 * 3 * scale;
+    const startX = (imgW - widgetW) / 2 + itemOffX;
+    const itemY = imgH - (22 * 3 - 3 * 3) * scale;
+
+    const slots = [];
+    let totalBright = 0;
+    for (let i = 0; i < 9; i++) {
+      const x = Math.round(startX + i * slotStep);
+      const y = Math.round(itemY);
+      const sz = Math.round(itemW);
+      if (x < 0 || y < 0 || x + sz > imgW || y + sz > imgH) continue;
+      const region = extractRegion(ctx, x, y, sz, sz, 16, 16);
+      let bright = 0;
+      for (let p = 0; p < 256; p++) {
+        const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
+        if (lum > 60) bright++;
+      }
+      if (bright > 12) {
+        slots.push({ index: i, features: computeFeatures(region, 16, 16, true), x, y, sz });
+        totalBright += bright;
+      }
     }
-    if (bright > 15) {
-      slots.push({ index: i, features: computeFeatures(region, 16, 16, true), x, y, sz });
+    const confidence = slots.length * 1000 + totalBright;
+    if (confidence > bestConfidence) {
+      bestConfidence = confidence;
+      bestSlots = slots;
     }
   }
-  return slots;
+  return bestSlots;
 }
 
 // --- Matching ---
 function matchPacks(slots) {
   if (!slots.length) return [];
   const ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'iron_sword'];
+  // Distinctive items get higher weight
+  const TYPE_WEIGHT = { diamond_sword: 1.5, ender_pearl: 1.3, splash_potion: 1.0, steak: 0.8, golden_carrot: 0.8, iron_sword: 1.2 };
   const results = [];
 
   for (const [packName, packData] of Object.entries(fingerprints.packs)) {
     let totalScore = 0, totalWeight = 0;
 
     for (const slot of slots) {
-      let bestSim = 0;
+      let bestSim = 0, bestType = '';
       for (const type of ITEM_TYPES) {
         if (!packData[type]) continue;
         const sim = compare(slot.features, packData[type]);
-        if (sim > bestSim) bestSim = sim;
+        if (sim > bestSim) { bestSim = sim; bestType = type; }
       }
-      // Only count slot if it confidently matches a known item
-      if (bestSim > 0.55) {
-        totalScore += bestSim;
-        totalWeight += 1;
+      if (bestSim > 0.50) {
+        const w = TYPE_WEIGHT[bestType] || 1;
+        totalScore += bestSim * w;
+        totalWeight += w;
       }
     }
 
     if (totalWeight === 0) continue;
-    const finalScore = totalScore / totalWeight; // proper weighted average, always [0,1]
-    if (finalScore > 0.62) {
+    const finalScore = totalScore / totalWeight;
+    if (finalScore > 0.58) {
       results.push({ name: packName, score: finalScore });
     }
   }
@@ -253,8 +275,8 @@ async function processImage(file) {
 
   try {
     if (!fingerprints) {
-      // ?v=2 busts browser cache of old v1 fingerprints (which had 'ahash' not 'dhash')
-      const resp = await fetch('/data/sbi-fingerprints.json?v=2');
+      // v3: 60-bin histogram + hue, multi-scale GUI, weighted item types
+      const resp = await fetch('/data/sbi-fingerprints.json?v=3');
       if (!resp.ok) throw new Error('Failed to load fingerprints: ' + resp.status);
       fingerprints = await resp.json();
     }

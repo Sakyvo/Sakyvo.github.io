@@ -218,7 +218,7 @@ nav { display: flex; gap: 12px; }
 .pack-card .name {
   font-size: 14px;
   font-weight: bold;
-  text-shadow: 1px 0 0 #aaa;
+  text-shadow: 1px 1px 1px #aaa;
 }
 
 footer {

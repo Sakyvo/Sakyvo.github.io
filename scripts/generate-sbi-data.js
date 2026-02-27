@@ -31,17 +31,27 @@ function computeDHash(pixels) {
   return Buffer.from(bits).toString('base64');
 }
 
+// Histogram: 48-bin RGB (16 per channel) + 12-bin hue = 60 bins total
 function computeHistogram(pixels, count) {
-  const hist = new Float64Array(24);
+  const hist = new Float64Array(60);
   let total = 0;
   for (let i = 0; i < count; i++) {
-    if (pixels[i * 4 + 3] < 128) continue; // skip transparent
+    if (pixels[i * 4 + 3] < 128) continue;
+    const r = pixels[i * 4], g = pixels[i * 4 + 1], b = pixels[i * 4 + 2];
     total++;
-    hist[Math.min(pixels[i * 4] >> 5, 7)]++;
-    hist[8 + Math.min(pixels[i * 4 + 1] >> 5, 7)]++;
-    hist[16 + Math.min(pixels[i * 4 + 2] >> 5, 7)]++;
+    hist[Math.min(r >> 4, 15)]++;
+    hist[16 + Math.min(g >> 4, 15)]++;
+    hist[32 + Math.min(b >> 4, 15)]++;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    if (d > 10) {
+      let h;
+      if (max === r) h = ((g - b) / d + 6) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      hist[48 + Math.min(Math.floor(h * 2), 11)]++;
+    }
   }
-  if (total > 0) for (let i = 0; i < 24; i++) hist[i] /= total;
+  if (total > 0) for (let i = 0; i < 60; i++) hist[i] /= total;
   return Array.from(hist).map(v => Math.round(v * 10000) / 10000);
 }
 
@@ -94,7 +104,7 @@ async function main() {
     done++;
     if (done % 20 === 0) console.log(`  ${done}/${dirs.length}`);
   }
-  const result = { version: 2, packs };
+  const result = { version: 3, packs };
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, JSON.stringify(result));
   console.log(`Done. ${Object.keys(packs).length} packs → ${OUT_FILE}`);
