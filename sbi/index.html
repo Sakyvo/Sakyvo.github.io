@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VALE - 以图搜图</title>
+  <title>VALE - Search by Image</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -11,16 +11,16 @@
   <header>
     <a href="/" class="logo">VALE</a>
     <nav>
-      <a href="/sbi/history/" class="nav-btn" title="搜索历史">🕐</a>
+      <a href="/sbi/history/" class="nav-btn" title="Search history">🕐</a>
     </nav>
   </header>
 
   <div class="sbi-container">
-    <h2 class="sbi-title">以图搜图</h2>
-    <p class="sbi-desc">上传 Minecraft PvP 截图，自动识别材质包</p>
+    <h2 class="sbi-title">Search by Image</h2>
+    <p class="sbi-desc">Upload a Minecraft PvP screenshot to identify the resource pack</p>
 
     <div class="sbi-upload" id="sbi-upload">
-      <p class="sbi-upload-text">拖拽、点击或粘贴截图</p>
+      <p class="sbi-upload-text">Drag &amp; drop, click, or paste a screenshot</p>
       <input type="file" id="sbi-file" accept="image/*" hidden>
     </div>
 
@@ -30,7 +30,7 @@
 
     <div class="sbi-progress" id="sbi-progress" hidden>
       <div class="sbi-spinner"></div>
-      <p>正在分析...</p>
+      <p>Analyzing...</p>
     </div>
 
     <div class="sbi-results" id="sbi-results" hidden></div>

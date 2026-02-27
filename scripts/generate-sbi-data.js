@@ -5,38 +5,37 @@ const sharp = require('sharp');
 const THUMB_DIR = path.join(__dirname, '..', 'thumbnails');
 const OUT_FILE = path.join(__dirname, '..', 'data', 'sbi-fingerprints.json');
 
+// Note: crosshair removed — MC renders it via XOR blending, making screenshot comparison meaningless
 const TEXTURES = [
-  { key: 'diamond_sword', file: 'diamond_sword.png', size: 16 },
-  { key: 'ender_pearl', file: 'ender_pearl.png', size: 16 },
-  { key: 'splash_potion', files: ['splash_potion_of_healing.png', 'potion_bottle_splash.png'], size: 16 },
-  { key: 'steak', file: 'steak.png', size: 16 },
-  { key: 'golden_carrot', file: 'golden_carrot.png', size: 16 },
-  { key: 'crosshair', file: 'icons.png', size: 15, crop: true }
+  { key: 'diamond_sword', file: 'diamond_sword.png' },
+  { key: 'ender_pearl', file: 'ender_pearl.png' },
+  { key: 'splash_potion', files: ['splash_potion_of_healing.png', 'potion_bottle_splash.png'] },
+  { key: 'steak', file: 'steak.png' },
+  { key: 'golden_carrot', file: 'golden_carrot.png' },
+  { key: 'iron_sword', file: 'iron_sword.png' },
 ];
 
-async function computeAHash(pixels, w, h) {
-  // Resize to 8x8 grayscale conceptually from raw RGBA
-  const gray = new Float64Array(w * h);
-  for (let i = 0; i < w * h; i++) {
-    const r = pixels[i * 4], g = pixels[i * 4 + 1], b = pixels[i * 4 + 2];
-    gray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-  }
-  let sum = 0;
-  for (let i = 0; i < gray.length; i++) sum += gray[i];
-  const avg = sum / gray.length;
-  const bits = new Uint8Array(Math.ceil(gray.length / 8));
-  for (let i = 0; i < gray.length; i++) {
-    if (gray[i] >= avg) bits[i >> 3] |= (1 << (7 - (i & 7)));
+// dHash: resize to 9x8, compare each pixel to its right neighbor → 64 bits
+function computeDHash(pixels) {
+  const bits = new Uint8Array(8);
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const li = (row * 9 + col) * 4;
+      const ri = (row * 9 + col + 1) * 4;
+      const l = 0.299 * pixels[li] + 0.587 * pixels[li + 1] + 0.114 * pixels[li + 2];
+      const r = 0.299 * pixels[ri] + 0.587 * pixels[ri + 1] + 0.114 * pixels[ri + 2];
+      const bit = row * 8 + col;
+      if (l > r) bits[bit >> 3] |= (1 << (7 - (bit & 7)));
+    }
   }
   return Buffer.from(bits).toString('base64');
 }
 
 function computeHistogram(pixels, count) {
-  const hist = new Float64Array(24); // 8 bins per channel
+  const hist = new Float64Array(24);
   let total = 0;
   for (let i = 0; i < count; i++) {
-    const a = pixels[i * 4 + 3];
-    if (a < 128) continue; // skip transparent
+    if (pixels[i * 4 + 3] < 128) continue; // skip transparent
     total++;
     hist[Math.min(pixels[i * 4] >> 5, 7)]++;
     hist[8 + Math.min(pixels[i * 4 + 1] >> 5, 7)]++;
@@ -46,20 +45,26 @@ function computeHistogram(pixels, count) {
   return Array.from(hist).map(v => Math.round(v * 10000) / 10000);
 }
 
-async function processTexture(filePath, texDef) {
-  let img = sharp(filePath);
-  if (texDef.crop) {
-    // icons.png: crosshair is at top-left 15x15
-    img = img.extract({ left: 0, top: 0, width: 15, height: 15 });
+// Color moments: mean per channel (non-transparent pixels only)
+function computeColorMoments(pixels, count) {
+  let sr = 0, sg = 0, sb = 0, n = 0;
+  for (let i = 0; i < count; i++) {
+    if (pixels[i * 4 + 3] < 128) continue;
+    sr += pixels[i * 4]; sg += pixels[i * 4 + 1]; sb += pixels[i * 4 + 2];
+    n++;
   }
-  const targetSize = texDef.size || 16;
-  // Resize to 8x8 for aHash
-  const hashBuf = await img.clone().resize(8, 8, { fit: 'fill' }).raw().ensureAlpha().toBuffer();
-  const ahash = await computeAHash(hashBuf, 8, 8);
-  // Resize to target for histogram
-  const histBuf = await img.clone().resize(targetSize, targetSize, { fit: 'fill' }).raw().ensureAlpha().toBuffer();
-  const hist = computeHistogram(histBuf, targetSize * targetSize);
-  return { ahash, hist };
+  if (!n) return [0, 0, 0];
+  return [Math.round(sr / n), Math.round(sg / n), Math.round(sb / n)];
+}
+
+async function processTexture(filePath) {
+  const img = sharp(filePath);
+  const hashBuf = await img.clone().resize(9, 8, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
+  const dhash = computeDHash(hashBuf);
+  const histBuf = await img.clone().resize(16, 16, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
+  const hist = computeHistogram(histBuf, 256);
+  const moments = computeColorMoments(histBuf, 256);
+  return { dhash, hist, moments };
 }
 
 async function main() {
@@ -81,19 +86,17 @@ async function main() {
       }
       if (!filePath) continue;
       try {
-        packData[tex.key] = await processTexture(filePath, tex);
-      } catch (e) {
-        // skip broken images
-      }
+        packData[tex.key] = await processTexture(filePath);
+      } catch { /* skip broken */ }
     }
     if (Object.keys(packData).length > 0) packs[dir] = packData;
     done++;
     if (done % 20 === 0) console.log(`  ${done}/${dirs.length}`);
   }
-  const result = { version: 1, packs };
+  const result = { version: 2, packs };
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, JSON.stringify(result));
-  console.log(`Done. ${Object.keys(packs).length} packs written to ${OUT_FILE}`);
+  console.log(`Done. ${Object.keys(packs).length} packs → ${OUT_FILE}`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
