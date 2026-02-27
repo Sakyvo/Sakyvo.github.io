@@ -251,23 +251,32 @@ async function processImage(file) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0);
 
-  if (!fingerprints) {
-    const resp = await fetch('/data/sbi-fingerprints.json');
-    fingerprints = await resp.json();
+  try {
+    if (!fingerprints) {
+      // ?v=2 busts browser cache of old v1 fingerprints (which had 'ahash' not 'dhash')
+      const resp = await fetch('/data/sbi-fingerprints.json?v=2');
+      if (!resp.ok) throw new Error('Failed to load fingerprints: ' + resp.status);
+      fingerprints = await resp.json();
+    }
+
+    const slots = extractHotbarSlots(ctx, img.width, img.height);
+    drawDetectionOverlay(ctx, slots);
+
+    const results = matchPacks(slots);
+    progress.hidden = true;
+    renderResults(results);
+
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 320; thumbCanvas.height = Math.round(320 * img.height / img.width);
+    thumbCanvas.getContext('2d').drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
+    saveHistory(thumbCanvas.toDataURL('image/jpeg', 0.6), results);
+  } catch (e) {
+    progress.hidden = true;
+    const container = document.getElementById('sbi-results');
+    container.innerHTML = '<p class="sbi-no-results">Error: ' + e.message + '</p>';
+    container.hidden = false;
+    console.error('SBI error:', e);
   }
-
-  const slots = extractHotbarSlots(ctx, img.width, img.height);
-  drawDetectionOverlay(ctx, slots);
-
-  const results = matchPacks(slots);
-  progress.hidden = true;
-  renderResults(results);
-
-  // Save thumbnail to history
-  const thumbCanvas = document.createElement('canvas');
-  thumbCanvas.width = 320; thumbCanvas.height = Math.round(320 * img.height / img.width);
-  thumbCanvas.getContext('2d').drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
-  saveHistory(thumbCanvas.toDataURL('image/jpeg', 0.6), results);
 
   URL.revokeObjectURL(url);
 }

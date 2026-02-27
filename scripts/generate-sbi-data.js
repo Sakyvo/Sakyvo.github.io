@@ -54,7 +54,8 @@ function computeColorMoments(pixels, count) {
     n++;
   }
   if (!n) return [0, 0, 0];
-  return [Math.round(sr / n), Math.round(sg / n), Math.round(sb / n)];
+  // Normalize to [0,1] to match browser-side computeColorMoments
+  return [+(sr / n / 255).toFixed(5), +(sg / n / 255).toFixed(5), +(sb / n / 255).toFixed(5)];
 }
 
 async function processTexture(filePath) {
