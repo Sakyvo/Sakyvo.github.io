@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VALE - 以图搜图</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="logo">VALE</a>
+    <nav>
+      <a href="/sbi/history/" class="nav-btn" title="搜索历史">🕐</a>
+    </nav>
+  </header>
+
+  <div class="sbi-container">
+    <h2 class="sbi-title">以图搜图</h2>
+    <p class="sbi-desc">上传 Minecraft PvP 截图，自动识别材质包</p>
+
+    <div class="sbi-upload" id="sbi-upload">
+      <p class="sbi-upload-text">拖拽、点击或粘贴截图</p>
+      <input type="file" id="sbi-file" accept="image/*" hidden>
+    </div>
+
+    <div class="sbi-preview" id="sbi-preview" hidden>
+      <canvas id="sbi-canvas"></canvas>
+    </div>
+
+    <div class="sbi-progress" id="sbi-progress" hidden>
+      <div class="sbi-spinner"></div>
+      <p>正在分析...</p>
+    </div>
+
+    <div class="sbi-results" id="sbi-results" hidden></div>
+  </div>
+
+  <footer>
+    <p>VALE Project</p>
+  </footer>
+
+  <script src="/assets/js/sbi.js"></script>
+</body>
+</html>
