@@ -12,8 +12,14 @@
     <a href="/" class="logo">VALE</a>
     <nav>
       <a href="/sbi/history/" class="nav-btn" title="Search history">🕐</a>
+      <button class="sbi-ai-badge" id="sbi-ai-badge" data-state="loading" title="AI Model Status">AI</button>
     </nav>
   </header>
+
+  <div class="sbi-ai-popup" id="sbi-ai-popup" hidden>
+    <div class="sbi-ai-popup-indicator" id="sbi-ai-dot"></div>
+    <span id="sbi-ai-msg">Loading AI model (~86MB, cached after first use)...</span>
+  </div>
 
   <div class="sbi-container">
     <h2 class="sbi-title">Search by Image</h2>

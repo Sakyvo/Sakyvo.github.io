@@ -9,19 +9,34 @@ function initClipWorker() {
   if (clipWorker) return;
   clipWorker = new Worker('/assets/js/sbi-worker.js', { type: 'module' });
   clipWorker.onmessage = ({ data }) => {
+    const badge = document.getElementById('sbi-ai-badge');
+    const popup = document.getElementById('sbi-ai-popup');
+    const msg = document.getElementById('sbi-ai-msg');
     if (data.type === 'ready') {
       clipWorkerReady = true;
+      if (badge) { badge.dataset.state = 'ready'; badge.title = 'AI Ready'; }
+      if (msg) msg.textContent = 'AI model loaded and ready.';
+      const dot = document.getElementById('sbi-ai-dot');
+      if (dot) dot.style.background = '#22c55e';
     } else if (data.type === 'status') {
       const el = document.getElementById('sbi-clip-status');
       if (el) el.textContent = data.msg;
+      if (badge) badge.dataset.state = 'loading';
+      if (msg) msg.textContent = data.msg;
     } else if (data.type === 'results') {
       handleClipResults(data.scores);
     } else if (data.type === 'error') {
       const el = document.getElementById('sbi-clip-status');
       if (el) el.textContent = 'AI: ' + data.msg;
+      if (badge) badge.dataset.state = 'error';
+      if (msg) msg.textContent = 'Error: ' + data.msg;
+      const dot = document.getElementById('sbi-ai-dot');
+      if (dot) dot.style.background = '#ef4444';
     }
   };
   clipWorker.postMessage({ type: 'init' });
+  const badge = document.getElementById('sbi-ai-badge');
+  if (badge) badge.dataset.state = 'loading';
 }
 
 let _lastHashResults = [], _lastAllScores = {};
@@ -45,8 +60,8 @@ function handleClipResults(clipScores) {
   }
   combined.sort((a, b) => b.score - a.score);
   const top10 = combined.slice(0, 10);
-  renderResults(top10);
-  if (statusEl) statusEl.textContent = 'AI analysis complete';
+  renderResults(top10, 'AI Enhanced');
+  if (statusEl) { statusEl.textContent = '✓ AI analysis complete'; statusEl.dataset.state = 'ready'; }
 
   const thumbCanvas = document.createElement('canvas');
   const origCanvas = document.getElementById('sbi-canvas');
@@ -246,24 +261,27 @@ function extractHotbarSlots(ctx, imgW, imgH) {
       const widgetY = imgH - widgetH + yOff;
 
       const slots = [];
-      let totalBright = 0;
+      let totalVar = 0;
       for (let i = 0; i < 9; i++) {
         const x = Math.round(widgetX + itemOffX + i * slotStep);
         const y = Math.round(itemY);
         const sz = Math.round(itemW);
         if (x < 0 || y < 0 || x + sz > imgW || y + sz > imgH) continue;
         const region = extractRegion(ctx, x, y, sz, sz, 16, 16);
-        let bright = 0;
+        // Use variance instead of brightness: items create varied pixels, empty slots are uniform
+        let lumSum = 0, lumSqSum = 0;
         for (let p = 0; p < 256; p++) {
           const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
-          if (lum > 60) bright++;
+          lumSum += lum; lumSqSum += lum * lum;
         }
-        if (bright > 12) {
+        const mean = lumSum / 256;
+        const variance = lumSqSum / 256 - mean * mean;
+        if (variance > 80) {
           slots.push({ index: i, features: computeFeatures(region, 16, 16, true), x, y, sz });
-          totalBright += bright;
+          totalVar += variance;
         }
       }
-      const confidence = slots.length * 1000 + totalBright;
+      const confidence = slots.length * 1000 + totalVar;
       if (confidence > bestConfidence) {
         bestConfidence = confidence;
         bestSlots = slots;
@@ -333,24 +351,36 @@ function drawDetectionOverlay(ctx, slots) {
   }
 }
 
-function renderResults(results) {
+function scoreColor(pct) {
+  if (pct >= 80) return '#22c55e';
+  if (pct >= 65) return '#f59e0b';
+  return '#ef4444';
+}
+
+function renderResults(results, label) {
   const container = document.getElementById('sbi-results');
   if (results.length === 0) {
     container.innerHTML = '<p class="sbi-no-results">No matching packs found</p>';
     container.hidden = false;
     return;
   }
-  container.innerHTML = results.map(r => {
+  const header = label ? `<div class="sbi-results-label">${label}</div>` : '';
+  container.innerHTML = header + results.map((r, i) => {
     const pct = Math.min(100, Math.round(r.score * 100));
+    const color = scoreColor(pct);
     const coverUrl = '/thumbnails/' + encodeURIComponent(r.name) + '/cover.png';
     const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
-    return '<a class="sbi-result-card" href="/p/' + encodeURIComponent(r.name) + '/">' +
-      '<div class="sbi-score">' + pct + '%</div>' +
-      '<div class="sbi-result-info">' +
-        '<div class="sbi-result-name">' + r.name.replace(/_/g, ' ') + '</div>' +
-      '</div>' +
-      '<img class="sbi-result-cover" src="' + coverUrl + '" onerror="this.src=\'' + packPng + '\'">' +
-    '</a>';
+    const displayName = r.name.replace(/_/g, ' ');
+    return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/">
+      <span class="sbi-rank">${i + 1}</span>
+      <span class="sbi-divider"></span>
+      <span class="sbi-score" style="color:${color}">${pct}%</span>
+      <span class="sbi-divider"></span>
+      <img class="sbi-pack-icon" src="${packPng}" onerror="this.style.display='none'">
+      <span class="sbi-result-name">${displayName}</span>
+      <span class="sbi-divider"></span>
+      <img class="sbi-result-cover" src="${coverUrl}" onerror="this.src='${packPng}'">
+    </a>`;
   }).join('');
   container.hidden = false;
 }
@@ -413,8 +443,7 @@ async function processImage(file) {
     // Stage 2: CLIP refinement (async)
     if (widgetFeatures && slots.length > 0) {
       const statusEl = document.getElementById('sbi-clip-status');
-      if (statusEl) { statusEl.textContent = 'Initializing AI model...'; statusEl.hidden = false; }
-      initClipWorker();
+      if (statusEl) { statusEl.textContent = 'Running AI analysis...'; statusEl.hidden = false; }
 
       // Extract hotbar region pixels for CLIP query
       const baseScale = img.height / 1080;
@@ -468,6 +497,22 @@ function init() {
       if (item.type.startsWith('image/')) { processImage(item.getAsFile()); break; }
     }
   });
+
+  // AI badge toggle
+  const badge = document.getElementById('sbi-ai-badge');
+  const popup = document.getElementById('sbi-ai-popup');
+  if (badge && popup) {
+    badge.addEventListener('click', () => popup.hidden = !popup.hidden);
+    document.addEventListener('click', e => {
+      if (!badge.contains(e.target) && !popup.contains(e.target)) popup.hidden = true;
+    });
+    // Show popup on first load
+    popup.hidden = false;
+    setTimeout(() => { popup.hidden = true; }, 4000);
+  }
+
+  // Pre-load worker in background
+  initClipWorker();
 }
 
 init();

@@ -955,14 +955,23 @@ footer {
 .sbi-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: transparent; animation: sbi-spin .8s linear infinite; margin: 0 auto 12px; }
 @keyframes sbi-spin { to { transform: rotate(360deg); } }
 .sbi-results { margin-top: 24px; }
-.sbi-result-card { display: flex; gap: 16px; padding: 16px; border: 2px solid var(--border); margin-bottom: 12px; align-items: center; text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; }
+.sbi-results-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.sbi-result-card { display: flex; align-items: center; padding: 0; border: 2px solid var(--border); margin-bottom: 8px; text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; overflow: hidden; height: 56px; }
 .sbi-result-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.sbi-score { font-size: 24px; font-weight: bold; min-width: 60px; text-align: center; }
-.sbi-result-info { flex: 1; }
-.sbi-result-name { font-size: 14px; font-weight: bold; }
-.sbi-result-cover { width: 120px; aspect-ratio: 2; object-fit: cover; image-rendering: pixelated; border: 1px solid var(--border); }
+.sbi-rank { min-width: 36px; text-align: center; font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
+.sbi-divider { width: 1px; background: var(--border); align-self: stretch; flex-shrink: 0; }
+.sbi-score { min-width: 56px; text-align: center; font-size: 18px; font-weight: bold; flex-shrink: 0; padding: 0 8px; }
+.sbi-pack-icon { width: 32px; height: 32px; image-rendering: pixelated; flex-shrink: 0; margin: 0 8px; object-fit: contain; }
+.sbi-result-name { flex: 1; font-size: 13px; font-weight: bold; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sbi-result-cover { width: 112px; height: 56px; object-fit: cover; image-rendering: pixelated; flex-shrink: 0; display: block; }
 .sbi-no-results { text-align: center; color: var(--text-secondary); padding: 40px 0; }
 .sbi-clip-status { text-align: center; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
+.sbi-ai-badge { padding: 3px 9px; font-size: 12px; font-weight: bold; border: 2px solid; cursor: pointer; background: transparent; letter-spacing: .04em; }
+.sbi-ai-badge[data-state="loading"] { color: #f59e0b; border-color: #f59e0b; }
+.sbi-ai-badge[data-state="ready"]   { color: #22c55e; border-color: #22c55e; }
+.sbi-ai-badge[data-state="error"]   { color: #ef4444; border-color: #ef4444; }
+.sbi-ai-popup { position: fixed; top: 56px; right: 16px; background: var(--bg, #fff); border: 2px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; z-index: 200; max-width: 320px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.sbi-ai-popup-indicator { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: #f59e0b; }
 .sbi-history-item { display: flex; gap: 16px; padding: 16px; border: 2px solid var(--border); margin-bottom: 12px; cursor: pointer; align-items: center; transition: transform .2s; }
 .sbi-history-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 .sbi-history-thumb { width: 120px; height: 68px; object-fit: cover; border: 1px solid var(--border); }
