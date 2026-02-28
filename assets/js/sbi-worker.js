@@ -11,7 +11,11 @@ env.allowLocalModels = false;
 env.allowRemoteModels = true;
 env.remotePathTemplate = '{model}/resolve/{revision}/';
 if (!env.backends.onnx.wasm) env.backends.onnx.wasm = {};
-env.backends.onnx.wasm.wasmPaths = '/assets/js/';
+env.backends.onnx.wasm.wasmPaths = {
+  mjs: '/assets/js/ort-wasm-simd-threaded.jsep.mjs',
+  wasm: '/assets/js/ort-wasm-simd-threaded.jsep.wasm'
+};
+env.backends.onnx.wasm.numThreads = 1;
 
 let processor = null, model = null;
 let embedNames = null, embedMatrix = null;
