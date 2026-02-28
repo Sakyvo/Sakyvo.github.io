@@ -49,7 +49,9 @@
       "Bash(ls -la \"K:\\\\Sakyvo.github.io\\\\thumbnails\\\\Eum3Blue_Revamp\\\\buff_\"*)",
       "Bash(git add scripts/extract-textures.js src/css/style.css src/js/pack-detail.js assets/css/style.css assets/js/pack-detail.js thumbnails/*/buff_fire_resistance.png)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "mcp__ace-tool__search_context",
+      "mcp__tavily-remote-mcp__tavily_search"
     ]
   }
 }
