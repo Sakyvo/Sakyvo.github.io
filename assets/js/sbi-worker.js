@@ -10,6 +10,7 @@ const MODEL_HOSTS = ['https://hf-mirror.com/', 'https://huggingface.co/'];
 env.allowLocalModels = false;
 env.allowRemoteModels = true;
 env.remotePathTemplate = '{model}/resolve/{revision}/';
+if (!env.backends.onnx.wasm) env.backends.onnx.wasm = {};
 env.backends.onnx.wasm.wasmPaths = '/assets/js/';
 
 let processor = null, model = null;
