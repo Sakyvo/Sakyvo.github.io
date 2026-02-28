@@ -13,7 +13,7 @@ function setClipWorkerError(errorMsg) {
   const msg = document.getElementById('sbi-ai-msg');
   const dot = document.getElementById('sbi-ai-dot');
   const el = document.getElementById('sbi-clip-status');
-  if (el) { el.textContent = 'AI: ' + clipWorkerError; el.dataset.state = 'error'; }
+  if (el) { el.hidden = false; el.textContent = 'AI: ' + clipWorkerError; el.dataset.state = 'error'; }
   if (badge) badge.dataset.state = 'error';
   if (msg) msg.textContent = 'Error: ' + clipWorkerError;
   if (dot) dot.style.background = '#ef4444';
