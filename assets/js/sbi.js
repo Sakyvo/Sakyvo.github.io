@@ -5,26 +5,28 @@ let fingerprints = null;
 
 // --- Feature computation ---
 
-// dHash: compare adjacent horizontal pixels → 64 bits, robust for texture edges
+// dHash per RGB channel: 192 bits (64 per channel), color-aware
 function computeDHash(imageData) {
   // imageData is from a 9x8 canvas
-  const bits = new Uint8Array(8);
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const li = (row * 9 + col) * 4;
-      const ri = (row * 9 + col + 1) * 4;
-      const l = 0.299 * imageData[li] + 0.587 * imageData[li + 1] + 0.114 * imageData[li + 2];
-      const r = 0.299 * imageData[ri] + 0.587 * imageData[ri + 1] + 0.114 * imageData[ri + 2];
-      const bit = row * 8 + col;
-      if (l > r) bits[bit >> 3] |= (1 << (7 - (bit & 7)));
+  const bits = new Uint8Array(24);
+  for (let ch = 0; ch < 3; ch++) {
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const li = (row * 9 + col) * 4 + ch;
+        const ri = (row * 9 + (col + 1)) * 4 + ch;
+        const bit = row * 8 + col;
+        const byteIdx = ch * 8 + (bit >> 3);
+        if (imageData[li] > imageData[ri])
+          bits[byteIdx] |= (1 << (7 - (bit & 7)));
+      }
     }
   }
   return bits;
 }
 
-// Histogram: 48-bin RGB (16 per channel) + 12-bin hue = 60 bins total
+// Histogram: 48-bin RGB (16 per channel) + 24-bin hue (15° each) = 72 bins total
 function computeHistogram(imageData, count, bgThreshold) {
-  const hist = new Float64Array(60);
+  const hist = new Float64Array(72);
   let total = 0;
   for (let i = 0; i < count; i++) {
     const r = imageData[i * 4], g = imageData[i * 4 + 1], b = imageData[i * 4 + 2];
@@ -35,21 +37,21 @@ function computeHistogram(imageData, count, bgThreshold) {
     hist[Math.min(r >> 4, 15)]++;
     hist[16 + Math.min(g >> 4, 15)]++;
     hist[32 + Math.min(b >> 4, 15)]++;
-    // Hue bin (12 bins = 30° each)
+    // Hue bin (24 bins = 15° each)
     const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
     if (d > 10) {
       let h;
       if (max === r) h = ((g - b) / d + 6) % 6;
       else if (max === g) h = (b - r) / d + 2;
       else h = (r - g) / d + 4;
-      hist[48 + Math.min(Math.floor(h * 2), 11)]++;
+      hist[48 + Math.min(Math.floor(h * 4), 23)]++;
     }
   }
-  if (total > 0) for (let i = 0; i < 60; i++) hist[i] /= total;
+  if (total > 0) for (let i = 0; i < 72; i++) hist[i] /= total;
   return hist;
 }
 
-// Color moments: mean RGB of foreground pixels
+// Color moments: mean + std per RGB channel
 function computeColorMoments(imageData, count, bgThreshold) {
   let sr = 0, sg = 0, sb = 0, n = 0;
   for (let i = 0; i < count; i++) {
@@ -59,7 +61,40 @@ function computeColorMoments(imageData, count, bgThreshold) {
     if (bgThreshold && (0.299 * r + 0.587 * g + 0.114 * b) < bgThreshold) continue;
     sr += r; sg += g; sb += b; n++;
   }
-  return n ? [sr / n / 255, sg / n / 255, sb / n / 255] : [0, 0, 0];
+  if (!n) return [0, 0, 0, 0, 0, 0];
+  const mr = sr / n, mg = sg / n, mb = sb / n;
+  let vr = 0, vg = 0, vb = 0;
+  for (let i = 0; i < count; i++) {
+    const r = imageData[i * 4], g = imageData[i * 4 + 1], b = imageData[i * 4 + 2];
+    const a = imageData[i * 4 + 3];
+    if (a < 128) continue;
+    if (bgThreshold && (0.299 * r + 0.587 * g + 0.114 * b) < bgThreshold) continue;
+    vr += (r - mr) ** 2; vg += (g - mg) ** 2; vb += (b - mb) ** 2;
+  }
+  return [mr / 255, mg / 255, mb / 255,
+          Math.sqrt(vr / n) / 255, Math.sqrt(vg / n) / 255, Math.sqrt(vb / n) / 255];
+}
+
+// Edge density: mean normalized gradient magnitude
+function computeEdgeDensity(imageData, w, h) {
+  let sum = 0, count = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (imageData[i + 3] < 128) continue;
+      if (x + 1 < w) {
+        const ri = (y * w + x + 1) * 4;
+        sum += Math.abs(imageData[i] - imageData[ri]) + Math.abs(imageData[i+1] - imageData[ri+1]) + Math.abs(imageData[i+2] - imageData[ri+2]);
+        count++;
+      }
+      if (y + 1 < h) {
+        const di = ((y+1) * w + x) * 4;
+        sum += Math.abs(imageData[i] - imageData[di]) + Math.abs(imageData[i+1] - imageData[di+1]) + Math.abs(imageData[i+2] - imageData[di+2]);
+        count++;
+      }
+    }
+  }
+  return count ? sum / (count * 3 * 255) : 0;
 }
 
 function base64ToBytes(b64) {
@@ -86,20 +121,26 @@ function cosineSimilarity(a, b) {
 }
 
 function colorMomentSim(a, b) {
-  // Distance between two [r,g,b] mean vectors, normalized to [0,1]
+  // Distance between two 6-dim [meanR,meanG,meanB,stdR,stdG,stdB] vectors
   let d = 0;
-  for (let i = 0; i < 3; i++) d += (a[i] - b[i]) ** 2;
-  return 1 - Math.sqrt(d / 3);
+  for (let i = 0; i < 6; i++) d += (a[i] - b[i]) ** 2;
+  return 1 - Math.sqrt(d / 6);
 }
 
 function compare(extracted, packTex) {
   const dhashA = extracted.dhash;
   const dhashB = base64ToBytes(packTex.dhash);
-  const hammingSim = 1 - hammingDistance(dhashA, dhashB) / 64;
+  const hammingSim = 1 - hammingDistance(dhashA, dhashB) / 192;
   const histSim = cosineSimilarity(extracted.hist, packTex.hist);
   const momentSim = colorMomentSim(extracted.moments, packTex.moments);
-  // Weights: dHash 40% (structure, robust to compression), histogram 35% (color+hue), moments 25%
-  return 0.40 * hammingSim + 0.35 * histSim + 0.25 * momentSim;
+  const edgeSim = 1 - Math.abs(extracted.edge - packTex.edge);
+  return 0.30 * hammingSim + 0.35 * histSim + 0.20 * momentSim + 0.15 * edgeSim;
+}
+
+function compareWidget(extracted, packWidget) {
+  const histSim = cosineSimilarity(extracted.hist, packWidget.hist);
+  const momentSim = colorMomentSim(extracted.moments, packWidget.moments);
+  return 0.50 * histSim + 0.50 * momentSim;
 }
 
 // --- Region extraction helpers ---
@@ -126,57 +167,73 @@ function computeFeatures(imageData, w, h, isScreenshot) {
   const dhash = computeDHash(tctx.getImageData(0, 0, 9, 8).data);
   const hist = computeHistogram(imageData.data, w * h, BG_THRESHOLD);
   const moments = computeColorMoments(imageData.data, w * h, BG_THRESHOLD);
-  return { dhash, hist, moments };
+  const edge = computeEdgeDensity(imageData.data, w, h);
+  return { dhash, hist, moments, edge };
 }
 
 // --- Hotbar extraction ---
-// Try multiple GUI scales (2x, 3x, 4x) and pick the one with most confident slots
+// Try multiple GUI scales (2x, 3x, 4x) and Y offsets, pick best confidence
 function extractHotbarSlots(ctx, imgW, imgH) {
   const baseScale = imgH / 1080;
   const GUI_SCALES = [3, 2, 4];
-  let bestSlots = [], bestConfidence = 0;
+  const Y_OFFSETS = [0, -3, 3, -6, 6];
+  let bestSlots = [], bestConfidence = 0, bestWidgetFeatures = null;
 
   for (const guiScale of GUI_SCALES) {
     const scale = baseScale * guiScale / 3;
     const widgetW = 182 * 3 * scale;
+    const widgetH = 22 * 3 * scale;
     const itemOffX = 3 * 3 * scale;
     const itemW = 16 * 3 * scale;
     const slotStep = 20 * 3 * scale;
-    const startX = (imgW - widgetW) / 2 + itemOffX;
-    const itemY = imgH - (22 * 3 - 3 * 3) * scale;
+    const widgetX = (imgW - widgetW) / 2;
+    const baseItemY = imgH - (22 * 3 - 3 * 3) * scale;
 
-    const slots = [];
-    let totalBright = 0;
-    for (let i = 0; i < 9; i++) {
-      const x = Math.round(startX + i * slotStep);
-      const y = Math.round(itemY);
-      const sz = Math.round(itemW);
-      if (x < 0 || y < 0 || x + sz > imgW || y + sz > imgH) continue;
-      const region = extractRegion(ctx, x, y, sz, sz, 16, 16);
-      let bright = 0;
-      for (let p = 0; p < 256; p++) {
-        const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
-        if (lum > 60) bright++;
+    for (const yOff of Y_OFFSETS) {
+      const itemY = baseItemY + yOff;
+      const widgetY = imgH - widgetH + yOff;
+
+      const slots = [];
+      let totalBright = 0;
+      for (let i = 0; i < 9; i++) {
+        const x = Math.round(widgetX + itemOffX + i * slotStep);
+        const y = Math.round(itemY);
+        const sz = Math.round(itemW);
+        if (x < 0 || y < 0 || x + sz > imgW || y + sz > imgH) continue;
+        const region = extractRegion(ctx, x, y, sz, sz, 16, 16);
+        let bright = 0;
+        for (let p = 0; p < 256; p++) {
+          const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
+          if (lum > 60) bright++;
+        }
+        if (bright > 12) {
+          slots.push({ index: i, features: computeFeatures(region, 16, 16, true), x, y, sz });
+          totalBright += bright;
+        }
       }
-      if (bright > 12) {
-        slots.push({ index: i, features: computeFeatures(region, 16, 16, true), x, y, sz });
-        totalBright += bright;
+      const confidence = slots.length * 1000 + totalBright;
+      if (confidence > bestConfidence) {
+        bestConfidence = confidence;
+        bestSlots = slots;
+        const wx = Math.round(widgetX), wy = Math.round(widgetY);
+        const ww = Math.round(widgetW), wh = Math.round(widgetH);
+        if (wx >= 0 && wy >= 0 && wx + ww <= imgW && wy + wh <= imgH) {
+          const widgetRegion = extractRegion(ctx, wx, wy, ww, wh, 16, 16);
+          bestWidgetFeatures = {
+            hist: computeHistogram(widgetRegion.data, 256, 0),
+            moments: computeColorMoments(widgetRegion.data, 256, 0)
+          };
+        }
       }
-    }
-    const confidence = slots.length * 1000 + totalBright;
-    if (confidence > bestConfidence) {
-      bestConfidence = confidence;
-      bestSlots = slots;
     }
   }
-  return bestSlots;
+  return { slots: bestSlots, widgetFeatures: bestWidgetFeatures };
 }
 
 // --- Matching ---
-function matchPacks(slots) {
+function matchPacks(slots, widgetFeatures) {
   if (!slots.length) return [];
   const ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'iron_sword'];
-  // Distinctive items get higher weight
   const TYPE_WEIGHT = { diamond_sword: 1.5, ender_pearl: 1.3, splash_potion: 1.0, steak: 0.8, golden_carrot: 0.8, iron_sword: 1.2 };
   const results = [];
 
@@ -197,9 +254,17 @@ function matchPacks(slots) {
       }
     }
 
+    // Widget similarity (reduced weight to prevent domination)
+    if (widgetFeatures && packData.hotbar_widget) {
+      const widgetSim = compareWidget(widgetFeatures, packData.hotbar_widget);
+      const widgetW = 1.2;
+      totalScore += widgetSim * widgetW;
+      totalWeight += widgetW;
+    }
+
     if (totalWeight === 0) continue;
     const finalScore = totalScore / totalWeight;
-    if (finalScore > 0.58) {
+    if (finalScore > 0.55) {
       results.push({ name: packName, score: finalScore });
     }
   }
@@ -275,16 +340,15 @@ async function processImage(file) {
 
   try {
     if (!fingerprints) {
-      // v3: 60-bin histogram + hue, multi-scale GUI, weighted item types
-      const resp = await fetch('/data/sbi-fingerprints.json?v=3');
+      const resp = await fetch('/data/sbi-fingerprints.json?v=5');
       if (!resp.ok) throw new Error('Failed to load fingerprints: ' + resp.status);
       fingerprints = await resp.json();
     }
 
-    const slots = extractHotbarSlots(ctx, img.width, img.height);
+    const { slots, widgetFeatures } = extractHotbarSlots(ctx, img.width, img.height);
     drawDetectionOverlay(ctx, slots);
 
-    const results = matchPacks(slots);
+    const results = matchPacks(slots, widgetFeatures);
     progress.hidden = true;
     renderResults(results);
 
