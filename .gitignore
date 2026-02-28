@@ -1,2 +1,3 @@
 resourcepacks/
 .ace-tool/
+node_modules/@huggingface/transformers/.cache/
