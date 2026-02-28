@@ -1,16 +1,10 @@
-// CLIP Web Worker for SBI — non-module, uses importScripts
-// WASM + bundle are co-located in /assets/js/ to avoid CDN dependency
+// CLIP Web Worker for SBI — ES module worker
+// transformers.min.js is a webpack ESM bundle; WASM files co-located in /assets/js/
 
-importScripts('/assets/js/transformers.min.js');
-
-const { AutoProcessor, CLIPVisionModelWithProjection, RawImage, env } = self.transformers;
+import { AutoProcessor, CLIPVisionModelWithProjection, RawImage } from '/assets/js/transformers.min.js';
 
 const MODEL_ID = 'Xenova/clip-vit-base-patch32';
 const EMBED_DIM = 512;
-
-// huggingface.co has CORS headers; hf-mirror.com may not
-// Use default (hf.co) — user's proxy handles connectivity
-// env.remoteHost = 'https://hf-mirror.com';
 
 let processor = null, model = null;
 let embedNames = null, embedMatrix = null;
@@ -20,16 +14,18 @@ function post(type, payload) { self.postMessage({ type, ...payload }); }
 async function loadModel() {
   post('status', { msg: 'Downloading AI model (~86MB, cached after first use)...' });
   processor = await AutoProcessor.from_pretrained(MODEL_ID);
+  post('status', { msg: 'Loading vision model...' });
   model = await CLIPVisionModelWithProjection.from_pretrained(MODEL_ID, { dtype: 'q8' });
 }
 
 async function loadEmbeddings() {
-  const idxResp = await fetch('/data/sbi-clip-index.json');
+  const [idxResp, binResp] = await Promise.all([
+    fetch('/data/sbi-clip-index.json'),
+    fetch('/data/sbi-clip-embeddings.bin')
+  ]);
   const idx = await idxResp.json();
   embedNames = idx.names;
-  const binResp = await fetch('/data/sbi-clip-embeddings.bin');
-  const buf = await binResp.arrayBuffer();
-  embedMatrix = new Float32Array(buf);
+  embedMatrix = new Float32Array(await binResp.arrayBuffer());
 }
 
 function cosineSim(a, b) {
@@ -56,7 +52,7 @@ self.onmessage = async ({ data }) => {
       await Promise.all([loadModel(), loadEmbeddings()]);
       post('ready', {});
     } catch (e) {
-      post('error', { msg: e.message });
+      post('error', { msg: e.message || String(e) });
     }
     return;
   }
@@ -64,13 +60,13 @@ self.onmessage = async ({ data }) => {
     try {
       post('status', { msg: 'Running AI analysis...' });
       const queryVec = await embedPixels(data.pixels, data.width, data.height);
-      const scores = [];
-      for (let i = 0; i < embedNames.length; i++) {
-        scores.push({ name: embedNames[i], clipScore: cosineSim(queryVec, embedMatrix.subarray(i * EMBED_DIM, i * EMBED_DIM + EMBED_DIM)) });
-      }
+      const scores = embedNames.map((name, i) => ({
+        name,
+        clipScore: cosineSim(queryVec, embedMatrix.subarray(i * EMBED_DIM, i * EMBED_DIM + EMBED_DIM))
+      }));
       post('results', { scores });
     } catch (e) {
-      post('error', { msg: e.message });
+      post('error', { msg: e.message || String(e) });
     }
   }
 };

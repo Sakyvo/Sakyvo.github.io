@@ -7,7 +7,7 @@ let clipWorkerReady = false;
 
 function initClipWorker() {
   if (clipWorker) return;
-  clipWorker = new Worker('/assets/js/sbi-worker.js');
+  clipWorker = new Worker('/assets/js/sbi-worker.js', { type: 'module' });
   clipWorker.onmessage = ({ data }) => {
     const badge = document.getElementById('sbi-ai-badge');
     const popup = document.getElementById('sbi-ai-popup');
