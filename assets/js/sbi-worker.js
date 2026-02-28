@@ -1,10 +1,14 @@
 // CLIP Web Worker for SBI
 // Loads Transformers.js + embeddings, runs inference on demand
 
-import { AutoProcessor, CLIPVisionModelWithProjection, RawImage } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/dist/transformers.min.js';
+import { AutoProcessor, CLIPVisionModelWithProjection, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/dist/transformers.min.js';
 
 const MODEL_ID = 'Xenova/clip-vit-base-patch32';
 const EMBED_DIM = 512;
+
+// Use mirror for regions where huggingface.co is blocked
+env.remoteHost = 'https://hf-mirror.com';
+env.allowLocalModels = false;
 
 let processor = null, model = null;
 let embedNames = null, embedMatrix = null; // Float32Array: N × 512
