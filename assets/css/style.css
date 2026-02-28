@@ -962,6 +962,7 @@ footer {
 .sbi-result-name { font-size: 14px; font-weight: bold; }
 .sbi-result-cover { width: 120px; aspect-ratio: 2; object-fit: cover; image-rendering: pixelated; border: 1px solid var(--border); }
 .sbi-no-results { text-align: center; color: var(--text-secondary); padding: 40px 0; }
+.sbi-clip-status { text-align: center; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
 .sbi-history-item { display: flex; gap: 16px; padding: 16px; border: 2px solid var(--border); margin-bottom: 12px; cursor: pointer; align-items: center; transition: transform .2s; }
 .sbi-history-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 .sbi-history-thumb { width: 120px; height: 68px; object-fit: cover; border: 1px solid var(--border); }

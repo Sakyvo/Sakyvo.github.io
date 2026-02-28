@@ -2,6 +2,58 @@
 'use strict';
 
 let fingerprints = null;
+let clipWorker = null;
+let clipWorkerReady = false;
+
+function initClipWorker() {
+  if (clipWorker) return;
+  clipWorker = new Worker('/assets/js/sbi-worker.js', { type: 'module' });
+  clipWorker.onmessage = ({ data }) => {
+    if (data.type === 'ready') {
+      clipWorkerReady = true;
+    } else if (data.type === 'status') {
+      const el = document.getElementById('sbi-clip-status');
+      if (el) el.textContent = data.msg;
+    } else if (data.type === 'results') {
+      handleClipResults(data.scores);
+    } else if (data.type === 'error') {
+      const el = document.getElementById('sbi-clip-status');
+      if (el) el.textContent = 'AI: ' + data.msg;
+    }
+  };
+  clipWorker.postMessage({ type: 'init' });
+}
+
+let _lastHashResults = [], _lastAllScores = {};
+
+function handleClipResults(clipScores) {
+  const statusEl = document.getElementById('sbi-clip-status');
+  // Build lookup: packName → clipScore
+  const clipMap = {};
+  for (const s of clipScores) clipMap[s.name] = s.clipScore;
+
+  // Combine: 40% hash + 60% CLIP
+  const combined = [];
+  const allNames = new Set([
+    ..._lastHashResults.map(r => r.name),
+    ...clipScores.slice(0, 30).map(s => s.name)
+  ]);
+  for (const name of allNames) {
+    const hashScore = _lastAllScores[name] || 0;
+    const clipScore = clipMap[name] || 0;
+    combined.push({ name, score: 0.4 * hashScore + 0.6 * clipScore });
+  }
+  combined.sort((a, b) => b.score - a.score);
+  const top10 = combined.slice(0, 10);
+  renderResults(top10);
+  if (statusEl) statusEl.textContent = 'AI analysis complete';
+
+  const thumbCanvas = document.createElement('canvas');
+  const origCanvas = document.getElementById('sbi-canvas');
+  thumbCanvas.width = 320; thumbCanvas.height = Math.round(320 * origCanvas.height / origCanvas.width);
+  thumbCanvas.getContext('2d').drawImage(origCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+  saveHistory(thumbCanvas.toDataURL('image/jpeg', 0.6), top10);
+}
 
 // --- Feature computation ---
 
@@ -348,9 +400,39 @@ async function processImage(file) {
     const { slots, widgetFeatures } = extractHotbarSlots(ctx, img.width, img.height);
     drawDetectionOverlay(ctx, slots);
 
+    // Stage 1: Hash-based instant results
     const results = matchPacks(slots, widgetFeatures);
     progress.hidden = true;
     renderResults(results);
+
+    // Cache hash scores for later CLIP combination
+    _lastHashResults = results;
+    _lastAllScores = {};
+    for (const r of results) _lastAllScores[r.name] = r.score;
+
+    // Stage 2: CLIP refinement (async)
+    if (widgetFeatures && slots.length > 0) {
+      const statusEl = document.getElementById('sbi-clip-status');
+      if (statusEl) { statusEl.textContent = 'Initializing AI model...'; statusEl.hidden = false; }
+      initClipWorker();
+
+      // Extract hotbar region pixels for CLIP query
+      const baseScale = img.height / 1080;
+      const guiScale = 3, scale = baseScale * guiScale / 3;
+      const widgetW = Math.round(182 * 3 * scale), widgetH = Math.round(22 * 3 * scale);
+      const widgetX = Math.round((img.width - widgetW) / 2);
+      const widgetY = Math.round(img.height - widgetH);
+      if (widgetX >= 0 && widgetY >= 0 && widgetX + widgetW <= img.width && widgetY + widgetH <= img.height) {
+        const clipRegion = extractRegion(ctx, widgetX, widgetY, widgetW, widgetH, 224, 224);
+        const pixels = clipRegion.data.buffer.slice(0);
+        const sendSearch = () => clipWorker.postMessage({ type: 'search', pixels, width: 224, height: 224 }, [pixels]);
+        if (clipWorkerReady) sendSearch();
+        else {
+          const check = setInterval(() => { if (clipWorkerReady) { clearInterval(check); sendSearch(); } }, 200);
+          setTimeout(() => clearInterval(check), 30000);
+        }
+      }
+    }
 
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = 320; thumbCanvas.height = Math.round(320 * img.height / img.width);
