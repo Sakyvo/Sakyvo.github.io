@@ -1,7 +1,7 @@
 // CLIP Web Worker for SBI
 // Loads Transformers.js + embeddings, runs inference on demand
 
-import { AutoProcessor, CLIPVisionModelWithProjection, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/dist/transformers.min.js';
+import { AutoProcessor, CLIPVisionModelWithProjection, RawImage, env } from '/assets/js/transformers.web.min.js';
 
 const MODEL_ID = 'Xenova/clip-vit-base-patch32';
 const EMBED_DIM = 512;
