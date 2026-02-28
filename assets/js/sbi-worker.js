@@ -1,10 +1,16 @@
 // CLIP Web Worker for SBI — ES module worker
 // transformers.min.js is a webpack ESM bundle; WASM files co-located in /assets/js/
 
-import { AutoProcessor, CLIPVisionModelWithProjection, RawImage } from '/assets/js/transformers.min.js';
+import { AutoProcessor, CLIPVisionModelWithProjection, RawImage, env } from '/assets/js/transformers.min.js';
 
 const MODEL_ID = 'Xenova/clip-vit-base-patch32';
 const EMBED_DIM = 512;
+const MODEL_HOSTS = ['https://hf-mirror.com/', 'https://huggingface.co/'];
+
+env.allowLocalModels = false;
+env.allowRemoteModels = true;
+env.remotePathTemplate = '{model}/resolve/{revision}/';
+env.backends.onnx.wasm.wasmPaths = '/assets/js/';
 
 let processor = null, model = null;
 let embedNames = null, embedMatrix = null;
@@ -12,10 +18,23 @@ let embedNames = null, embedMatrix = null;
 function post(type, payload) { self.postMessage({ type, ...payload }); }
 
 async function loadModel() {
-  post('status', { msg: 'Downloading AI model (~86MB, cached after first use)...' });
-  processor = await AutoProcessor.from_pretrained(MODEL_ID);
-  post('status', { msg: 'Loading vision model...' });
-  model = await CLIPVisionModelWithProjection.from_pretrained(MODEL_ID, { dtype: 'q8' });
+  const errors = [];
+  for (const host of MODEL_HOSTS) {
+    env.remoteHost = host;
+    try {
+      post('status', { msg: `Downloading AI model from ${new URL(host).host} (~86MB, cached after first use)...` });
+      processor = await AutoProcessor.from_pretrained(MODEL_ID);
+      post('status', { msg: `Loading vision model from ${new URL(host).host}...` });
+      model = await CLIPVisionModelWithProjection.from_pretrained(MODEL_ID, { dtype: 'q8' });
+      return;
+    } catch (e) {
+      errors.push(`${new URL(host).host}: ${e.message || String(e)}`);
+      processor = null;
+      model = null;
+      post('status', { msg: `Model source ${new URL(host).host} unavailable, trying fallback...` });
+    }
+  }
+  throw new Error(`Failed to fetch AI model from all sources. ${errors.join(' | ')}`);
 }
 
 async function loadEmbeddings() {
@@ -23,9 +42,15 @@ async function loadEmbeddings() {
     fetch('/data/sbi-clip-index.json'),
     fetch('/data/sbi-clip-embeddings.bin')
   ]);
+  if (!idxResp.ok) throw new Error(`Failed to load /data/sbi-clip-index.json: ${idxResp.status}`);
+  if (!binResp.ok) throw new Error(`Failed to load /data/sbi-clip-embeddings.bin: ${binResp.status}`);
   const idx = await idxResp.json();
+  if (!Array.isArray(idx.names)) throw new Error('Invalid /data/sbi-clip-index.json format');
   embedNames = idx.names;
   embedMatrix = new Float32Array(await binResp.arrayBuffer());
+  if (embedMatrix.length !== embedNames.length * EMBED_DIM) {
+    throw new Error(`Embedding size mismatch: expected ${embedNames.length * EMBED_DIM}, got ${embedMatrix.length}`);
+  }
 }
 
 function cosineSim(a, b) {

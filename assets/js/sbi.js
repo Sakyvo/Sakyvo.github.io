@@ -4,6 +4,20 @@
 let fingerprints = null;
 let clipWorker = null;
 let clipWorkerReady = false;
+let clipWorkerError = null;
+
+function setClipWorkerError(errorMsg) {
+  clipWorkerReady = false;
+  clipWorkerError = errorMsg || 'Unknown worker error';
+  const badge = document.getElementById('sbi-ai-badge');
+  const msg = document.getElementById('sbi-ai-msg');
+  const dot = document.getElementById('sbi-ai-dot');
+  const el = document.getElementById('sbi-clip-status');
+  if (el) { el.textContent = 'AI: ' + clipWorkerError; el.dataset.state = 'error'; }
+  if (badge) badge.dataset.state = 'error';
+  if (msg) msg.textContent = 'Error: ' + clipWorkerError;
+  if (dot) dot.style.background = '#ef4444';
+}
 
 function initClipWorker() {
   if (clipWorker) return;
@@ -14,6 +28,7 @@ function initClipWorker() {
     const msg = document.getElementById('sbi-ai-msg');
     if (data.type === 'ready') {
       clipWorkerReady = true;
+      clipWorkerError = null;
       if (badge) { badge.dataset.state = 'ready'; badge.title = 'AI Ready'; }
       if (msg) msg.textContent = 'AI model loaded and ready.';
       const dot = document.getElementById('sbi-ai-dot');
@@ -26,14 +41,11 @@ function initClipWorker() {
     } else if (data.type === 'results') {
       handleClipResults(data.scores);
     } else if (data.type === 'error') {
-      const el = document.getElementById('sbi-clip-status');
-      if (el) el.textContent = 'AI: ' + data.msg;
-      if (badge) badge.dataset.state = 'error';
-      if (msg) msg.textContent = 'Error: ' + data.msg;
-      const dot = document.getElementById('sbi-ai-dot');
-      if (dot) dot.style.background = '#ef4444';
+      setClipWorkerError(data.msg);
     }
   };
+  clipWorker.onerror = e => setClipWorkerError(e.message || 'Worker runtime error');
+  clipWorker.onmessageerror = () => setClipWorkerError('Worker message error');
   clipWorker.postMessage({ type: 'init' });
   const badge = document.getElementById('sbi-ai-badge');
   if (badge) badge.dataset.state = 'loading';
@@ -443,7 +455,12 @@ async function processImage(file) {
     // Stage 2: CLIP refinement (async)
     if (widgetFeatures && slots.length > 0) {
       const statusEl = document.getElementById('sbi-clip-status');
-      if (statusEl) { statusEl.textContent = 'Running AI analysis...'; statusEl.hidden = false; }
+      if (statusEl) statusEl.hidden = false;
+      if (clipWorkerError) {
+        if (statusEl) { statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
+      } else if (statusEl) {
+        statusEl.textContent = 'Running AI analysis...';
+      }
 
       // Extract hotbar region pixels for CLIP query
       const baseScale = img.height / 1080;
@@ -451,14 +468,30 @@ async function processImage(file) {
       const widgetW = Math.round(182 * 3 * scale), widgetH = Math.round(22 * 3 * scale);
       const widgetX = Math.round((img.width - widgetW) / 2);
       const widgetY = Math.round(img.height - widgetH);
-      if (widgetX >= 0 && widgetY >= 0 && widgetX + widgetW <= img.width && widgetY + widgetH <= img.height) {
+      if (!clipWorkerError && widgetX >= 0 && widgetY >= 0 && widgetX + widgetW <= img.width && widgetY + widgetH <= img.height) {
         const clipRegion = extractRegion(ctx, widgetX, widgetY, widgetW, widgetH, 224, 224);
         const pixels = clipRegion.data.buffer.slice(0);
         const sendSearch = () => clipWorker.postMessage({ type: 'search', pixels, width: 224, height: 224 }, [pixels]);
         if (clipWorkerReady) sendSearch();
         else {
-          const check = setInterval(() => { if (clipWorkerReady) { clearInterval(check); sendSearch(); } }, 200);
-          setTimeout(() => clearInterval(check), 30000);
+          const check = setInterval(() => {
+            if (clipWorkerReady) {
+              clearInterval(check);
+              clearTimeout(waitTimeout);
+              sendSearch();
+            } else if (clipWorkerError) {
+              clearInterval(check);
+              clearTimeout(waitTimeout);
+              if (statusEl) { statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
+            }
+          }, 200);
+          const waitTimeout = setTimeout(() => {
+            clearInterval(check);
+            if (!clipWorkerReady && statusEl) {
+              statusEl.textContent = 'AI model still loading, showing hash results only.';
+              statusEl.dataset.state = 'error';
+            }
+          }, 30000);
         }
       }
     }
