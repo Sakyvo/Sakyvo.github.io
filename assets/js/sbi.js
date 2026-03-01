@@ -482,20 +482,23 @@ function extractHotbarSlots(ctx, imgW, imgH) {
 
   for (const unit of UNIT_CANDIDATES) {
     const widgetW = 182 * unit;
+    const widgetH = 22 * unit;
     const itemOffX = 3 * unit;
     const itemW = 16 * unit;
     const slotStep = 20 * unit;
     for (const xShift of X_SHIFTS) {
       for (const yShift of Y_SHIFTS) {
         const widgetX = (imgW - widgetW) / 2 + xShift;
+        const widgetY = imgH - widgetH + yShift;
         const itemY = imgH - 19 * unit + yShift;
+        if (widgetX < 0 || widgetY < 0 || widgetX + widgetW > imgW || widgetY + widgetH > imgH) continue;
         let score = 0, count = 0;
         for (const i of [0, 2, 4, 6, 8]) {
           const x = widgetX + itemOffX + i * slotStep;
           const v = quickSlotVariance(ctx, x, itemY, itemW, imgW, imgH);
           if (v > 20) { score += v; count++; }
         }
-        if (count >= 2) coarse.push({ unit, xShift, yShift, score: count * 500 + score });
+        if (count >= 2) coarse.push({ unit, xShift, yShift, score: count * 500 + score, widgetX, widgetY, widgetW, widgetH });
       }
     }
   }
@@ -549,6 +552,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     }
     slots.sort((a, b) => b.quality - a.quality);
     const usedSlots = slots.slice(0, Math.min(7, slots.length));
+    if (usedSlots.length < 4) continue;
 
     const wx = Math.round(widgetX);
     const wy = Math.round(widgetY);
@@ -565,6 +569,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
       widgetRect = { x: wx, y: wy, w: ww, h: wh };
       hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
     }
+    if (!widgetRect) continue;
 
     const widgetBoost = estimateWidgetConfidence(widgetFeatures);
     const hudBoost = hudFeatures ? (

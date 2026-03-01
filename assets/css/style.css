@@ -968,11 +968,22 @@ footer {
 .sbi-clip-status { text-align: center; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
 .sbi-debug { margin-top: 14px; border: 2px solid var(--border); background: var(--bg-alt); }
 .sbi-debug > summary { cursor: pointer; font-size: 12px; font-weight: bold; letter-spacing: .06em; text-transform: uppercase; padding: 8px 10px; }
-.sbi-debug-meta { font-size: 12px; color: var(--text-secondary); padding: 0 10px 8px; }
-.sbi-debug-wrap { overflow-x: auto; border-top: 1px solid var(--border); }
-.sbi-debug-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 860px; }
-.sbi-debug-table th, .sbi-debug-table td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; white-space: nowrap; }
+.sbi-debug-meta { font-size: 11px; color: var(--text-secondary); padding: 0 10px 8px; line-height: 1.35; word-break: break-word; }
+.sbi-debug-wrap { overflow-x: hidden; border-top: 1px solid var(--border); }
+.sbi-debug-table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
+.sbi-debug-table th, .sbi-debug-table td { border-bottom: 1px solid var(--border); padding: 4px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbi-debug-table th { background: rgba(0,0,0,0.06); font-weight: 700; }
+.sbi-debug-table th:nth-child(1), .sbi-debug-table td:nth-child(1) { width: 4%; }
+.sbi-debug-table th:nth-child(2), .sbi-debug-table td:nth-child(2) { width: 27%; }
+.sbi-debug-table th:nth-child(3), .sbi-debug-table td:nth-child(3),
+.sbi-debug-table th:nth-child(4), .sbi-debug-table td:nth-child(4),
+.sbi-debug-table th:nth-child(5), .sbi-debug-table td:nth-child(5),
+.sbi-debug-table th:nth-child(6), .sbi-debug-table td:nth-child(6),
+.sbi-debug-table th:nth-child(7), .sbi-debug-table td:nth-child(7),
+.sbi-debug-table th:nth-child(8), .sbi-debug-table td:nth-child(8),
+.sbi-debug-table th:nth-child(9), .sbi-debug-table td:nth-child(9),
+.sbi-debug-table th:nth-child(10), .sbi-debug-table td:nth-child(10) { width: 6%; }
+.sbi-debug-table th:nth-child(11), .sbi-debug-table td:nth-child(11) { width: 21%; white-space: normal; line-height: 1.15; }
 .sbi-ai-badge { padding: 3px 9px; font-size: 12px; font-weight: bold; border: 2px solid; cursor: pointer; background: transparent; letter-spacing: .04em; }
 .sbi-ai-badge[data-state="loading"] { color: #f59e0b; border-color: #f59e0b; }
 .sbi-ai-badge[data-state="ready"]   { color: #22c55e; border-color: #22c55e; }
