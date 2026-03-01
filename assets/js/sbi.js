@@ -261,6 +261,29 @@ function maskSlotNoise(data, w, h) {
   return out;
 }
 
+function buildSlotVariants(ctx, x, y, sz, imgW, imgH) {
+  const variants = [];
+  const offsets = [
+    [0, 0],
+    [-0.12, 0],
+    [0.12, 0],
+    [0, -0.12],
+    [0, 0.12],
+  ];
+  const inset = Math.max(1, Math.round(sz * 0.12));
+  const iw = Math.max(4, sz - inset * 2);
+  const ih = Math.max(4, sz - inset * 2);
+  const shiftPx = Math.max(1, Math.round(sz * 0.1));
+  for (const [ox, oy] of offsets) {
+    const sx = x + inset + Math.round(ox * shiftPx);
+    const sy = y + inset + Math.round(oy * shiftPx);
+    if (sx < 0 || sy < 0 || sx + iw > imgW || sy + ih > imgH) continue;
+    const region = extractRegion(ctx, sx, sy, iw, ih, 16, 16);
+    variants.push(computeFeatures(region, 16, 16, true, 'slot'));
+  }
+  return variants;
+}
+
 function computeFeatures(imageData, w, h, isScreenshot, mode) {
   const BG_THRESHOLD = isScreenshot ? 50 : 0;
   const effectiveData = (isScreenshot && mode === 'slot')
@@ -403,9 +426,10 @@ function extractHotbarSlots(ctx, imgW, imgH) {
           const mean = lumSum / 256;
           const variance = lumSqSum / 256 - mean * mean;
           const features = computeFeatures(region, 16, 16, true, 'slot');
+          const variants = buildSlotVariants(ctx, x, y, sz, imgW, imgH);
           const quality = Math.sqrt(Math.max(0, variance)) * (0.6 + features.edge);
-          if (variance > 45 && features.edge > 0.04) {
-            slots.push({ index: i, features, x, y, sz, quality });
+          if (variance > 45 && features.edge > 0.04 && variants.length > 0) {
+            slots.push({ index: i, features, variants, x, y, sz, quality });
             totalVar += variance;
             totalEdge += features.edge;
             totalQuality += quality;
@@ -431,7 +455,13 @@ function extractHotbarSlots(ctx, imgW, imgH) {
         }
 
         const widgetBoost = estimateWidgetConfidence(widgetFeatures);
-        const confidence = usedSlots.length * 1500 + totalVar * 0.8 + totalEdge * 800 + totalQuality * 40 + widgetBoost * 2500;
+        const hudBoost = hudFeatures ? (
+          (hudFeatures.hearts.length >= 6 ? 1 : 0) +
+          (hudFeatures.hunger.length >= 6 ? 1 : 0) +
+          (hudFeatures.armor.length >= 6 ? 1 : 0) +
+          (hudFeatures.xpBar ? 1 : 0)
+        ) : 0;
+        const confidence = usedSlots.length * 1500 + totalVar * 0.8 + totalEdge * 800 + totalQuality * 40 + widgetBoost * 2500 + hudBoost * 900;
         if (confidence > bestConfidence) {
           bestConfidence = confidence;
           bestSlots = usedSlots;
@@ -475,6 +505,17 @@ function compareHudXp(xpBar, bgTex, fillTex) {
   return 0.7 * max + 0.3 * (sum / sims.length);
 }
 
+function compareSlotToType(slot, packTex) {
+  if (!slot) return 0;
+  const variants = slot.variants && slot.variants.length ? slot.variants : (slot.features ? [slot.features] : []);
+  let best = 0;
+  for (const v of variants) {
+    const sim = compare(v, packTex);
+    if (sim > best) best = sim;
+  }
+  return best;
+}
+
 // --- Matching ---
 function matchPacks(slots, widgetFeatures, hudFeatures) {
   if (!slots.length) return [];
@@ -489,7 +530,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       let bestSim = 0, bestType = '';
       for (const type of ITEM_TYPES) {
         if (!packData[type]) continue;
-        const sim = compare(slot.features, packData[type]);
+        const sim = compareSlotToType(slot, packData[type]);
         if (sim > bestSim) { bestSim = sim; bestType = type; }
       }
       if (bestSim > 0.46) {
@@ -531,13 +572,13 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 }
 
 function drawDetectionOverlay(ctx, slots, hudFeatures) {
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.strokeStyle = '#ff0';
   for (const slot of slots) {
     ctx.strokeRect(slot.x, slot.y, slot.sz, slot.sz);
   }
   if (!hudFeatures) return;
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 2;
   ctx.strokeStyle = '#22d3ee';
   for (const b of hudFeatures.heartBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
   ctx.strokeStyle = '#f97316';
