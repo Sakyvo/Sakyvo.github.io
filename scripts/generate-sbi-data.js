@@ -17,6 +17,16 @@ const TEXTURES = [
 
 // Hotbar widget region in vanilla widgets.png (256x256 base)
 const HOTBAR_REGION = { x: 0, y: 0, w: 182, h: 22 };
+const HUD_ICON_REGIONS = {
+  health_empty: { x: 16, y: 0, w: 9, h: 9 },
+  health_full: { x: 52, y: 0, w: 9, h: 9 },
+  hunger_empty: { x: 16, y: 27, w: 9, h: 9 },
+  hunger_full: { x: 52, y: 27, w: 9, h: 9 },
+  armor_empty: { x: 16, y: 9, w: 9, h: 9 },
+  armor_full: { x: 34, y: 9, w: 9, h: 9 },
+  xp_bar_bg: { x: 0, y: 64, w: 182, h: 5, fw: 64, fh: 16 },
+  xp_bar_fill: { x: 0, y: 69, w: 182, h: 5, fw: 64, fh: 16 },
+};
 
 // dHash per RGB channel: 24 bytes (192 bits), color-aware
 function computeDHash(pixels) {
@@ -108,27 +118,50 @@ function computeEdgeDensity(pixels, w, h) {
 }
 
 async function processTexture(filePath) {
-  const img = sharp(filePath);
+  return processSharpImage(sharp(filePath), 16, 16);
+}
+
+function scaleRegion(meta, region) {
+  const scale = meta.width / 256;
+  const left = Math.max(0, Math.round(region.x * scale));
+  const top = Math.max(0, Math.round(region.y * scale));
+  const width = Math.max(1, Math.round(region.w * scale));
+  const height = Math.max(1, Math.round(region.h * scale));
+  const safeWidth = Math.min(width, Math.max(1, meta.width - left));
+  const safeHeight = Math.min(height, Math.max(1, meta.height - top));
+  return { left, top, width: safeWidth, height: safeHeight };
+}
+
+async function processSharpImage(img, featureW, featureH) {
   const hashBuf = await img.clone().resize(9, 8, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
   const dhash = computeDHash(hashBuf);
-  const featBuf = await img.clone().resize(16, 16, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
-  const hist = computeHistogram(featBuf, 256);
-  const moments = computeColorMoments(featBuf, 256);
-  const edge = computeEdgeDensity(featBuf, 16, 16);
+  const featBuf = await img.clone().resize(featureW, featureH, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
+  const count = featureW * featureH;
+  const hist = computeHistogram(featBuf, count);
+  const moments = computeColorMoments(featBuf, count);
+  const edge = computeEdgeDensity(featBuf, featureW, featureH);
   return { dhash, hist, moments, edge };
 }
 
 async function processHotbarWidget(widgetsPath) {
   const meta = await sharp(widgetsPath).metadata();
-  const scale = meta.width / 256;
-  const { x, y, w, h } = HOTBAR_REGION;
-  const cx = Math.round(x * scale), cy = Math.round(y * scale);
-  const cw = Math.round(w * scale), ch = Math.round(h * scale);
-  const cropped = sharp(widgetsPath).extract({ left: cx, top: cy, width: cw, height: ch });
-  const buf = await cropped.clone().resize(16, 16, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
-  const hist = computeHistogram(buf, 256);
-  const moments = computeColorMoments(buf, 256);
-  return { hist, moments };
+  const crop = scaleRegion(meta, HOTBAR_REGION);
+  const cropped = sharp(widgetsPath).extract(crop);
+  const feat = await processSharpImage(cropped, 16, 16);
+  return { hist: feat.hist, moments: feat.moments, edge: feat.edge };
+}
+
+async function processHudIcons(iconsPath) {
+  const meta = await sharp(iconsPath).metadata();
+  const out = {};
+  for (const [key, region] of Object.entries(HUD_ICON_REGIONS)) {
+    const crop = scaleRegion(meta, region);
+    const img = sharp(iconsPath).extract(crop);
+    const fw = region.fw || 16;
+    const fh = region.fh || 16;
+    out[key] = await processSharpImage(img, fw, fh);
+  }
+  return out;
 }
 
 async function main() {
@@ -160,11 +193,17 @@ async function main() {
         packData.hotbar_widget = await processHotbarWidget(widgetsPath);
       } catch { /* skip broken */ }
     }
+    const iconsPath = path.join(packDir, 'icons.png');
+    if (fs.existsSync(iconsPath)) {
+      try {
+        Object.assign(packData, await processHudIcons(iconsPath));
+      } catch { /* skip broken */ }
+    }
     if (Object.keys(packData).length > 0) packs[dir] = packData;
     done++;
     if (done % 20 === 0) console.log(`  ${done}/${dirs.length}`);
   }
-  const result = { version: 5, packs };
+  const result = { version: 6, packs };
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, JSON.stringify(result));
   console.log(`Done. ${Object.keys(packs).length} packs → ${OUT_FILE}`);

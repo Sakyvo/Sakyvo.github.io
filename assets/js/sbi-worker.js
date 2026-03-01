@@ -11,10 +11,7 @@ env.allowLocalModels = false;
 env.allowRemoteModels = true;
 env.remotePathTemplate = '{model}/resolve/{revision}/';
 if (!env.backends.onnx.wasm) env.backends.onnx.wasm = {};
-env.backends.onnx.wasm.wasmPaths = {
-  mjs: '/assets/js/ort-wasm-simd-threaded.jsep.mjs',
-  wasm: '/assets/js/ort-wasm-simd-threaded.jsep.wasm'
-};
+env.backends.onnx.wasm.wasmPaths = '/assets/js/';
 env.backends.onnx.wasm.numThreads = 1;
 
 let processor = null, model = null;
@@ -33,7 +30,11 @@ async function loadModel() {
       model = await CLIPVisionModelWithProjection.from_pretrained(MODEL_ID, { dtype: 'q8' });
       return;
     } catch (e) {
-      errors.push(`${new URL(host).host}: ${e.message || String(e)}`);
+      const msg = e.message || String(e);
+      errors.push(`${new URL(host).host}: ${msg}`);
+      if (/no available backend|ort-wasm|Failed to fetch dynamically imported module/i.test(msg)) {
+        delete env.backends.onnx.wasm.wasmPaths;
+      }
       processor = null;
       model = null;
       post('status', { msg: `Model source ${new URL(host).host} unavailable, trying fallback...` });
@@ -94,7 +95,8 @@ self.onmessage = async ({ data }) => {
         name,
         clipScore: cosineSim(queryVec, embedMatrix.subarray(i * EMBED_DIM, i * EMBED_DIM + EMBED_DIM))
       }));
-      post('results', { scores });
+      scores.sort((a, b) => b.clipScore - a.clipScore);
+      post('results', { scores: scores.slice(0, 300) });
     } catch (e) {
       post('error', { msg: e.message || String(e) });
     }
