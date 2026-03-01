@@ -12,6 +12,7 @@ const TEXTURES = [
   { key: 'splash_potion', files: ['splash_potion_of_healing.png', 'potion_bottle_splash.png'] },
   { key: 'steak', file: 'steak.png' },
   { key: 'golden_carrot', file: 'golden_carrot.png' },
+  { key: 'apple_golden', files: ['apple_golden.png', 'golden_apple.png'] },
   { key: 'iron_sword', file: 'iron_sword.png' },
 ];
 
@@ -19,10 +20,13 @@ const TEXTURES = [
 const HOTBAR_REGION = { x: 0, y: 0, w: 182, h: 22 };
 const HUD_ICON_REGIONS = {
   health_empty: { x: 16, y: 0, w: 9, h: 9 },
+  health_half: { x: 61, y: 0, w: 9, h: 9 },
   health_full: { x: 52, y: 0, w: 9, h: 9 },
   hunger_empty: { x: 16, y: 27, w: 9, h: 9 },
+  hunger_half: { x: 61, y: 27, w: 9, h: 9 },
   hunger_full: { x: 52, y: 27, w: 9, h: 9 },
   armor_empty: { x: 16, y: 9, w: 9, h: 9 },
+  armor_half: { x: 25, y: 9, w: 9, h: 9 },
   armor_full: { x: 34, y: 9, w: 9, h: 9 },
   xp_bar_bg: { x: 0, y: 64, w: 182, h: 5, fw: 64, fh: 16 },
   xp_bar_fill: { x: 0, y: 69, w: 182, h: 5, fw: 64, fh: 16 },
@@ -203,7 +207,7 @@ async function main() {
     done++;
     if (done % 20 === 0) console.log(`  ${done}/${dirs.length}`);
   }
-  const result = { version: 6, packs };
+  const result = { version: 7, packs };
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, JSON.stringify(result));
   console.log(`Done. ${Object.keys(packs).length} packs → ${OUT_FILE}`);
