@@ -55,6 +55,9 @@ let _lastHashResults = [], _lastAllScores = {};
 const SBI_FINGERPRINT_VERSION = 7;
 const CLIP_HASH_WEIGHT = 0.9;
 const CLIP_WEIGHT = 0.1;
+let _lastMatchDetails = {};
+let _lastClipScores = {};
+let _lastDetectionMeta = null;
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -70,12 +73,66 @@ function normalizeClipScore(v) {
   return Math.max(0, Math.min(1, n));
 }
 
+function fmtPct(v) {
+  if (!isFinite(v)) return '-';
+  return (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + '%';
+}
+
+function summarizeSlotTypes(types) {
+  if (!types || !types.length) return '-';
+  const map = {
+    diamond_sword: 'DS',
+    iron_sword: 'IS',
+    ender_pearl: 'EP',
+    splash_potion: 'POT',
+    steak: 'STK',
+    golden_carrot: 'GC',
+    apple_golden: 'GAP',
+  };
+  return types.map(t => map[t] || '?').join(' ');
+}
+
+function renderDebugPanel(results, phase) {
+  const panel = document.getElementById('sbi-debug');
+  const meta = document.getElementById('sbi-debug-meta');
+  const body = document.getElementById('sbi-debug-body');
+  if (!panel || !meta || !body) return;
+
+  panel.hidden = false;
+  const d = _lastDetectionMeta || {};
+  const rect = d.widgetRect ? `x=${d.widgetRect.x}, y=${d.widgetRect.y}, w=${d.widgetRect.w}, h=${d.widgetRect.h}` : 'none';
+  const search = d.searchInfo
+    ? `unit=${d.searchInfo.unit.toFixed(3)}, dx=${d.searchInfo.xShift}, dy=${d.searchInfo.yShift}, conf=${Math.round(d.searchInfo.confidence)}`
+    : 'none';
+  meta.textContent =
+    `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor/xp)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0}/${d.hasXp ? 1 : 0} | widget=${rect} | search=${search}`;
+
+  body.innerHTML = (results || []).slice(0, 10).map((r, i) => {
+    const info = _lastMatchDetails[r.name] || {};
+    const clip = _lastClipScores[r.name];
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${r.name}</td>
+      <td>${fmtPct(r.score)}</td>
+      <td>${fmtPct(info.slotScore)}</td>
+      <td>${fmtPct(info.widgetScore)}</td>
+      <td>${fmtPct(info.healthScore)}</td>
+      <td>${fmtPct(info.hungerScore)}</td>
+      <td>${fmtPct(info.armorScore)}</td>
+      <td>${fmtPct(info.xpScore)}</td>
+      <td>${clip === undefined ? '-' : fmtPct(clip)}</td>
+      <td>${summarizeSlotTypes(info.slotTypes)}</td>
+    </tr>`;
+  }).join('');
+}
+
 function handleClipResults(clipScores) {
   const statusEl = document.getElementById('sbi-clip-status');
   const sortedClip = [...clipScores].sort((a, b) => b.clipScore - a.clipScore);
   // Build lookup: packName → clipScore
   const clipMap = {};
   for (const s of sortedClip) clipMap[s.name] = normalizeClipScore(s.clipScore);
+  _lastClipScores = clipMap;
 
   // Combine: hash-dominant with light CLIP rerank
   const combined = [];
@@ -94,6 +151,7 @@ function handleClipResults(clipScores) {
   combined.sort((a, b) => b.score - a.score);
   const top10 = combined.slice(0, 10);
   renderResults(top10, 'AI Enhanced');
+  renderDebugPanel(top10, 'ai');
   if (statusEl) { statusEl.textContent = '✓ AI analysis complete'; statusEl.dataset.state = 'ready'; }
 
   const thumbCanvas = document.createElement('canvas');
@@ -445,6 +503,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
   coarse.sort((a, b) => b.score - a.score);
   const detailedCandidates = coarse.slice(0, 48);
   let bestSlots = [], bestConfidence = -Infinity, bestWidgetFeatures = null, bestWidgetRect = null, bestHudFeatures = null;
+  let bestSearchInfo = null;
 
   for (const c of detailedCandidates) {
     const unit = c.unit;
@@ -522,9 +581,16 @@ function extractHotbarSlots(ctx, imgW, imgH) {
       bestWidgetFeatures = widgetFeatures;
       bestWidgetRect = widgetRect;
       bestHudFeatures = hudFeatures;
+      bestSearchInfo = { unit: c.unit, xShift: c.xShift, yShift: c.yShift, confidence };
     }
   }
-  return { slots: bestSlots, widgetFeatures: bestWidgetFeatures, widgetRect: bestWidgetRect, hudFeatures: bestHudFeatures };
+  return {
+    slots: bestSlots,
+    widgetFeatures: bestWidgetFeatures,
+    widgetRect: bestWidgetRect,
+    hudFeatures: bestHudFeatures,
+    searchInfo: bestSearchInfo,
+  };
 }
 
 function compareHudCells(cells, variants) {
@@ -571,16 +637,19 @@ function compareSlotToType(slot, packTex) {
 
 // --- Matching ---
 function matchPacks(slots, widgetFeatures, hudFeatures) {
-  if (!slots.length) return { results: [], slotTypes: [] };
+  if (!slots.length) return { results: [], slotTypes: [], details: {} };
   const ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
   const TYPE_WEIGHT = { diamond_sword: 1.5, ender_pearl: 1.3, splash_potion: 1.0, steak: 0.8, golden_carrot: 0.8, apple_golden: 0.9, iron_sword: 1.2 };
   const results = [];
+  const details = {};
   let bestScore = -Infinity;
   let bestSlotTypes = [];
 
   for (const [packName, packData] of Object.entries(fingerprints.packs)) {
     let totalScore = 0, totalWeight = 0;
+    let slotScore = 0, slotWeight = 0;
     const packSlotTypes = [];
+    let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0, xpSim = 0;
 
     for (const slot of slots) {
       let bestSim = 0, bestType = '';
@@ -595,21 +664,23 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
         const w = (TYPE_WEIGHT[bestType] || 1) * qualityW;
         totalScore += bestSim * w;
         totalWeight += w;
+        slotScore += bestSim * w;
+        slotWeight += w;
       }
     }
 
     if (widgetFeatures && packData.hotbar_widget) {
-      const widgetSim = compareWidget(widgetFeatures, packData.hotbar_widget);
+      widgetSim = compareWidget(widgetFeatures, packData.hotbar_widget);
       const widgetW = 1.1;
       totalScore += widgetSim * widgetW;
       totalWeight += widgetW;
     }
 
     if (hudFeatures) {
-      const healthSim = compareHudCells(hudFeatures.hearts, [packData.health_empty, packData.health_half, packData.health_full]);
-      const hungerSim = compareHudCells(hudFeatures.hunger, [packData.hunger_empty, packData.hunger_half, packData.hunger_full]);
-      const armorSim = compareHudCells(hudFeatures.armor, [packData.armor_empty, packData.armor_half, packData.armor_full]);
-      const xpSim = compareHudXp(hudFeatures.xpBar, packData.xp_bar_bg, packData.xp_bar_fill);
+      healthSim = compareHudCells(hudFeatures.hearts, [packData.health_empty, packData.health_half, packData.health_full]);
+      hungerSim = compareHudCells(hudFeatures.hunger, [packData.hunger_empty, packData.hunger_half, packData.hunger_full]);
+      armorSim = compareHudCells(hudFeatures.armor, [packData.armor_empty, packData.armor_half, packData.armor_full]);
+      xpSim = compareHudXp(hudFeatures.xpBar, packData.xp_bar_bg, packData.xp_bar_fill);
 
       if (healthSim > 0) { totalScore += healthSim * 1.1; totalWeight += 1.1; }
       if (hungerSim > 0) { totalScore += hungerSim * 1.0; totalWeight += 1.0; }
@@ -621,6 +692,16 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     const finalScore = totalScore / totalWeight;
     if (finalScore > 0.50) {
       results.push({ name: packName, score: finalScore });
+      details[packName] = {
+        finalScore,
+        slotScore: slotWeight ? slotScore / slotWeight : 0,
+        widgetScore: widgetSim,
+        healthScore: healthSim,
+        hungerScore: hungerSim,
+        armorScore: armorSim,
+        xpScore: xpSim,
+        slotTypes: packSlotTypes,
+      };
       if (finalScore > bestScore) {
         bestScore = finalScore;
         bestSlotTypes = packSlotTypes;
@@ -629,7 +710,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   }
 
   results.sort((a, b) => b.score - a.score);
-  return { results: results.slice(0, 80), slotTypes: bestSlotTypes };
+  return { results: results.slice(0, 80), slotTypes: bestSlotTypes, details };
 }
 
 function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
@@ -710,9 +791,15 @@ async function processImage(file) {
   const preview = document.getElementById('sbi-preview');
   const progress = document.getElementById('sbi-progress');
   const resultsEl = document.getElementById('sbi-results');
+  const debugPanel = document.getElementById('sbi-debug');
+  const debugBody = document.getElementById('sbi-debug-body');
+  const debugMeta = document.getElementById('sbi-debug-meta');
   resultsEl.hidden = true;
   progress.hidden = false;
   preview.hidden = false;
+  if (debugPanel) debugPanel.hidden = true;
+  if (debugBody) debugBody.innerHTML = '';
+  if (debugMeta) debugMeta.textContent = '';
 
   const img = new Image();
   const url = URL.createObjectURL(file);
@@ -730,14 +817,26 @@ async function processImage(file) {
       fingerprints = await resp.json();
     }
 
-    const { slots, widgetFeatures, widgetRect, hudFeatures } = extractHotbarSlots(ctx, img.width, img.height);
+    const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(ctx, img.width, img.height);
 
     // Stage 1: Hash-based instant results
-    const { results, slotTypes } = matchPacks(slots, widgetFeatures, hudFeatures);
+    const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
     const stage1Top10 = results.slice(0, 10);
+    _lastMatchDetails = details || {};
+    _lastClipScores = {};
+    _lastDetectionMeta = {
+      widgetRect,
+      searchInfo,
+      slotCount: slots.length,
+      heartCount: hudFeatures && hudFeatures.hearts ? hudFeatures.hearts.length : 0,
+      hungerCount: hudFeatures && hudFeatures.hunger ? hudFeatures.hunger.length : 0,
+      armorCount: hudFeatures && hudFeatures.armor ? hudFeatures.armor.length : 0,
+      hasXp: Boolean(hudFeatures && hudFeatures.xpBar),
+    };
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     progress.hidden = true;
     renderResults(stage1Top10);
+    renderDebugPanel(stage1Top10, 'hash');
 
     // Cache hash scores for later CLIP combination
     _lastHashResults = results.slice(0, 40);

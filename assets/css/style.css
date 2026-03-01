@@ -966,6 +966,13 @@ footer {
 .sbi-result-cover { width: 152px; height: 76px; object-fit: cover; image-rendering: pixelated; flex-shrink: 0; display: block; }
 .sbi-no-results { text-align: center; color: var(--text-secondary); padding: 40px 0; }
 .sbi-clip-status { text-align: center; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
+.sbi-debug { margin-top: 14px; border: 2px solid var(--border); background: var(--bg-alt); }
+.sbi-debug > summary { cursor: pointer; font-size: 12px; font-weight: bold; letter-spacing: .06em; text-transform: uppercase; padding: 8px 10px; }
+.sbi-debug-meta { font-size: 12px; color: var(--text-secondary); padding: 0 10px 8px; }
+.sbi-debug-wrap { overflow-x: auto; border-top: 1px solid var(--border); }
+.sbi-debug-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 860px; }
+.sbi-debug-table th, .sbi-debug-table td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; white-space: nowrap; }
+.sbi-debug-table th { background: rgba(0,0,0,0.06); font-weight: 700; }
 .sbi-ai-badge { padding: 3px 9px; font-size: 12px; font-weight: bold; border: 2px solid; cursor: pointer; background: transparent; letter-spacing: .04em; }
 .sbi-ai-badge[data-state="loading"] { color: #f59e0b; border-color: #f59e0b; }
 .sbi-ai-badge[data-state="ready"]   { color: #22c55e; border-color: #22c55e; }
