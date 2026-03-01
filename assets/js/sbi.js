@@ -247,21 +247,42 @@ function extractRegion(ctx, x, y, w, h, targetW, targetH) {
   return tctx.getImageData(0, 0, targetW, targetH);
 }
 
-function computeFeatures(imageData, w, h, isScreenshot) {
+function maskSlotNoise(data, w, h) {
+  const out = new Uint8ClampedArray(data);
+  const durabilityY = Math.floor(h * 0.78);
+  const countX = Math.floor(w * 0.58);
+  const countY = Math.floor(h * 0.58);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (y >= durabilityY || (x >= countX && y >= countY)) out[i + 3] = 0;
+    }
+  }
+  return out;
+}
+
+function computeFeatures(imageData, w, h, isScreenshot, mode) {
   const BG_THRESHOLD = isScreenshot ? 50 : 0;
+  const effectiveData = (isScreenshot && mode === 'slot')
+    ? maskSlotNoise(imageData.data, w, h)
+    : imageData.data;
+  const effectiveImage = (effectiveData === imageData.data)
+    ? imageData
+    : new ImageData(effectiveData, w, h);
+
   // Resize source to 9x8 for dHash
   const src = document.createElement('canvas');
   src.width = w; src.height = h;
-  src.getContext('2d').putImageData(imageData, 0, 0);
+  src.getContext('2d').putImageData(effectiveImage, 0, 0);
   const tmp = document.createElement('canvas');
   tmp.width = 9; tmp.height = 8;
   const tctx = tmp.getContext('2d');
   tctx.imageSmoothingEnabled = true;
   tctx.drawImage(src, 0, 0, 9, 8);
   const dhash = computeDHash(tctx.getImageData(0, 0, 9, 8).data);
-  const hist = computeHistogram(imageData.data, w * h, BG_THRESHOLD);
-  const moments = computeColorMoments(imageData.data, w * h, BG_THRESHOLD);
-  const edge = computeEdgeDensity(imageData.data, w, h);
+  const hist = computeHistogram(effectiveData, w * h, BG_THRESHOLD);
+  const moments = computeColorMoments(effectiveData, w * h, BG_THRESHOLD);
+  const edge = computeEdgeDensity(effectiveData, w, h);
   return { dhash, hist, moments, edge };
 }
 
@@ -270,7 +291,7 @@ function tryExtractFeature(ctx, x, y, w, h, imgW, imgH, targetW, targetH) {
   if (iw <= 1 || ih <= 1) return null;
   if (ix < 0 || iy < 0 || ix + iw > imgW || iy + ih > imgH) return null;
   const region = extractRegion(ctx, ix, iy, iw, ih, targetW, targetH);
-  return computeFeatures(region, targetW, targetH, true);
+  return computeFeatures(region, targetW, targetH, true, 'hud');
 }
 
 function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
@@ -285,6 +306,9 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
   const hearts = [];
   const hunger = [];
   const armor = [];
+  const heartBoxes = [];
+  const hungerBoxes = [];
+  const armorBoxes = [];
 
   for (let i = 0; i < 10; i++) {
     const heartX = widgetRect.x + (1 + i * 8) * unit;
@@ -294,24 +318,41 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
     const hungerFeat = tryExtractFeature(ctx, hungerX, heartsY, iconSize, iconSize, imgW, imgH, 16, 16);
     const armorFeat = tryExtractFeature(ctx, heartX, armorY, iconSize, iconSize, imgW, imgH, 16, 16);
 
-    if (heartFeat) hearts.push(heartFeat);
-    if (hungerFeat) hunger.push(hungerFeat);
-    if (armorFeat) armor.push(armorFeat);
+    if (heartFeat) { hearts.push(heartFeat); heartBoxes.push({ x: heartX, y: heartsY, w: iconSize, h: iconSize }); }
+    if (hungerFeat) { hunger.push(hungerFeat); hungerBoxes.push({ x: hungerX, y: heartsY, w: iconSize, h: iconSize }); }
+    if (armorFeat) { armor.push(armorFeat); armorBoxes.push({ x: heartX, y: armorY, w: iconSize, h: iconSize }); }
   }
 
+  const xpBox = {
+    x: widgetRect.x,
+    y: widgetRect.y - 7 * unit,
+    w: 182 * unit,
+    h: 5 * unit
+  };
   const xpBar = tryExtractFeature(
     ctx,
-    widgetRect.x,
-    widgetRect.y - 7 * unit,
-    182 * unit,
-    5 * unit,
+    xpBox.x,
+    xpBox.y,
+    xpBox.w,
+    xpBox.h,
     imgW,
     imgH,
     64,
     16
   );
 
-  return { hearts, hunger, armor, xpBar };
+  return { hearts, hunger, armor, xpBar, heartBoxes, hungerBoxes, armorBoxes, xpBox };
+}
+
+function estimateWidgetConfidence(widgetFeatures) {
+  if (!widgetFeatures || !fingerprints || !fingerprints.packs) return 0;
+  let best = 0;
+  for (const packData of Object.values(fingerprints.packs)) {
+    if (!packData.hotbar_widget) continue;
+    const sim = compareWidget(widgetFeatures, packData.hotbar_widget);
+    if (sim > best) best = sim;
+  }
+  return best;
 }
 
 // --- Hotbar extraction ---
@@ -319,7 +360,7 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
 function extractHotbarSlots(ctx, imgW, imgH) {
   const baseScale = imgH / 1080;
   const GUI_SCALES = [3, 2, 4, 1];
-  const SHIFT_UNITS = [0, -0.75, 0.75, -1.5, 1.5];
+  const SHIFT_UNITS = [0, -0.5, 0.5, -1, 1, -1.5, 1.5, -2, 2];
   let bestSlots = [], bestConfidence = -Infinity, bestWidgetFeatures = null, bestWidgetRect = null, bestHudFeatures = null;
 
   for (const guiScale of GUI_SCALES) {
@@ -341,7 +382,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
         const widgetY = imgH - widgetH + yShift;
 
         const slots = [];
-        let totalVar = 0, totalEdge = 0;
+        let totalVar = 0, totalEdge = 0, totalQuality = 0;
         for (let i = 0; i < 9; i++) {
           const x = Math.round(widgetX + itemOffX + i * slotStep + xShift);
           const y = Math.round(itemY);
@@ -361,13 +402,17 @@ function extractHotbarSlots(ctx, imgW, imgH) {
           }
           const mean = lumSum / 256;
           const variance = lumSqSum / 256 - mean * mean;
-          const features = computeFeatures(region, 16, 16, true);
+          const features = computeFeatures(region, 16, 16, true, 'slot');
+          const quality = Math.sqrt(Math.max(0, variance)) * (0.6 + features.edge);
           if (variance > 45 && features.edge > 0.04) {
-            slots.push({ index: i, features, x, y, sz });
+            slots.push({ index: i, features, x, y, sz, quality });
             totalVar += variance;
             totalEdge += features.edge;
+            totalQuality += quality;
           }
         }
+        slots.sort((a, b) => b.quality - a.quality);
+        const usedSlots = slots.slice(0, Math.min(6, slots.length));
 
         const wx = Math.round(widgetX + xShift);
         const wy = Math.round(widgetY);
@@ -385,10 +430,11 @@ function extractHotbarSlots(ctx, imgW, imgH) {
           hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
         }
 
-        const confidence = slots.length * 1400 + totalVar * 1.2 + totalEdge * 900;
+        const widgetBoost = estimateWidgetConfidence(widgetFeatures);
+        const confidence = usedSlots.length * 1500 + totalVar * 0.8 + totalEdge * 800 + totalQuality * 40 + widgetBoost * 2500;
         if (confidence > bestConfidence) {
           bestConfidence = confidence;
-          bestSlots = slots;
+          bestSlots = usedSlots;
           bestWidgetFeatures = widgetFeatures;
           bestWidgetRect = widgetRect;
           bestHudFeatures = hudFeatures;
@@ -447,7 +493,8 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
         if (sim > bestSim) { bestSim = sim; bestType = type; }
       }
       if (bestSim > 0.46) {
-        const w = TYPE_WEIGHT[bestType] || 1;
+        const qualityW = 0.7 + 0.6 * Math.min(1, (slot.quality || 0) / 12);
+        const w = (TYPE_WEIGHT[bestType] || 1) * qualityW;
         totalScore += bestSim * w;
         totalWeight += w;
       }
@@ -483,11 +530,23 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   return results.slice(0, 10);
 }
 
-function drawDetectionOverlay(ctx, slots) {
+function drawDetectionOverlay(ctx, slots, hudFeatures) {
   ctx.lineWidth = 2;
   ctx.strokeStyle = '#ff0';
   for (const slot of slots) {
     ctx.strokeRect(slot.x, slot.y, slot.sz, slot.sz);
+  }
+  if (!hudFeatures) return;
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#22d3ee';
+  for (const b of hudFeatures.heartBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = '#f97316';
+  for (const b of hudFeatures.hungerBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = '#a78bfa';
+  for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  if (hudFeatures.xpBox) {
+    ctx.strokeStyle = '#22c55e';
+    ctx.strokeRect(hudFeatures.xpBox.x, hudFeatures.xpBox.y, hudFeatures.xpBox.w, hudFeatures.xpBox.h);
   }
 }
 
@@ -568,7 +627,7 @@ async function processImage(file) {
     }
 
     const { slots, widgetFeatures, widgetRect, hudFeatures } = extractHotbarSlots(ctx, img.width, img.height);
-    drawDetectionOverlay(ctx, slots);
+    drawDetectionOverlay(ctx, slots, hudFeatures);
 
     // Stage 1: Hash-based instant results
     const results = matchPacks(slots, widgetFeatures, hudFeatures);
