@@ -53,8 +53,8 @@ function initClipWorker() {
 
 let _lastHashResults = [], _lastAllScores = {};
 const SBI_FINGERPRINT_VERSION = 7;
-const CLIP_HASH_WEIGHT = 0.8;
-const CLIP_WEIGHT = 0.2;
+const CLIP_HASH_WEIGHT = 0.9;
+const CLIP_WEIGHT = 0.1;
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -387,98 +387,141 @@ function estimateWidgetConfidence(widgetFeatures) {
   return best;
 }
 
+function buildUnitCandidates(imgW, imgH) {
+  const units = new Set();
+  const guiUnits = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 4];
+  for (const u of guiUnits) units.add(u.toFixed(3));
+  for (let ratio = 0.24; ratio <= 0.44; ratio += 0.02) units.add((imgW * ratio / 182).toFixed(3));
+  for (let ratio = 0.035; ratio <= 0.09; ratio += 0.01) units.add((imgH * ratio / 22).toFixed(3));
+  return Array.from(units).map(Number).filter(u => u >= 0.8 && u <= 5).sort((a, b) => a - b);
+}
+
+function quickSlotVariance(ctx, x, y, sz, imgW, imgH) {
+  const inset = Math.max(1, Math.round(sz * 0.18));
+  const iw = Math.max(4, sz - inset * 2);
+  const ih = Math.max(4, sz - inset * 2);
+  const sx = Math.round(x + inset);
+  const sy = Math.round(y + inset);
+  if (sx < 0 || sy < 0 || sx + iw > imgW || sy + ih > imgH) return -1;
+  const region = extractRegion(ctx, sx, sy, iw, ih, 12, 12);
+  let lumSum = 0, lumSqSum = 0;
+  for (let p = 0; p < 144; p++) {
+    const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
+    lumSum += lum;
+    lumSqSum += lum * lum;
+  }
+  const mean = lumSum / 144;
+  return lumSqSum / 144 - mean * mean;
+}
+
 // --- Hotbar extraction ---
-// Try multiple GUI scales and XY offsets, pick best confidence
+// Multi-scale pixel-space search, then refine with full features
 function extractHotbarSlots(ctx, imgW, imgH) {
-  const baseScale = imgH / 1080;
-  const GUI_SCALES = [3, 2, 4, 1];
-  const SHIFT_UNITS = [0, -0.5, 0.5, -1, 1, -1.5, 1.5, -2, 2];
+  const UNIT_CANDIDATES = buildUnitCandidates(imgW, imgH);
+  const X_SHIFTS = [-24, -16, -8, 0, 8, 16, 24];
+  const Y_SHIFTS = [-32, -24, -16, -8, 0, 8, 16, 24];
+  const coarse = [];
+
+  for (const unit of UNIT_CANDIDATES) {
+    const widgetW = 182 * unit;
+    const itemOffX = 3 * unit;
+    const itemW = 16 * unit;
+    const slotStep = 20 * unit;
+    for (const xShift of X_SHIFTS) {
+      for (const yShift of Y_SHIFTS) {
+        const widgetX = (imgW - widgetW) / 2 + xShift;
+        const itemY = imgH - 19 * unit + yShift;
+        let score = 0, count = 0;
+        for (const i of [0, 2, 4, 6, 8]) {
+          const x = widgetX + itemOffX + i * slotStep;
+          const v = quickSlotVariance(ctx, x, itemY, itemW, imgW, imgH);
+          if (v > 20) { score += v; count++; }
+        }
+        if (count >= 2) coarse.push({ unit, xShift, yShift, score: count * 500 + score });
+      }
+    }
+  }
+
+  coarse.sort((a, b) => b.score - a.score);
+  const detailedCandidates = coarse.slice(0, 48);
   let bestSlots = [], bestConfidence = -Infinity, bestWidgetFeatures = null, bestWidgetRect = null, bestHudFeatures = null;
 
-  for (const guiScale of GUI_SCALES) {
-    const scale = baseScale * guiScale / 3;
-    const unit = 3 * scale;
+  for (const c of detailedCandidates) {
+    const unit = c.unit;
     const widgetW = 182 * unit;
     const widgetH = 22 * unit;
     const itemOffX = 3 * unit;
     const itemW = 16 * unit;
     const slotStep = 20 * unit;
-    const widgetX = (imgW - widgetW) / 2;
-    const baseItemY = imgH - 19 * unit;
+    const widgetX = (imgW - widgetW) / 2 + c.xShift;
+    const itemY = imgH - 19 * unit + c.yShift;
+    const widgetY = imgH - widgetH + c.yShift;
 
-    for (const xShiftU of SHIFT_UNITS) {
-      for (const yShiftU of SHIFT_UNITS) {
-        const xShift = xShiftU * unit;
-        const yShift = yShiftU * unit;
-        const itemY = baseItemY + yShift;
-        const widgetY = imgH - widgetH + yShift;
+    const slots = [];
+    let totalVar = 0, totalEdge = 0, totalQuality = 0;
+    for (let i = 0; i < 9; i++) {
+      const x = Math.round(widgetX + itemOffX + i * slotStep);
+      const y = Math.round(itemY);
+      const sz = Math.round(itemW);
+      if (x < 0 || y < 0 || x + sz > imgW || y + sz > imgH) continue;
 
-        const slots = [];
-        let totalVar = 0, totalEdge = 0, totalQuality = 0;
-        for (let i = 0; i < 9; i++) {
-          const x = Math.round(widgetX + itemOffX + i * slotStep + xShift);
-          const y = Math.round(itemY);
-          const sz = Math.round(itemW);
-          if (x < 0 || y < 0 || x + sz > imgW || y + sz > imgH) continue;
+      const inset = Math.max(1, Math.round(sz * 0.12));
+      const iw = Math.max(4, sz - inset * 2);
+      const ih = Math.max(4, sz - inset * 2);
+      const region = extractRegion(ctx, x + inset, y + inset, iw, ih, 16, 16);
 
-          const inset = Math.max(1, Math.round(sz * 0.12));
-          const iw = Math.max(4, sz - inset * 2);
-          const ih = Math.max(4, sz - inset * 2);
-          const region = extractRegion(ctx, x + inset, y + inset, iw, ih, 16, 16);
-
-          let lumSum = 0, lumSqSum = 0;
-          for (let p = 0; p < 256; p++) {
-            const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
-            lumSum += lum;
-            lumSqSum += lum * lum;
-          }
-          const mean = lumSum / 256;
-          const variance = lumSqSum / 256 - mean * mean;
-          const features = computeFeatures(region, 16, 16, true, 'slot');
-          const variants = buildSlotVariants(ctx, x, y, sz, imgW, imgH);
-          const quality = Math.sqrt(Math.max(0, variance)) * (0.6 + features.edge);
-          if (variance > 45 && features.edge > 0.04 && variants.length > 0) {
-            slots.push({ index: i, features, variants, x, y, sz, quality });
-            totalVar += variance;
-            totalEdge += features.edge;
-            totalQuality += quality;
-          }
-        }
-        slots.sort((a, b) => b.quality - a.quality);
-        const usedSlots = slots.slice(0, Math.min(6, slots.length));
-
-        const wx = Math.round(widgetX + xShift);
-        const wy = Math.round(widgetY);
-        const ww = Math.round(widgetW);
-        const wh = Math.round(widgetH);
-        let widgetFeatures = null, widgetRect = null, hudFeatures = null;
-        if (wx >= 0 && wy >= 0 && wx + ww <= imgW && wy + wh <= imgH) {
-          const widgetRegion = extractRegion(ctx, wx, wy, ww, wh, 16, 16);
-          widgetFeatures = {
-            hist: computeHistogram(widgetRegion.data, 256, 0),
-            moments: computeColorMoments(widgetRegion.data, 256, 0),
-            edge: computeEdgeDensity(widgetRegion.data, 16, 16)
-          };
-          widgetRect = { x: wx, y: wy, w: ww, h: wh };
-          hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
-        }
-
-        const widgetBoost = estimateWidgetConfidence(widgetFeatures);
-        const hudBoost = hudFeatures ? (
-          (hudFeatures.hearts.length >= 6 ? 1 : 0) +
-          (hudFeatures.hunger.length >= 6 ? 1 : 0) +
-          (hudFeatures.armor.length >= 6 ? 1 : 0) +
-          (hudFeatures.xpBar ? 1 : 0)
-        ) : 0;
-        const confidence = usedSlots.length * 1500 + totalVar * 0.8 + totalEdge * 800 + totalQuality * 40 + widgetBoost * 2500 + hudBoost * 900;
-        if (confidence > bestConfidence) {
-          bestConfidence = confidence;
-          bestSlots = usedSlots;
-          bestWidgetFeatures = widgetFeatures;
-          bestWidgetRect = widgetRect;
-          bestHudFeatures = hudFeatures;
-        }
+      let lumSum = 0, lumSqSum = 0;
+      for (let p = 0; p < 256; p++) {
+        const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
+        lumSum += lum;
+        lumSqSum += lum * lum;
       }
+      const mean = lumSum / 256;
+      const variance = lumSqSum / 256 - mean * mean;
+      const features = computeFeatures(region, 16, 16, true, 'slot');
+      const variants = buildSlotVariants(ctx, x, y, sz, imgW, imgH);
+      const quality = Math.sqrt(Math.max(0, variance)) * (0.6 + features.edge);
+      if (variance > 40 && features.edge > 0.035 && variants.length > 0) {
+        slots.push({ index: i, features, variants, x, y, sz, quality });
+        totalVar += variance;
+        totalEdge += features.edge;
+        totalQuality += quality;
+      }
+    }
+    slots.sort((a, b) => b.quality - a.quality);
+    const usedSlots = slots.slice(0, Math.min(7, slots.length));
+
+    const wx = Math.round(widgetX);
+    const wy = Math.round(widgetY);
+    const ww = Math.round(widgetW);
+    const wh = Math.round(widgetH);
+    let widgetFeatures = null, widgetRect = null, hudFeatures = null;
+    if (wx >= 0 && wy >= 0 && wx + ww <= imgW && wy + wh <= imgH) {
+      const widgetRegion = extractRegion(ctx, wx, wy, ww, wh, 16, 16);
+      widgetFeatures = {
+        hist: computeHistogram(widgetRegion.data, 256, 0),
+        moments: computeColorMoments(widgetRegion.data, 256, 0),
+        edge: computeEdgeDensity(widgetRegion.data, 16, 16)
+      };
+      widgetRect = { x: wx, y: wy, w: ww, h: wh };
+      hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
+    }
+
+    const widgetBoost = estimateWidgetConfidence(widgetFeatures);
+    const hudBoost = hudFeatures ? (
+      (hudFeatures.hearts.length >= 6 ? 1 : 0) +
+      (hudFeatures.hunger.length >= 6 ? 1 : 0) +
+      (hudFeatures.armor.length >= 6 ? 1 : 0) +
+      (hudFeatures.xpBar ? 1 : 0)
+    ) : 0;
+    const centerPenalty = Math.abs(c.xShift) * 5 + Math.abs(c.yShift) * 4;
+    const confidence = usedSlots.length * 1600 + totalVar * 0.85 + totalEdge * 900 + totalQuality * 45 + widgetBoost * 2600 + hudBoost * 1000 - centerPenalty;
+    if (confidence > bestConfidence) {
+      bestConfidence = confidence;
+      bestSlots = usedSlots;
+      bestWidgetFeatures = widgetFeatures;
+      bestWidgetRect = widgetRect;
+      bestHudFeatures = hudFeatures;
     }
   }
   return { slots: bestSlots, widgetFeatures: bestWidgetFeatures, widgetRect: bestWidgetRect, hudFeatures: bestHudFeatures };
@@ -586,7 +629,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   }
 
   results.sort((a, b) => b.score - a.score);
-  return { results: results.slice(0, 10), slotTypes: bestSlotTypes };
+  return { results: results.slice(0, 80), slotTypes: bestSlotTypes };
 }
 
 function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
@@ -691,12 +734,13 @@ async function processImage(file) {
 
     // Stage 1: Hash-based instant results
     const { results, slotTypes } = matchPacks(slots, widgetFeatures, hudFeatures);
+    const stage1Top10 = results.slice(0, 10);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     progress.hidden = true;
-    renderResults(results);
+    renderResults(stage1Top10);
 
     // Cache hash scores for later CLIP combination
-    _lastHashResults = results;
+    _lastHashResults = results.slice(0, 40);
     _lastAllScores = {};
     for (const r of results) _lastAllScores[r.name] = r.score;
 
@@ -741,7 +785,7 @@ async function processImage(file) {
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = 320; thumbCanvas.height = Math.round(320 * img.height / img.width);
     thumbCanvas.getContext('2d').drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
-    saveHistory(thumbCanvas.toDataURL('image/jpeg', 0.6), results);
+    saveHistory(thumbCanvas.toDataURL('image/jpeg', 0.6), stage1Top10);
   } catch (e) {
     progress.hidden = true;
     const container = document.getElementById('sbi-results');
