@@ -76,9 +76,10 @@ const STRICT_BOTTOM_OFFSET_RATIOS = [0, 0.015, 0.03, 0.045];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
 const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
 const SBI_SCORE_WEIGHTS = {
-  type: { diamond_sword: 1.6, ender_pearl: 1.8, splash_potion: 1.15, steak: 0.8, golden_carrot: 1.0, apple_golden: 1.0, iron_sword: 1.35 },
-  hud: { health: 1.8, hunger: 1.1, armor: 1.7 },
-  mix: { slot: 0.64, hud: 0.30, widget: 0.06, slotNoHud: 0.9, widgetNoHud: 0.1 },
+  // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
+  type: { diamond_sword: 1.6, ender_pearl: 2.2, splash_potion: 1.2, steak: 0.8, golden_carrot: 1.0, apple_golden: 1.0, iron_sword: 1.35 },
+  hud: { health: 3.2, hunger: 0.6, armor: 3.2 },
+  mix: { slot: 0.25, hud: 0.45, widget: 0.30, slotNoHud: 0.55, widgetNoHud: 0.45 },
 };
 
 function clamp01(v) {
@@ -223,6 +224,7 @@ function handleClipResults(clipScores) {
     ..._lastHashResults.map(r => r.name),
     ...sortedClip.slice(0, 40).map(s => s.name)
   ]);
+  for (const name of FORCE_PACKS) allNames.add(name);
   for (const name of allNames) {
     const hashScore = _lastAllScores[name] || 0;
     const hasClip = Object.prototype.hasOwnProperty.call(clipMap, name);
@@ -245,7 +247,7 @@ function handleClipResults(clipScores) {
   renderResults(top10, 'AI Enhanced');
   renderDebugPanel(top10, 'ai');
   renderForcedPacks();
-  if (statusEl) { statusEl.textContent = '✓ AI analysis complete'; statusEl.dataset.state = 'ready'; }
+  if (statusEl) { statusEl.hidden = true; statusEl.textContent = ''; statusEl.dataset.state = 'ready'; }
 
   const thumbCanvas = document.createElement('canvas');
   const origCanvas = document.getElementById('sbi-canvas');
@@ -526,6 +528,25 @@ function computeFeatures(imageData, w, h, isScreenshot, mode) {
     effectiveData = suppressSlotBackground(effectiveData, w, h);
     effectiveData = zeroRgbForTransparent(effectiveData);
   }
+
+  // Lightweight slot signature for robust item-type inference (computed on alpha-only pixels; no BG_THRESHOLD).
+  let sig = null;
+  if (mode === 'slot') {
+    let n = 0, lumSum = 0, rSum = 0, gSum = 0, bSum = 0, red = 0, yellow = 0;
+    for (let p = 0; p < w * h; p++) {
+      const a = effectiveData[p * 4 + 3];
+      if (a < 128) continue;
+      const r = effectiveData[p * 4], g = effectiveData[p * 4 + 1], b = effectiveData[p * 4 + 2];
+      n++;
+      rSum += r; gSum += g; bSum += b;
+      lumSum += 0.299 * r + 0.587 * g + 0.114 * b;
+      if (r > g + 30 && r > b + 30) red++;
+      if (r > 160 && g > 140 && b < 140) yellow++;
+    }
+    sig = n
+      ? { n, meanLum: lumSum / n, meanR: rSum / n, meanG: gSum / n, meanB: bSum / n, redFrac: red / n, yellowFrac: yellow / n }
+      : { n: 0, meanLum: 0, meanR: 0, meanG: 0, meanB: 0, redFrac: 0, yellowFrac: 0 };
+  }
   const effectiveImage = (effectiveData === imageData.data)
     ? imageData
     : new ImageData(effectiveData, w, h);
@@ -543,7 +564,7 @@ function computeFeatures(imageData, w, h, isScreenshot, mode) {
   const hist = computeHistogram(effectiveData, w * h, BG_THRESHOLD);
   const moments = computeColorMoments(effectiveData, w * h, BG_THRESHOLD);
   const edge = computeEdgeDensity(effectiveData, w, h);
-  return { dhash, hist, moments, edge };
+  return { dhash, hist, moments, edge, sig };
 }
 
 function tryExtractFeature(ctx, x, y, w, h, imgW, imgH, targetW, targetH) {
@@ -586,22 +607,67 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
   return { hearts, hunger, armor, heartBoxes, hungerBoxes, armorBoxes };
 }
 
-function estimateWidgetConfidence(widgetFeatures) {
-  if (!widgetFeatures || !fingerprints || !fingerprints.packs) return 0;
-  let best = 0;
-  for (const packData of Object.values(fingerprints.packs)) {
+function estimateWidgetCandidates(widgetFeatures, topK) {
+  if (!widgetFeatures || !fingerprints || !fingerprints.packs) return { best: 0, bestName: '', top: [] };
+  const top = [];
+  let best = 0, bestName = '';
+  for (const [name, packData] of Object.entries(fingerprints.packs)) {
     if (!packData.hotbar_widget) continue;
     const sim = compareWidget(widgetFeatures, packData.hotbar_widget);
-    if (sim > best) best = sim;
+    if (sim > best) { best = sim; bestName = name; }
+    if (topK > 0) {
+      top.push({ name, sim });
+      top.sort((a, b) => b.sim - a.sim);
+      if (top.length > topK) top.length = topK;
+    }
   }
-  return best;
+  return { best, bestName, top };
+}
+
+function estimateHudConfidence(hudFeatures, packNames) {
+  if (!hudFeatures || !fingerprints || !fingerprints.packs) return { best: 0, bestName: '' };
+  const names = (packNames && packNames.length) ? packNames : Object.keys(fingerprints.packs);
+  let best = 0, bestName = '';
+  for (const name of names) {
+    const p = fingerprints.packs[name];
+    if (!p) continue;
+    const healthSim = compareHudCells(hudFeatures.hearts, [p.health_empty, p.health_half, p.health_full]);
+    const hungerSim = compareHudCells(hudFeatures.hunger, [p.hunger_empty, p.hunger_half, p.hunger_full]);
+    const armorSim = compareHudCells(hudFeatures.armor, [p.armor_empty, p.armor_half, p.armor_full]);
+
+    let hudWeighted = 0, hudWeights = 0;
+    if (healthSim > 0) { hudWeighted += healthSim * SBI_SCORE_WEIGHTS.hud.health; hudWeights += SBI_SCORE_WEIGHTS.hud.health; }
+    if (hungerSim > 0) { hudWeighted += hungerSim * SBI_SCORE_WEIGHTS.hud.hunger; hudWeights += SBI_SCORE_WEIGHTS.hud.hunger; }
+    if (armorSim > 0) { hudWeighted += armorSim * SBI_SCORE_WEIGHTS.hud.armor; hudWeights += SBI_SCORE_WEIGHTS.hud.armor; }
+    const hudComposite = hudWeights ? (hudWeighted / hudWeights) : 0;
+
+    if (hudComposite > best) { best = hudComposite; bestName = name; }
+  }
+  return { best, bestName };
 }
 
 function buildStrictCropCandidates(imgW, imgH) {
   const unitSet = new Set();
-  for (const ratio of STRICT_WIDGET_WIDTH_RATIOS) unitSet.add((imgW * ratio / 182).toFixed(3));
-  for (const ratio of STRICT_WIDGET_HEIGHT_RATIOS) unitSet.add((imgH * ratio / 22).toFixed(3));
-  const units = Array.from(unitSet).map(Number).filter(u => u >= 0.8 && u <= 5).sort((a, b) => a - b);
+
+  // Prefer Minecraft-like GUI scale factors (integer), plus ratio-consistent fallbacks for rescaled screenshots.
+  const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
+  for (let u = 1; u <= maxScale; u++) unitSet.add(u.toFixed(3));
+
+  for (const rw of STRICT_WIDGET_WIDTH_RATIOS) {
+    const unitW = imgW * rw / 182;
+    for (const rh of STRICT_WIDGET_HEIGHT_RATIOS) {
+      const unitH = imgH * rh / 22;
+      if (Math.abs(unitW - unitH) > 0.24) continue;
+      unitSet.add(((unitW + unitH) * 0.5).toFixed(3));
+    }
+  }
+
+  // Legacy union fallback (keeps behavior for unusual crops/aspects).
+  if (unitSet.size < 6) {
+    for (const ratio of STRICT_WIDGET_WIDTH_RATIOS) unitSet.add((imgW * ratio / 182).toFixed(3));
+    for (const ratio of STRICT_WIDGET_HEIGHT_RATIOS) unitSet.add((imgH * ratio / 22).toFixed(3));
+  }
+  const units = Array.from(unitSet).map(Number).filter(u => u >= 0.8 && u <= 6).sort((a, b) => a - b);
   const out = [];
   for (const unit of units) {
     const widgetW = 182 * unit;
@@ -642,7 +708,8 @@ function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index) {
   const variants = buildSlotVariants(ctx, sx, sy, ss, imgW, imgH);
   if (!variants.length) variants.push(features);
 
-  const varScore = clamp01((variance - 14) / 100);
+  // Variance on empty slots can be deceptively high due to gradients; gate against that.
+  const varScore = clamp01((variance - 220) / 1500);
   const edgeScore = clamp01((features.edge - 0.02) / 0.08);
   const activity = 0.62 * varScore + 0.38 * edgeScore;
   const quality = Math.sqrt(Math.max(0, variance)) * (0.55 + features.edge) * (0.45 + activity);
@@ -656,7 +723,9 @@ function extractHotbarSlots(ctx, imgW, imgH) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
   let bestSlots = [];
   let bestConfidence = -Infinity;
+  let bestBoost = -Infinity;
   let bestWidgetBoost = -Infinity;
+  let bestHudBoost = -Infinity;
   let bestWidgetFeatures = null;
   let bestWidgetRect = null;
   let bestHudFeatures = null;
@@ -702,21 +771,40 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     };
     const widgetRect = { x: wx, y: wy, w: ww, h: wh };
     const hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
-    const widgetBoost = estimateWidgetConfidence(widgetFeatures);
+
+    const widgetCand = estimateWidgetCandidates(widgetFeatures, 8);
+    const widgetBoost = widgetCand.best;
+    const hudCand = hudFeatures
+      ? estimateHudConfidence(hudFeatures, widgetCand.top.map(t => t.name))
+      : { best: 0, bestName: '' };
+    const hudBoost = hudCand.best;
+    const combinedBoost = hudFeatures ? (0.55 * widgetBoost + 0.45 * hudBoost) : widgetBoost;
     const hudCoverage = hudFeatures
       ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30)
       : 0;
 
     const confidence = activeCount * 260 + totalActivity * 200 + totalQuality * 8 + hudCoverage * 540;
-    const boostDelta = widgetBoost - bestWidgetBoost;
+    const boostDelta = combinedBoost - bestBoost;
     if (boostDelta > 0.001 || (Math.abs(boostDelta) <= 0.001 && confidence > bestConfidence)) {
       bestConfidence = confidence;
+      bestBoost = combinedBoost;
       bestWidgetBoost = widgetBoost;
+      bestHudBoost = hudBoost;
       bestSlots = slots;
       bestWidgetFeatures = widgetFeatures;
       bestWidgetRect = widgetRect;
       bestHudFeatures = hudFeatures;
-      bestSearchInfo = { mode: 'strict-ratio', unit: c.unit, bottomRatio: c.bottomRatio, confidence, widgetBoost };
+      bestSearchInfo = {
+        mode: 'strict-ratio',
+        unit: c.unit,
+        bottomRatio: c.bottomRatio,
+        confidence,
+        combinedBoost,
+        widgetBoost,
+        hudBoost,
+        widgetBest: widgetCand.bestName,
+        hudBest: hudCand.bestName,
+      };
     }
   }
 
@@ -764,69 +852,51 @@ function sharpenSimilarityScore(v) {
 
 function inferDisplaySlotTypes(slots) {
   const out = new Array(9).fill('none');
-  if (!slots || !slots.length || !fingerprints || !fingerprints.packs) return out;
+  if (!slots || !slots.length) return out;
 
   const ordered = [...slots].sort((a, b) => a.index - b.index);
-  const packEntries = Object.values(fingerprints.packs);
   for (const slot of ordered) {
     if (!slot || slot.index < 0 || slot.index > 8) continue;
+
     const activity = clamp01(slot.activity || 0);
-    if (activity < 0.26 || (slot.variance || 0) < 220) {
+    const variance = slot.variance || 0;
+    if (activity < 0.26 || variance < 220) {
       out[slot.index] = 'none';
       continue;
     }
 
-    const typeScores = {};
-    let bestType = 'none', bestScore = 0, secondScore = 0;
-    for (const type of SLOT_ITEM_TYPES) {
-      const sims = [];
-      for (const packData of packEntries) {
-        if (!packData[type]) continue;
-        sims.push(compareSlotToType(slot, packData[type]));
-      }
-      if (!sims.length) continue;
-      sims.sort((a, b) => b - a);
-      const take = Math.max(4, Math.min(sims.length, Math.ceil(sims.length * 0.1)));
-      let sum = 0;
-      for (let i = 0; i < take; i++) sum += sims[i];
-      const topMean = sum / take;
-      const blended = topMean * 0.8 + sims[0] * 0.2;
-      typeScores[type] = blended;
-      if (blended > bestScore) {
-        secondScore = bestScore;
-        bestScore = blended;
-        bestType = type;
-      } else if (blended > secondScore) {
-        secondScore = blended;
-      }
+    const sig = slot.features && slot.features.sig;
+    if (!sig || sig.n <= 0 || !isFinite(sig.meanLum) || !isFinite(sig.meanR) || !isFinite(sig.meanB)) {
+      out[slot.index] = 'none';
+      continue;
     }
 
-    if (slot.index === 0 && bestType === 'ender_pearl') {
-      const swordType = (typeScores.diamond_sword || 0) >= (typeScores.iron_sword || 0) ? 'diamond_sword' : 'iron_sword';
-      if ((typeScores[swordType] || 0) >= bestScore - 0.045) {
-        bestType = swordType;
-        bestScore = typeScores[swordType];
-      }
-    }
-    if (slot.index === 1 && (typeScores.ender_pearl || 0) >= bestScore - 0.03) {
-      bestType = 'ender_pearl';
-      bestScore = typeScores.ender_pearl;
-    }
-    if (slot.index >= 5 && slot.index <= 7 && activity >= 0.34 && (typeScores.splash_potion || 0) >= bestScore - 0.04) {
-      bestType = 'splash_potion';
-      bestScore = typeScores.splash_potion || bestScore;
-    }
-    if (slot.index === 8 && (typeScores.golden_carrot || 0) >= bestScore - 0.03) {
-      bestType = 'golden_carrot';
-      bestScore = typeScores.golden_carrot || bestScore;
+    // Food (GC / gapple both render as GC in the UI summary).
+    if (sig.yellowFrac >= 0.12) {
+      out[slot.index] = 'golden_carrot';
+      continue;
     }
 
-    const certainty = Math.max(0, bestScore - secondScore);
-    const middleNoneBoost = (slot.index >= 2 && slot.index <= 4) ? 0.03 : 0;
-    const noneGate = 0.58 + (0.3 - Math.min(0.3, activity)) * 0.2 + middleNoneBoost;
-    const certaintyGate = 0.006;
-    if (bestScore < noneGate || certainty < certaintyGate) out[slot.index] = 'none';
-    else out[slot.index] = bestType;
+    // Health potions: red-heavy.
+    if (sig.redFrac >= 0.075) {
+      out[slot.index] = 'splash_potion';
+      continue;
+    }
+
+    // Ender pearl: typically dark + low warm colors.
+    if (sig.meanLum < 80 && sig.redFrac < 0.05 && sig.yellowFrac < 0.08) {
+      out[slot.index] = 'ender_pearl';
+      continue;
+    }
+
+    const blueStrong = (sig.meanB > sig.meanR + 35) && (sig.meanB > sig.meanG + 25);
+    if (sig.n < 70) {
+      out[slot.index] = blueStrong ? 'diamond_sword' : 'iron_sword';
+      continue;
+    }
+
+    // Fallback: for larger silhouettes, prefer pearls over swords.
+    out[slot.index] = blueStrong ? 'ender_pearl' : 'none';
   }
 
   return out;
@@ -850,37 +920,40 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0;
 
     for (const slot of slots) {
-      let bestSim = 0, secondSim = 0, bestType = '';
-      for (const type of ITEM_TYPES) {
-        if (!packData[type]) continue;
-        const sim = compareSlotToType(slot, packData[type]);
-        if (sim > bestSim) {
-          secondSim = bestSim;
-          bestSim = sim;
-          bestType = type;
-        } else if (sim > secondSim) {
-          secondSim = sim;
-        }
-      }
       const activity = clamp01(slot.activity || 0);
       if (activity < 0.18) continue;
 
+      const targetType = displaySlotTypes[slot.index] || 'none';
+      if (targetType === 'none') continue;
+      const targetTex = packData[targetType];
+      if (!targetTex) continue;
+
+      const sim = compareSlotToType(slot, targetTex);
+      let altBest = 0;
+      for (const type of ITEM_TYPES) {
+        if (type === targetType) continue;
+        if (!packData[type]) continue;
+        altBest = Math.max(altBest, compareSlotToType(slot, packData[type]));
+      }
+
       activeSlots++;
-      const certainty = Math.max(0, bestSim - secondSim);
+      const certainty = Math.max(0, sim - altBest);
       const qualityNorm = clamp01((slot.quality || 0) / 13);
-      const w = (TYPE_WEIGHT[bestType] || 1) * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
-      slotWeighted += bestSim * w;
+      const w = (TYPE_WEIGHT[targetType] || 1) * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
+      slotWeighted += sim * w;
       slotWeights += w;
       certaintySum += certainty;
-      if (bestSim >= 0.54) strongSlots++;
-      else slotPenalty += (0.54 - bestSim) * (0.8 + activity * 0.7);
+      if (sim >= 0.54) strongSlots++;
+      else slotPenalty += (0.54 - sim) * (0.8 + activity * 0.7);
     }
-    if (!slotWeights || activeSlots < 3) continue;
+    if (!slotWeights || activeSlots < 3) {
+      if (!isForced) continue;
+    }
 
-    const slotScore = slotWeighted / slotWeights;
-    const slotCoverage = strongSlots / activeSlots;
-    const slotPenaltyNorm = slotPenalty / activeSlots;
-    const slotCertainty = certaintySum / activeSlots;
+    const slotScore = slotWeights ? (slotWeighted / slotWeights) : 0;
+    const slotCoverage = activeSlots ? (strongSlots / activeSlots) : 0;
+    const slotPenaltyNorm = activeSlots ? (slotPenalty / activeSlots) : 0;
+    const slotCertainty = activeSlots ? (certaintySum / activeSlots) : 0;
     let slotComposite = slotScore * (0.78 + 0.22 * slotCoverage) + Math.min(0.10, slotCertainty * 0.55);
     slotComposite -= slotPenaltyNorm * 0.35;
     slotComposite = clamp01(slotComposite);
@@ -1067,11 +1140,9 @@ async function processImage(file) {
     // Stage 2: CLIP refinement (async)
     if (widgetRect && slots.length > 0) {
       const statusEl = document.getElementById('sbi-clip-status');
-      if (statusEl) statusEl.hidden = false;
+      if (statusEl) { statusEl.hidden = true; statusEl.textContent = ''; }
       if (clipWorkerError) {
-        if (statusEl) { statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
-      } else if (statusEl) {
-        statusEl.textContent = 'Running AI analysis...';
+        if (statusEl) { statusEl.hidden = false; statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
       }
 
       if (!clipWorkerError && widgetRect.x >= 0 && widgetRect.y >= 0 && widgetRect.x + widgetRect.w <= img.width && widgetRect.y + widgetRect.h <= img.height) {
@@ -1088,7 +1159,7 @@ async function processImage(file) {
             } else if (clipWorkerError) {
               clearInterval(check);
               clearTimeout(waitTimeout);
-              if (statusEl) { statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
+              if (statusEl) { statusEl.hidden = false; statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
             }
           }, 200);
           const waitTimeout = setTimeout(() => {
