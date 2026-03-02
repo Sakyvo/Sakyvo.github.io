@@ -54,8 +54,12 @@ function initClipWorker() {
 
 let _lastHashResults = [], _lastAllScores = {};
 const SBI_FINGERPRINT_VERSION = 7;
-const CLIP_HASH_WEIGHT = 0.9;
-const CLIP_WEIGHT = 0.1;
+// AI (CLIP) is used as a rerank signal. We normalize CLIP scores per-query and
+// apply it as a multiplicative factor on top of the hash score, so a weak CLIP
+// match won't incorrectly drag down a strong hash match when the crop is correct.
+const CLIP_RERANK_BASE = 0.35;
+const CLIP_RERANK_WEIGHT = 0.65;
+const CLIP_ONLY_SCALE = 0.72;
 let _lastMatchDetails = {};
 let _lastClipScores = {};
 let _lastForcedCombined = {};
@@ -84,11 +88,6 @@ const SBI_SCORE_WEIGHTS = {
 
 function clamp01(v) {
   return Math.max(0, Math.min(1, v));
-}
-
-function normalizeClipScore(v) {
-  const n = (Math.max(-1, Math.min(1, v)) + 1) * 0.5;
-  return Math.max(0, Math.min(1, n));
 }
 
 function fmtPct(v) {
@@ -153,7 +152,7 @@ function renderScoreBreakdown() {
     return `<tr><td>${label}</td><td>${k}</td><td>${v.toFixed(2)}</td></tr>`;
   }).join('');
   el.innerHTML = `
-    <div>XP is ignored. Final score mixes Slot/HUD/Widget and can be lightly reranked by AI.</div>
+    <div>XP is ignored. AI uses a (widget + sword + pearl) composite; final score mixes Slot/HUD/Widget and can be reranked by AI.</div>
     <table class="sbi-weight-table">
       <thead><tr><th>Item</th><th>Key</th><th>Weight</th></tr></thead>
       <tbody>${typeRows}</tbody>
@@ -168,7 +167,7 @@ function renderScoreBreakdown() {
     </table>
     <div>Mix (with HUD): Slot ${SBI_SCORE_WEIGHTS.mix.slot.toFixed(2)}, HUD ${SBI_SCORE_WEIGHTS.mix.hud.toFixed(2)}, Widget ${SBI_SCORE_WEIGHTS.mix.widget.toFixed(2)}</div>
     <div>Mix (no HUD): Slot ${SBI_SCORE_WEIGHTS.mix.slotNoHud.toFixed(2)}, Widget ${SBI_SCORE_WEIGHTS.mix.widgetNoHud.toFixed(2)}</div>
-    <div>AI rerank mix: Hash ${CLIP_HASH_WEIGHT.toFixed(2)}, CLIP ${CLIP_WEIGHT.toFixed(2)}</div>
+    <div>AI rerank: Total = Hash × (${CLIP_RERANK_BASE.toFixed(2)} + ${CLIP_RERANK_WEIGHT.toFixed(2)} × CLIP), CLIP-only scale ${CLIP_ONLY_SCALE.toFixed(2)}</div>
   `;
 }
 
@@ -213,12 +212,18 @@ function renderForcedPacks() {
 function handleClipResults(clipScores) {
   const statusEl = document.getElementById('sbi-clip-status');
   const sortedClip = [...clipScores].sort((a, b) => b.clipScore - a.clipScore);
-  // Build lookup: packName → clipScore
+  // Build lookup: packName → normalized clip score (per-query range over returned top-K)
   const clipMap = {};
-  for (const s of sortedClip) clipMap[s.name] = normalizeClipScore(s.clipScore);
+  const maxRaw = sortedClip.length ? sortedClip[0].clipScore : 0;
+  const minRaw = sortedClip.length ? sortedClip[sortedClip.length - 1].clipScore : maxRaw;
+  const denom = maxRaw - minRaw;
+  for (const s of sortedClip) {
+    const v = denom > 1e-6 ? (s.clipScore - minRaw) / denom : 0.5;
+    clipMap[s.name] = clamp01(v);
+  }
   _lastClipScores = clipMap;
 
-  // Combine: hash-dominant with light CLIP rerank
+  // Combine: hash with CLIP rerank (never let CLIP drag a strong hash match below zero-confidence floor)
   const combined = [];
   const allNames = new Set([
     ..._lastHashResults.map(r => r.name),
@@ -228,18 +233,26 @@ function handleClipResults(clipScores) {
   for (const name of allNames) {
     const hashScore = _lastAllScores[name] || 0;
     const hasClip = Object.prototype.hasOwnProperty.call(clipMap, name);
-    const clipScore = hasClip ? clipMap[name] : hashScore;
-    let score = hasClip ? (CLIP_HASH_WEIGHT * hashScore + CLIP_WEIGHT * clipScore) : hashScore;
-    if (!hashScore && hasClip) score *= 0.85;
+    const clipScore = hasClip ? clipMap[name] : 0;
+    const hasHash = hashScore > 0;
+    let score;
+    if (hasHash && hasClip) score = hashScore * (CLIP_RERANK_BASE + CLIP_RERANK_WEIGHT * clipScore);
+    else if (hasHash) score = hashScore;
+    else if (hasClip) score = clipScore * CLIP_ONLY_SCALE;
+    else score = 0;
     combined.push({ name, score });
   }
   _lastForcedCombined = {};
   for (const name of FORCE_PACKS) {
     const hashScore = _lastAllScores[name] || 0;
     const hasClip = Object.prototype.hasOwnProperty.call(clipMap, name);
-    const clipScore = hasClip ? clipMap[name] : hashScore;
-    let score = hasClip ? (CLIP_HASH_WEIGHT * hashScore + CLIP_WEIGHT * clipScore) : hashScore;
-    if (!hashScore && hasClip) score *= 0.85;
+    const clipScore = hasClip ? clipMap[name] : 0;
+    const hasHash = hashScore > 0;
+    let score;
+    if (hasHash && hasClip) score = hashScore * (CLIP_RERANK_BASE + CLIP_RERANK_WEIGHT * clipScore);
+    else if (hasHash) score = hashScore;
+    else if (hasClip) score = clipScore * CLIP_ONLY_SCALE;
+    else score = 0;
     _lastForcedCombined[name] = score;
   }
   combined.sort((a, b) => b.score - a.score);
@@ -653,6 +666,21 @@ function buildStrictCropCandidates(imgW, imgH) {
   const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
   for (let u = 1; u <= maxScale; u++) unitSet.add(u.toFixed(3));
 
+  // Hotbar-only crops: the widget can span (almost) the full image width.
+  // These units are harmless for full screenshots (filtered out by range).
+  const uFullW = imgW / 182;
+  if (isFinite(uFullW)) {
+    if (uFullW >= 0.8 && uFullW <= 6) unitSet.add(uFullW.toFixed(3));
+    const ur = Math.round(uFullW);
+    if (ur >= 1 && ur <= 6) unitSet.add(ur.toFixed(3));
+  }
+  const uFullH = imgH / 22;
+  if (isFinite(uFullH)) {
+    if (uFullH >= 0.8 && uFullH <= 6) unitSet.add(uFullH.toFixed(3));
+    const ur = Math.round(uFullH);
+    if (ur >= 1 && ur <= 6) unitSet.add(ur.toFixed(3));
+  }
+
   for (const rw of STRICT_WIDGET_WIDTH_RATIOS) {
     const unitW = imgW * rw / 182;
     for (const rh of STRICT_WIDGET_HEIGHT_RATIOS) {
@@ -715,6 +743,67 @@ function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index) {
   const quality = Math.sqrt(Math.max(0, variance)) * (0.55 + features.edge) * (0.45 + activity);
 
   return { index, features, variants, x: sx, y: sy, sz: ss, quality, activity, variance };
+}
+
+function pickSlotForClip(slots, slotTypes, wantedType, fallbackIndex) {
+  if (Array.isArray(slotTypes) && slotTypes.length === 9) {
+    const idx = slotTypes.indexOf(wantedType);
+    if (idx >= 0) {
+      const byIndex = slots.find(s => s && s.index === idx);
+      if (byIndex) return byIndex;
+      if (slots[idx]) return slots[idx];
+    }
+  }
+  const fb = slots.find(s => s && s.index === fallbackIndex) || slots[fallbackIndex];
+  return fb || slots[0] || null;
+}
+
+function buildClipCompositePixels(ctx, imgW, imgH, widgetRect, slots, slotTypes) {
+  if (!widgetRect || !slots || !slots.length) return null;
+
+  const W = 224, H = 224, HALF = 112;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const cctx = c.getContext('2d', { willReadFrequently: true });
+  cctx.imageSmoothingEnabled = false;
+  cctx.fillStyle = 'rgb(20,20,20)';
+  cctx.fillRect(0, 0, W, H);
+
+  // Top: hotbar widget strip
+  cctx.drawImage(ctx.canvas, widgetRect.x, widgetRect.y, widgetRect.w, widgetRect.h, 0, 0, W, HALF);
+
+  const swordSlot = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0);
+  const pearlSlot = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1);
+
+  const itemCanvas = document.createElement('canvas');
+  itemCanvas.width = 16; itemCanvas.height = 16;
+  const ictx = itemCanvas.getContext('2d', { willReadFrequently: true });
+  ictx.imageSmoothingEnabled = false;
+
+  const drawItem = (slot, dx, dy) => {
+    if (!slot) return;
+    const inset = Math.max(1, Math.round(slot.sz * 0.12));
+    const sx = Math.round(slot.x + inset);
+    const sy = Math.round(slot.y + inset);
+    const sw = Math.max(2, Math.round(slot.sz - inset * 2));
+    const sh = Math.max(2, Math.round(slot.sz - inset * 2));
+    if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) return;
+
+    // Remove slot BG + HUD-like overlays to better match thumbnail composites (transparent texture over dark bg).
+    const region = extractRegion(ctx, sx, sy, sw, sh, 16, 16);
+    let eff = maskSlotNoise(region.data, 16, 16);
+    eff = suppressSlotBackground(eff, 16, 16);
+    eff = zeroRgbForTransparent(eff);
+    ictx.putImageData(new ImageData(eff, 16, 16), 0, 0);
+    cctx.drawImage(itemCanvas, 0, 0, 16, 16, dx, dy, HALF, HALF);
+  };
+
+  // Bottom: sword (left) + pearl (right), matching the embedding composite layout.
+  drawItem(swordSlot, 0, HALF);
+  drawItem(pearlSlot, HALF, HALF);
+
+  const img = cctx.getImageData(0, 0, W, H);
+  return img.data.buffer.slice(0);
 }
 
 // --- Hotbar extraction ---
@@ -1146,29 +1235,30 @@ async function processImage(file) {
       }
 
       if (!clipWorkerError && widgetRect.x >= 0 && widgetRect.y >= 0 && widgetRect.x + widgetRect.w <= img.width && widgetRect.y + widgetRect.h <= img.height) {
-        const clipRegion = extractRegion(ctx, widgetRect.x, widgetRect.y, widgetRect.w, widgetRect.h, 224, 224);
-        const pixels = clipRegion.data.buffer.slice(0);
-        const sendSearch = () => clipWorker.postMessage({ type: 'search', pixels, width: 224, height: 224 }, [pixels]);
-        if (clipWorkerReady) sendSearch();
-        else {
-          const check = setInterval(() => {
-            if (clipWorkerReady) {
+        const pixels = buildClipCompositePixels(ctx, img.width, img.height, widgetRect, slots, slotTypes);
+        if (pixels) {
+          const sendSearch = () => clipWorker.postMessage({ type: 'search', pixels, width: 224, height: 224 }, [pixels]);
+          if (clipWorkerReady) sendSearch();
+          else {
+            const check = setInterval(() => {
+              if (clipWorkerReady) {
+                clearInterval(check);
+                clearTimeout(waitTimeout);
+                sendSearch();
+              } else if (clipWorkerError) {
+                clearInterval(check);
+                clearTimeout(waitTimeout);
+                if (statusEl) { statusEl.hidden = false; statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
+              }
+            }, 200);
+            const waitTimeout = setTimeout(() => {
               clearInterval(check);
-              clearTimeout(waitTimeout);
-              sendSearch();
-            } else if (clipWorkerError) {
-              clearInterval(check);
-              clearTimeout(waitTimeout);
-              if (statusEl) { statusEl.hidden = false; statusEl.textContent = 'AI unavailable: ' + clipWorkerError; statusEl.dataset.state = 'error'; }
-            }
-          }, 200);
-          const waitTimeout = setTimeout(() => {
-            clearInterval(check);
-            if (!clipWorkerReady && statusEl) {
-              statusEl.textContent = 'AI model still loading, showing hash results only.';
-              statusEl.dataset.state = 'error';
-            }
-          }, 30000);
+              if (!clipWorkerReady && statusEl) {
+                statusEl.textContent = 'AI model still loading, showing hash results only.';
+                statusEl.dataset.state = 'error';
+              }
+            }, 30000);
+          }
         }
       }
     }
