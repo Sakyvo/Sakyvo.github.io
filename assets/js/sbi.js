@@ -81,7 +81,7 @@ const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak
 const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
 const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
-  type: { diamond_sword: 1.6, ender_pearl: 2.2, splash_potion: 1.2, steak: 0.8, golden_carrot: 1.0, apple_golden: 1.0, iron_sword: 1.35 },
+  type: { diamond_sword: 2.2, ender_pearl: 2.2, splash_potion: 1.2, steak: 0.8, golden_carrot: 1.0, apple_golden: 1.0, iron_sword: 1.35 },
   hud: { health: 3.2, hunger: 0.6, armor: 3.2 },
   mix: { slot: 0.25, hud: 0.45, widget: 0.30, slotNoHud: 0.55, widgetNoHud: 0.45 },
 };
@@ -386,6 +386,16 @@ function cosineSimilarity(a, b) {
   return (na && nb) ? dot / (Math.sqrt(na) * Math.sqrt(nb)) : 0;
 }
 
+function meanRgbDirSim(momA, momB) {
+  if (!momA || !momB) return 0;
+  const ar = momA[0], ag = momA[1], ab = momA[2];
+  const br = momB[0], bg = momB[1], bb = momB[2];
+  const dot = ar * br + ag * bg + ab * bb;
+  const na = Math.sqrt(ar * ar + ag * ag + ab * ab);
+  const nb = Math.sqrt(br * br + bg * bg + bb * bb);
+  return (na && nb) ? dot / (na * nb) : 0;
+}
+
 function colorMomentSim(a, b) {
   // Distance between two 6-dim [meanR,meanG,meanB,stdR,stdG,stdB] vectors
   let d = 0;
@@ -420,6 +430,39 @@ function extractRegion(ctx, x, y, w, h, targetW, targetH) {
   tctx.imageSmoothingEnabled = false;
   tctx.drawImage(ctx.canvas, x, y, w, h, 0, 0, targetW, targetH);
   return tctx.getImageData(0, 0, targetW, targetH);
+}
+
+function resizeImageDataNearest(imageData, srcW, srcH, dstW, dstH) {
+  const src = document.createElement('canvas');
+  src.width = srcW; src.height = srcH;
+  src.getContext('2d').putImageData(imageData, 0, 0);
+  const dst = document.createElement('canvas');
+  dst.width = dstW; dst.height = dstH;
+  const dctx = dst.getContext('2d');
+  dctx.imageSmoothingEnabled = false;
+  dctx.drawImage(src, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
+  return dctx.getImageData(0, 0, dstW, dstH);
+}
+
+function maskWidgetItems(data, w, h) {
+  const out = new Uint8ClampedArray(data);
+  if (w < 40 || h < 12) return out;
+
+  // Normalize to vanilla widget strip (182x22): item squares live at x=3+i*20, y=3, size=16.
+  const sx = w / 182;
+  const sy = h / 22;
+  const itemSize = Math.max(1, Math.round(16 * Math.min(sx, sy)));
+  const itemY = Math.round(3 * sy);
+
+  for (let i = 0; i < 9; i++) {
+    const itemX = Math.round((3 + i * 20) * sx);
+    const x1 = Math.max(0, itemX), x2 = Math.min(w, itemX + itemSize);
+    const y1 = Math.max(0, itemY), y2 = Math.min(h, itemY + itemSize);
+    for (let y = y1; y < y2; y++) {
+      for (let x = x1; x < x2; x++) out[(y * w + x) * 4 + 3] = 0;
+    }
+  }
+  return out;
 }
 
 function maskSlotNoise(data, w, h) {
@@ -758,6 +801,97 @@ function pickSlotForClip(slots, slotTypes, wantedType, fallbackIndex) {
   return fb || slots[0] || null;
 }
 
+function bboxOfBoxes(boxes) {
+  if (!boxes || !boxes.length) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const b of boxes) {
+    if (!b) continue;
+    minX = Math.min(minX, b.x);
+    minY = Math.min(minY, b.y);
+    maxX = Math.max(maxX, b.x + b.w);
+    maxY = Math.max(maxY, b.y + b.h);
+  }
+  if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) return null;
+  return { x: minX, y: minY, w: Math.max(1, maxX - minX), h: Math.max(1, maxY - minY) };
+}
+
+function renderCropCanvas(id, imageData) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (!imageData) { canvas.classList.add('sbi-crop-hidden'); return; }
+  canvas.classList.remove('sbi-crop-hidden');
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
+  canvas.getContext('2d').putImageData(imageData, 0, 0);
+}
+
+function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (!slot) { canvas.classList.add('sbi-crop-hidden'); return; }
+
+  const inset = Math.max(1, Math.round(slot.sz * 0.12));
+  const sx = Math.round(slot.x + inset);
+  const sy = Math.round(slot.y + inset);
+  const sw = Math.max(2, Math.round(slot.sz - inset * 2));
+  const sh = Math.max(2, Math.round(slot.sz - inset * 2));
+  if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
+
+  const region = extractRegion(ctx, sx, sy, sw, sh, 16, 16);
+  let eff = maskSlotNoise(region.data, 16, 16);
+  eff = suppressSlotBackground(eff, 16, 16);
+  eff = zeroRgbForTransparent(eff);
+
+  const src = document.createElement('canvas');
+  src.width = 16; src.height = 16;
+  src.getContext('2d').putImageData(new ImageData(eff, 16, 16), 0, 0);
+
+  const size = outSize || 96;
+  canvas.classList.remove('sbi-crop-hidden');
+  canvas.width = size;
+  canvas.height = size;
+  const cctx = canvas.getContext('2d');
+  cctx.imageSmoothingEnabled = false;
+  cctx.fillStyle = '#141414';
+  cctx.fillRect(0, 0, size, size);
+  cctx.drawImage(src, 0, 0, 16, 16, 0, 0, size, size);
+}
+
+function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes) {
+  const wrap = document.getElementById('sbi-crops');
+  if (!wrap) return;
+  if (!widgetRect) { wrap.hidden = true; return; }
+
+  renderCropCanvas(
+    'sbi-crop-hotbar',
+    extractRegion(ctx, widgetRect.x, widgetRect.y, widgetRect.w, widgetRect.h, 256, Math.max(1, Math.round(256 * widgetRect.h / widgetRect.w)))
+  );
+
+  const armorBox = hudFeatures ? bboxOfBoxes(hudFeatures.armorBoxes) : null;
+  const heartBox = hudFeatures ? bboxOfBoxes(hudFeatures.heartBoxes) : null;
+  const hungerBox = hudFeatures ? bboxOfBoxes(hudFeatures.hungerBoxes) : null;
+  const renderHudBar = (id, box) => {
+    if (!box) { renderCropCanvas(id, null); return; }
+    const w = 256;
+    const h = Math.max(1, Math.round(w * box.h / box.w));
+    renderCropCanvas(id, extractRegion(ctx, box.x, box.y, box.w, box.h, w, h));
+  };
+  renderHudBar('sbi-crop-armor', armorBox);
+  renderHudBar('sbi-crop-health', heartBox);
+  renderHudBar('sbi-crop-hunger', hungerBox);
+
+  const ds = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0);
+  const ep = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1);
+  const hl = pickSlotForClip(slots, slotTypes, 'splash_potion', 5);
+  const food = pickSlotForClip(slots, slotTypes, 'golden_carrot', 8) || pickSlotForClip(slots, slotTypes, 'steak', 8);
+  renderItemCropCanvas('sbi-crop-ds', ctx, imgW, imgH, ds, 96);
+  renderItemCropCanvas('sbi-crop-ep', ctx, imgW, imgH, ep, 96);
+  renderItemCropCanvas('sbi-crop-hl', ctx, imgW, imgH, hl, 96);
+  renderItemCropCanvas('sbi-crop-food', ctx, imgW, imgH, food, 96);
+
+  wrap.hidden = false;
+}
+
 function buildClipCompositePixels(ctx, imgW, imgH, widgetRect, slots, slotTypes) {
   if (!widgetRect || !slots || !slots.length) return null;
 
@@ -852,7 +986,10 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const wh = Math.round(widgetH);
     if (wx < 0 || wy < 0 || wx + ww > imgW || wy + wh > imgH) continue;
 
-    const widgetRegion = extractRegion(ctx, wx, wy, ww, wh, 16, 16);
+    // Compute widget features on a masked widget strip to reduce item overlays' influence.
+    const widgetStrip = extractRegion(ctx, wx, wy, ww, wh, 182, 22);
+    const widgetMasked = new ImageData(maskWidgetItems(widgetStrip.data, 182, 22), 182, 22);
+    const widgetRegion = resizeImageDataNearest(widgetMasked, 182, 22, 16, 16);
     const widgetFeatures = {
       hist: computeHistogram(widgetRegion.data, 256, 0),
       moments: computeColorMoments(widgetRegion.data, 256, 0),
@@ -923,12 +1060,21 @@ function compareHudCells(cells, variants) {
   return take ? sum / take : 0;
 }
 
-function compareSlotToType(slot, packTex) {
+function compareSlotVariant(extracted, packTex, targetType) {
+  let sim = compare(extracted, packTex);
+  if (targetType === 'diamond_sword') {
+    const dir = meanRgbDirSim(extracted.moments, packTex.moments);
+    sim *= (0.30 + 0.70 * clamp01(dir));
+  }
+  return sim;
+}
+
+function compareSlotToType(slot, packTex, targetType) {
   if (!slot) return 0;
   const variants = slot.variants && slot.variants.length ? slot.variants : (slot.features ? [slot.features] : []);
   let best = 0;
   for (const v of variants) {
-    const sim = compare(v, packTex);
+    const sim = compareSlotVariant(v, packTex, targetType);
     if (sim > best) best = sim;
   }
   return best;
@@ -1017,12 +1163,12 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       const targetTex = packData[targetType];
       if (!targetTex) continue;
 
-      const sim = compareSlotToType(slot, targetTex);
+      const sim = compareSlotToType(slot, targetTex, targetType);
       let altBest = 0;
       for (const type of ITEM_TYPES) {
         if (type === targetType) continue;
         if (!packData[type]) continue;
-        altBest = Math.max(altBest, compareSlotToType(slot, packData[type]));
+        altBest = Math.max(altBest, compareSlotToType(slot, packData[type], type));
       }
 
       activeSlots++;
@@ -1169,12 +1315,14 @@ async function processImage(file) {
   const preview = document.getElementById('sbi-preview');
   const progress = document.getElementById('sbi-progress');
   const resultsEl = document.getElementById('sbi-results');
+  const cropsEl = document.getElementById('sbi-crops');
   const debugPanel = document.getElementById('sbi-debug');
   const debugBody = document.getElementById('sbi-debug-body');
   const debugMeta = document.getElementById('sbi-debug-meta');
   resultsEl.hidden = true;
   progress.hidden = false;
   preview.hidden = false;
+  if (cropsEl) cropsEl.hidden = true;
   if (debugPanel) debugPanel.hidden = true;
   if (debugBody) debugBody.innerHTML = '';
   if (debugMeta) debugMeta.textContent = '';
@@ -1210,6 +1358,7 @@ async function processImage(file) {
       hungerCount: hudFeatures && hudFeatures.hunger ? hudFeatures.hunger.length : 0,
       armorCount: hudFeatures && hudFeatures.armor ? hudFeatures.armor.length : 0,
     };
+    renderCrops(ctx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     progress.hidden = true;
     renderResults(stage1Top10);

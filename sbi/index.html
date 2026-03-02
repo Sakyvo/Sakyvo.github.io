@@ -30,10 +30,6 @@
       <input type="file" id="sbi-file" accept="image/*" hidden>
     </div>
 
-    <div class="sbi-preview" id="sbi-preview" hidden>
-      <canvas id="sbi-canvas"></canvas>
-    </div>
-
     <div class="sbi-progress" id="sbi-progress" hidden>
       <div class="sbi-spinner"></div>
       <p>Analyzing...</p>
@@ -42,6 +38,58 @@
     <div class="sbi-clip-status" id="sbi-clip-status" hidden></div>
 
     <div class="sbi-results" id="sbi-results" hidden></div>
+
+    <div class="sbi-preview" id="sbi-preview" hidden>
+      <canvas id="sbi-canvas"></canvas>
+    </div>
+
+    <div class="sbi-crops" id="sbi-crops" hidden>
+      <div class="sbi-crops-title">Cropped Regions</div>
+
+      <div class="sbi-crops-section">
+        <div class="sbi-crops-section-title">I. GUI</div>
+        <div class="sbi-crops-grid">
+          <div class="sbi-crop-card">
+            <div class="sbi-crop-label">Armor</div>
+            <canvas id="sbi-crop-armor"></canvas>
+          </div>
+          <div class="sbi-crop-card">
+            <div class="sbi-crop-label">Health</div>
+            <canvas id="sbi-crop-health"></canvas>
+          </div>
+          <div class="sbi-crop-card">
+            <div class="sbi-crop-label">Hunger</div>
+            <canvas id="sbi-crop-hunger"></canvas>
+          </div>
+          <div class="sbi-crop-card">
+            <div class="sbi-crop-label">Hotbar</div>
+            <canvas id="sbi-crop-hotbar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="sbi-crops-section">
+        <div class="sbi-crops-section-title">II. Items</div>
+        <div class="sbi-crops-grid">
+          <div class="sbi-crop-card sbi-crop-square">
+            <div class="sbi-crop-label">Diamond Sword</div>
+            <canvas id="sbi-crop-ds"></canvas>
+          </div>
+          <div class="sbi-crop-card sbi-crop-square">
+            <div class="sbi-crop-label">Ender Pearl</div>
+            <canvas id="sbi-crop-ep"></canvas>
+          </div>
+          <div class="sbi-crop-card sbi-crop-square">
+            <div class="sbi-crop-label">Healing Potion</div>
+            <canvas id="sbi-crop-hl"></canvas>
+          </div>
+          <div class="sbi-crop-card sbi-crop-square">
+            <div class="sbi-crop-label">Food</div>
+            <canvas id="sbi-crop-food"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <details class="sbi-debug" id="sbi-debug" hidden>
       <summary>Diagnostics</summary>
@@ -85,6 +133,6 @@
     <p>VALE Project</p>
   </footer>
 
-  <script src="/assets/js/sbi.js?v=15"></script>
+  <script src="/assets/js/sbi.js?v=16"></script>
 </body>
 </html>
