@@ -67,6 +67,13 @@ const SLOT_COLOR_MAP = {
   golden_carrot: '#fde68a',
   apple_golden: '#fde68a',
 };
+const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
+const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
+const STRICT_BOTTOM_OFFSET_RATIOS = [0, 0.015, 0.03, 0.045];
+
+function clamp01(v) {
+  return Math.max(0, Math.min(1, v));
+}
 
 function normalizeClipScore(v) {
   const n = (Math.max(-1, Math.min(1, v)) + 1) * 0.5;
@@ -102,7 +109,7 @@ function renderDebugPanel(results, phase) {
   const d = _lastDetectionMeta || {};
   const rect = d.widgetRect ? `x=${d.widgetRect.x}, y=${d.widgetRect.y}, w=${d.widgetRect.w}, h=${d.widgetRect.h}` : 'none';
   const search = d.searchInfo
-    ? `unit=${d.searchInfo.unit.toFixed(3)}, dx=${d.searchInfo.xShift}, dy=${d.searchInfo.yShift}, conf=${Math.round(d.searchInfo.confidence)}`
+    ? `unit=${d.searchInfo.unit.toFixed(3)}, mode=${d.searchInfo.mode || 'strict'}, by=${d.searchInfo.bottomRatio === undefined ? '-' : d.searchInfo.bottomRatio.toFixed(3)}, conf=${Math.round(d.searchInfo.confidence)}`
     : 'none';
   meta.textContent =
     `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor/xp)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0}/${d.hasXp ? 1 : 0} | widget=${rect} | search=${search}`;
@@ -335,6 +342,7 @@ function buildSlotVariants(ctx, x, y, sz, imgW, imgH) {
     [-0.12, 0],
     [0.12, 0],
     [0, -0.12],
+    [0, -0.24],
     [0, 0.12],
   ];
   const inset = Math.max(1, Math.round(sz * 0.12));
@@ -445,150 +453,126 @@ function estimateWidgetConfidence(widgetFeatures) {
   return best;
 }
 
-function buildUnitCandidates(imgW, imgH) {
-  const units = new Set();
-  const guiUnits = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 4];
-  for (const u of guiUnits) units.add(u.toFixed(3));
-  for (let ratio = 0.24; ratio <= 0.44; ratio += 0.02) units.add((imgW * ratio / 182).toFixed(3));
-  for (let ratio = 0.035; ratio <= 0.09; ratio += 0.01) units.add((imgH * ratio / 22).toFixed(3));
-  return Array.from(units).map(Number).filter(u => u >= 0.8 && u <= 5).sort((a, b) => a - b);
+function buildStrictCropCandidates(imgW, imgH) {
+  const unitSet = new Set();
+  for (const ratio of STRICT_WIDGET_WIDTH_RATIOS) unitSet.add((imgW * ratio / 182).toFixed(3));
+  for (const ratio of STRICT_WIDGET_HEIGHT_RATIOS) unitSet.add((imgH * ratio / 22).toFixed(3));
+  const units = Array.from(unitSet).map(Number).filter(u => u >= 0.8 && u <= 5).sort((a, b) => a - b);
+  const out = [];
+  for (const unit of units) {
+    const widgetW = 182 * unit;
+    const widgetH = 22 * unit;
+    if (widgetW > imgW * 0.92 || widgetH > imgH * 0.2) continue;
+    const widgetX = (imgW - widgetW) / 2;
+    for (const bottomRatio of STRICT_BOTTOM_OFFSET_RATIOS) {
+      const bottomOffset = imgH * bottomRatio;
+      const widgetY = imgH - widgetH - bottomOffset;
+      if (widgetX < 0 || widgetY < 0 || widgetX + widgetW > imgW || widgetY + widgetH > imgH) continue;
+      out.push({ unit, bottomRatio, bottomOffset, widgetX, widgetY, widgetW, widgetH });
+    }
+  }
+  return out;
 }
 
-function quickSlotVariance(ctx, x, y, sz, imgW, imgH) {
-  const inset = Math.max(1, Math.round(sz * 0.18));
-  const iw = Math.max(4, sz - inset * 2);
-  const ih = Math.max(4, sz - inset * 2);
-  const sx = Math.round(x + inset);
-  const sy = Math.round(y + inset);
-  if (sx < 0 || sy < 0 || sx + iw > imgW || sy + ih > imgH) return -1;
-  const region = extractRegion(ctx, sx, sy, iw, ih, 12, 12);
+function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index) {
+  const sx = Math.round(x);
+  const sy = Math.round(y);
+  const ss = Math.round(sz);
+  if (sx < 0 || sy < 0 || sx + ss > imgW || sy + ss > imgH) return null;
+
+  const inset = Math.max(1, Math.round(ss * 0.12));
+  const iw = Math.max(4, ss - inset * 2);
+  const ih = Math.max(4, ss - inset * 2);
+  if (sx + inset < 0 || sy + inset < 0 || sx + inset + iw > imgW || sy + inset + ih > imgH) return null;
+
+  const region = extractRegion(ctx, sx + inset, sy + inset, iw, ih, 16, 16);
   let lumSum = 0, lumSqSum = 0;
-  for (let p = 0; p < 144; p++) {
+  for (let p = 0; p < 256; p++) {
     const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
     lumSum += lum;
     lumSqSum += lum * lum;
   }
-  const mean = lumSum / 144;
-  return lumSqSum / 144 - mean * mean;
+  const mean = lumSum / 256;
+  const variance = lumSqSum / 256 - mean * mean;
+  const features = computeFeatures(region, 16, 16, true, 'slot');
+  const variants = buildSlotVariants(ctx, sx, sy, ss, imgW, imgH);
+  if (!variants.length) variants.push(features);
+
+  const varScore = clamp01((variance - 14) / 100);
+  const edgeScore = clamp01((features.edge - 0.02) / 0.08);
+  const activity = 0.62 * varScore + 0.38 * edgeScore;
+  const quality = Math.sqrt(Math.max(0, variance)) * (0.55 + features.edge) * (0.45 + activity);
+
+  return { index, features, variants, x: sx, y: sy, sz: ss, quality, activity, variance };
 }
 
 // --- Hotbar extraction ---
-// Multi-scale pixel-space search, then refine with full features
+// Strict proportional crop only: centered hotbar + fixed bottom ratio candidates
 function extractHotbarSlots(ctx, imgW, imgH) {
-  const UNIT_CANDIDATES = buildUnitCandidates(imgW, imgH);
-  const X_SHIFTS = [-24, -16, -8, 0, 8, 16, 24];
-  const Y_SHIFTS = [-32, -24, -16, -8, 0, 8, 16, 24];
-  const coarse = [];
-
-  for (const unit of UNIT_CANDIDATES) {
-    const widgetW = 182 * unit;
-    const widgetH = 22 * unit;
-    const itemOffX = 3 * unit;
-    const itemW = 16 * unit;
-    const slotStep = 20 * unit;
-    for (const xShift of X_SHIFTS) {
-      for (const yShift of Y_SHIFTS) {
-        const widgetX = (imgW - widgetW) / 2 + xShift;
-        const widgetY = imgH - widgetH + yShift;
-        const itemY = imgH - 19 * unit + yShift;
-        if (widgetX < 0 || widgetY < 0 || widgetX + widgetW > imgW || widgetY + widgetH > imgH) continue;
-        let score = 0, count = 0;
-        for (const i of [0, 2, 4, 6, 8]) {
-          const x = widgetX + itemOffX + i * slotStep;
-          const v = quickSlotVariance(ctx, x, itemY, itemW, imgW, imgH);
-          if (v > 20) { score += v; count++; }
-        }
-        if (count >= 2) coarse.push({ unit, xShift, yShift, score: count * 500 + score, widgetX, widgetY, widgetW, widgetH });
-      }
-    }
-  }
-
-  coarse.sort((a, b) => b.score - a.score);
-  const detailedCandidates = coarse.slice(0, 48);
-  let bestSlots = [], bestConfidence = -Infinity, bestWidgetFeatures = null, bestWidgetRect = null, bestHudFeatures = null;
+  const candidates = buildStrictCropCandidates(imgW, imgH);
+  let bestSlots = [];
+  let bestConfidence = -Infinity;
+  let bestWidgetFeatures = null;
+  let bestWidgetRect = null;
+  let bestHudFeatures = null;
   let bestSearchInfo = null;
 
-  for (const c of detailedCandidates) {
+  for (const c of candidates) {
     const unit = c.unit;
     const widgetW = 182 * unit;
     const widgetH = 22 * unit;
     const itemOffX = 3 * unit;
     const itemW = 16 * unit;
     const slotStep = 20 * unit;
-    const widgetX = (imgW - widgetW) / 2 + c.xShift;
-    const itemY = imgH - 19 * unit + c.yShift;
-    const widgetY = imgH - widgetH + c.yShift;
+    const widgetX = c.widgetX;
+    const widgetY = c.widgetY;
+    const itemY = imgH - 19 * unit - c.bottomOffset;
 
     const slots = [];
-    let totalVar = 0, totalEdge = 0, totalQuality = 0;
+    let activeCount = 0;
+    let totalActivity = 0;
+    let totalQuality = 0;
     for (let i = 0; i < 9; i++) {
-      const x = Math.round(widgetX + itemOffX + i * slotStep);
-      const y = Math.round(itemY);
-      const sz = Math.round(itemW);
-      if (x < 0 || y < 0 || x + sz > imgW || y + sz > imgH) continue;
-
-      const inset = Math.max(1, Math.round(sz * 0.12));
-      const iw = Math.max(4, sz - inset * 2);
-      const ih = Math.max(4, sz - inset * 2);
-      const region = extractRegion(ctx, x + inset, y + inset, iw, ih, 16, 16);
-
-      let lumSum = 0, lumSqSum = 0;
-      for (let p = 0; p < 256; p++) {
-        const lum = 0.299 * region.data[p * 4] + 0.587 * region.data[p * 4 + 1] + 0.114 * region.data[p * 4 + 2];
-        lumSum += lum;
-        lumSqSum += lum * lum;
-      }
-      const mean = lumSum / 256;
-      const variance = lumSqSum / 256 - mean * mean;
-      const features = computeFeatures(region, 16, 16, true, 'slot');
-      const variants = buildSlotVariants(ctx, x, y, sz, imgW, imgH);
-      const quality = Math.sqrt(Math.max(0, variance)) * (0.6 + features.edge);
-      if (variance > 40 && features.edge > 0.035 && variants.length > 0) {
-        slots.push({ index: i, features, variants, x, y, sz, quality });
-        totalVar += variance;
-        totalEdge += features.edge;
-        totalQuality += quality;
-      }
+      const x = widgetX + itemOffX + i * slotStep;
+      const slot = extractSlotFeatures(ctx, x, itemY, itemW, imgW, imgH, i);
+      if (!slot) continue;
+      slots.push(slot);
+      totalActivity += slot.activity;
+      totalQuality += slot.quality;
+      if (slot.activity >= 0.28) activeCount++;
     }
-    slots.sort((a, b) => b.quality - a.quality);
-    const usedSlots = slots.slice(0, Math.min(7, slots.length));
-    if (usedSlots.length < 4) continue;
+    if (slots.length !== 9) continue;
 
     const wx = Math.round(widgetX);
     const wy = Math.round(widgetY);
     const ww = Math.round(widgetW);
     const wh = Math.round(widgetH);
-    let widgetFeatures = null, widgetRect = null, hudFeatures = null;
-    if (wx >= 0 && wy >= 0 && wx + ww <= imgW && wy + wh <= imgH) {
-      const widgetRegion = extractRegion(ctx, wx, wy, ww, wh, 16, 16);
-      widgetFeatures = {
-        hist: computeHistogram(widgetRegion.data, 256, 0),
-        moments: computeColorMoments(widgetRegion.data, 256, 0),
-        edge: computeEdgeDensity(widgetRegion.data, 16, 16)
-      };
-      widgetRect = { x: wx, y: wy, w: ww, h: wh };
-      hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
-    }
-    if (!widgetRect) continue;
+    if (wx < 0 || wy < 0 || wx + ww > imgW || wy + wh > imgH) continue;
 
+    const widgetRegion = extractRegion(ctx, wx, wy, ww, wh, 16, 16);
+    const widgetFeatures = {
+      hist: computeHistogram(widgetRegion.data, 256, 0),
+      moments: computeColorMoments(widgetRegion.data, 256, 0),
+      edge: computeEdgeDensity(widgetRegion.data, 16, 16)
+    };
+    const widgetRect = { x: wx, y: wy, w: ww, h: wh };
+    const hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
     const widgetBoost = estimateWidgetConfidence(widgetFeatures);
-    const hudBoost = hudFeatures ? (
-      (hudFeatures.hearts.length >= 6 ? 1 : 0) +
-      (hudFeatures.hunger.length >= 6 ? 1 : 0) +
-      (hudFeatures.armor.length >= 6 ? 1 : 0) +
-      (hudFeatures.xpBar ? 1 : 0)
-    ) : 0;
-    const centerPenalty = Math.abs(c.xShift) * 5 + Math.abs(c.yShift) * 4;
-    const confidence = usedSlots.length * 1600 + totalVar * 0.85 + totalEdge * 900 + totalQuality * 45 + widgetBoost * 2600 + hudBoost * 1000 - centerPenalty;
+    const hudCoverage = hudFeatures
+      ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30) + (hudFeatures.xpBar ? 0.2 : 0)
+      : 0;
+
+    const confidence = activeCount * 260 + totalActivity * 200 + totalQuality * 8 + hudCoverage * 540 + widgetBoost * 220;
     if (confidence > bestConfidence) {
       bestConfidence = confidence;
-      bestSlots = usedSlots;
+      bestSlots = slots;
       bestWidgetFeatures = widgetFeatures;
       bestWidgetRect = widgetRect;
       bestHudFeatures = hudFeatures;
-      bestSearchInfo = { unit: c.unit, xShift: c.xShift, yShift: c.yShift, confidence };
+      bestSearchInfo = { mode: 'strict-ratio', unit: c.unit, bottomRatio: c.bottomRatio, confidence };
     }
   }
+
   return {
     slots: bestSlots,
     widgetFeatures: bestWidgetFeatures,
@@ -640,6 +624,11 @@ function compareSlotToType(slot, packTex) {
   return best;
 }
 
+function sharpenSimilarityScore(v) {
+  const x = clamp01(v);
+  return clamp01(1 / (1 + Math.exp(-12 * (x - 0.58))));
+}
+
 // --- Matching ---
 function matchPacks(slots, widgetFeatures, hudFeatures) {
   if (!slots.length) return { results: [], slotTypes: [], details: {} };
@@ -651,60 +640,88 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   let bestSlotTypes = [];
 
   for (const [packName, packData] of Object.entries(fingerprints.packs)) {
-    let totalScore = 0, totalWeight = 0;
-    let slotScore = 0, slotWeight = 0;
-    const packSlotTypes = [];
+    let slotWeighted = 0, slotWeights = 0;
+    let slotPenalty = 0, certaintySum = 0;
+    let activeSlots = 0, strongSlots = 0;
+    const packSlotTypes = new Array(slots.length).fill('');
     let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0, xpSim = 0;
 
     for (const slot of slots) {
-      let bestSim = 0, bestType = '';
+      let bestSim = 0, secondSim = 0, bestType = '';
       for (const type of ITEM_TYPES) {
         if (!packData[type]) continue;
         const sim = compareSlotToType(slot, packData[type]);
-        if (sim > bestSim) { bestSim = sim; bestType = type; }
+        if (sim > bestSim) {
+          secondSim = bestSim;
+          bestSim = sim;
+          bestType = type;
+        } else if (sim > secondSim) {
+          secondSim = sim;
+        }
       }
-      packSlotTypes.push(bestType);
-      if (bestSim > 0.46) {
-        const qualityW = 0.7 + 0.6 * Math.min(1, (slot.quality || 0) / 12);
-        const w = (TYPE_WEIGHT[bestType] || 1) * qualityW;
-        totalScore += bestSim * w;
-        totalWeight += w;
-        slotScore += bestSim * w;
-        slotWeight += w;
-      }
+      packSlotTypes[slot.index] = bestType;
+      const activity = clamp01(slot.activity || 0);
+      if (activity < 0.18) continue;
+
+      activeSlots++;
+      const certainty = Math.max(0, bestSim - secondSim);
+      const qualityNorm = clamp01((slot.quality || 0) / 13);
+      const w = (TYPE_WEIGHT[bestType] || 1) * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
+      slotWeighted += bestSim * w;
+      slotWeights += w;
+      certaintySum += certainty;
+      if (bestSim >= 0.54) strongSlots++;
+      else slotPenalty += (0.54 - bestSim) * (0.8 + activity * 0.7);
     }
+    if (!slotWeights || activeSlots < 3) continue;
+
+    const slotScore = slotWeighted / slotWeights;
+    const slotCoverage = strongSlots / activeSlots;
+    const slotPenaltyNorm = slotPenalty / activeSlots;
+    const slotCertainty = certaintySum / activeSlots;
+    let slotComposite = slotScore * (0.78 + 0.22 * slotCoverage) + Math.min(0.10, slotCertainty * 0.55);
+    slotComposite -= slotPenaltyNorm * 0.35;
+    slotComposite = clamp01(slotComposite);
 
     if (widgetFeatures && packData.hotbar_widget) {
       widgetSim = compareWidget(widgetFeatures, packData.hotbar_widget);
-      const widgetW = 1.1;
-      totalScore += widgetSim * widgetW;
-      totalWeight += widgetW;
     }
 
+    let hudWeighted = 0, hudWeights = 0;
     if (hudFeatures) {
       healthSim = compareHudCells(hudFeatures.hearts, [packData.health_empty, packData.health_half, packData.health_full]);
       hungerSim = compareHudCells(hudFeatures.hunger, [packData.hunger_empty, packData.hunger_half, packData.hunger_full]);
       armorSim = compareHudCells(hudFeatures.armor, [packData.armor_empty, packData.armor_half, packData.armor_full]);
       xpSim = compareHudXp(hudFeatures.xpBar, packData.xp_bar_bg, packData.xp_bar_fill);
 
-      if (healthSim > 0) { totalScore += healthSim * 1.1; totalWeight += 1.1; }
-      if (hungerSim > 0) { totalScore += hungerSim * 1.0; totalWeight += 1.0; }
-      if (armorSim > 0) { totalScore += armorSim * 0.9; totalWeight += 0.9; }
-      if (xpSim > 0) { totalScore += xpSim * 0.8; totalWeight += 0.8; }
+      if (healthSim > 0) { hudWeighted += healthSim * 1.35; hudWeights += 1.35; }
+      if (hungerSim > 0) { hudWeighted += hungerSim * 1.2; hudWeights += 1.2; }
+      if (armorSim > 0) { hudWeighted += armorSim * 1.25; hudWeights += 1.25; }
+      if (xpSim > 0) { hudWeighted += xpSim * 0.45; hudWeights += 0.45; }
     }
 
-    if (totalWeight === 0) continue;
-    const finalScore = totalScore / totalWeight;
-    if (finalScore > 0.50) {
+    const hudComposite = hudWeights ? (hudWeighted / hudWeights) : 0;
+    let rawScore;
+    if (hudWeights > 0) rawScore = slotComposite * 0.72 + hudComposite * 0.24 + widgetSim * 0.04;
+    else rawScore = slotComposite * 0.94 + widgetSim * 0.06;
+
+    rawScore += (slotCoverage - 0.5) * 0.09;
+    rawScore -= slotPenaltyNorm * 0.22;
+    rawScore = clamp01(rawScore);
+
+    const finalScore = sharpenSimilarityScore(rawScore);
+    if (finalScore > 0.28) {
       results.push({ name: packName, score: finalScore });
       details[packName] = {
         finalScore,
-        slotScore: slotWeight ? slotScore / slotWeight : 0,
+        slotScore: slotComposite,
         widgetScore: widgetSim,
         healthScore: healthSim,
         hungerScore: hungerSim,
         armorScore: armorSim,
         xpScore: xpSim,
+        slotCoverage,
+        slotCertainty,
         slotTypes: packSlotTypes,
       };
       if (finalScore > bestScore) {
