@@ -33,10 +33,11 @@ function initClipWorker() {
       if (msg) msg.textContent = 'AI model loaded and ready.';
       const dot = document.getElementById('sbi-ai-dot');
       if (dot) dot.style.background = '#22c55e';
+      if (popup) popup.hidden = true;
     } else if (data.type === 'status') {
       const el = document.getElementById('sbi-clip-status');
       if (el) el.textContent = data.msg;
-      if (badge) badge.dataset.state = 'loading';
+      if (badge) badge.dataset.state = clipWorkerReady ? 'ready' : 'loading';
       if (msg) msg.textContent = data.msg;
     } else if (data.type === 'results') {
       handleClipResults(data.scores);
@@ -57,6 +58,7 @@ const CLIP_HASH_WEIGHT = 0.9;
 const CLIP_WEIGHT = 0.1;
 let _lastMatchDetails = {};
 let _lastClipScores = {};
+let _lastForcedCombined = {};
 let _lastDetectionMeta = null;
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
@@ -72,6 +74,12 @@ const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_RATIOS = [0, 0.015, 0.03, 0.045];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
+const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
+const SBI_SCORE_WEIGHTS = {
+  type: { diamond_sword: 1.6, ender_pearl: 1.8, splash_potion: 1.15, steak: 0.8, golden_carrot: 1.0, apple_golden: 1.0, iron_sword: 1.35 },
+  hud: { health: 1.8, hunger: 1.1, armor: 1.7 },
+  mix: { slot: 0.64, hud: 0.30, widget: 0.06, slotNoHud: 0.9, widgetNoHud: 0.1 },
+};
 
 function clamp01(v) {
   return Math.max(0, Math.min(1, v));
@@ -112,10 +120,10 @@ function renderDebugPanel(results, phase) {
   const d = _lastDetectionMeta || {};
   const rect = d.widgetRect ? `x=${d.widgetRect.x}, y=${d.widgetRect.y}, w=${d.widgetRect.w}, h=${d.widgetRect.h}` : 'none';
   const search = d.searchInfo
-    ? `unit=${d.searchInfo.unit.toFixed(3)}, mode=${d.searchInfo.mode || 'strict'}, by=${d.searchInfo.bottomRatio === undefined ? '-' : d.searchInfo.bottomRatio.toFixed(3)}, conf=${Math.round(d.searchInfo.confidence)}`
+    ? `unit=${d.searchInfo.unit.toFixed(3)}, mode=${d.searchInfo.mode || 'strict'}, by=${d.searchInfo.bottomRatio === undefined ? '-' : d.searchInfo.bottomRatio.toFixed(3)}, boost=${d.searchInfo.widgetBoost === undefined ? '-' : d.searchInfo.widgetBoost.toFixed(3)}, conf=${Math.round(d.searchInfo.confidence)}`
     : 'none';
   meta.textContent =
-    `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor/xp)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0}/${d.hasXp ? 1 : 0} | widget=${rect} | search=${search}`;
+    `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}`;
 
   body.innerHTML = (results || []).slice(0, 10).map((r, i) => {
     const info = _lastMatchDetails[r.name] || {};
@@ -129,11 +137,76 @@ function renderDebugPanel(results, phase) {
       <td>${fmtPct(info.healthScore)}</td>
       <td>${fmtPct(info.hungerScore)}</td>
       <td>${fmtPct(info.armorScore)}</td>
-      <td>${fmtPct(info.xpScore)}</td>
       <td>${clip === undefined ? '-' : fmtPct(clip)}</td>
       <td>${summarizeSlotTypes(info.slotTypes)}</td>
     </tr>`;
   }).join('');
+}
+
+function renderScoreBreakdown() {
+  const el = document.getElementById('sbi-breakdown-body');
+  if (!el) return;
+
+  const typeRows = Object.entries(SBI_SCORE_WEIGHTS.type).map(([k, v]) => {
+    const label = summarizeSlotTypes([k]);
+    return `<tr><td>${label}</td><td>${k}</td><td>${v.toFixed(2)}</td></tr>`;
+  }).join('');
+  el.innerHTML = `
+    <div>XP is ignored. Final score mixes Slot/HUD/Widget and can be lightly reranked by AI.</div>
+    <table class="sbi-weight-table">
+      <thead><tr><th>Item</th><th>Key</th><th>Weight</th></tr></thead>
+      <tbody>${typeRows}</tbody>
+    </table>
+    <table class="sbi-weight-table">
+      <thead><tr><th>HUD</th><th>Weight</th></tr></thead>
+      <tbody>
+        <tr><td>Health</td><td>${SBI_SCORE_WEIGHTS.hud.health.toFixed(2)}</td></tr>
+        <tr><td>Hunger</td><td>${SBI_SCORE_WEIGHTS.hud.hunger.toFixed(2)}</td></tr>
+        <tr><td>Armor</td><td>${SBI_SCORE_WEIGHTS.hud.armor.toFixed(2)}</td></tr>
+      </tbody>
+    </table>
+    <div>Mix (with HUD): Slot ${SBI_SCORE_WEIGHTS.mix.slot.toFixed(2)}, HUD ${SBI_SCORE_WEIGHTS.mix.hud.toFixed(2)}, Widget ${SBI_SCORE_WEIGHTS.mix.widget.toFixed(2)}</div>
+    <div>Mix (no HUD): Slot ${SBI_SCORE_WEIGHTS.mix.slotNoHud.toFixed(2)}, Widget ${SBI_SCORE_WEIGHTS.mix.widgetNoHud.toFixed(2)}</div>
+    <div>AI rerank mix: Hash ${CLIP_HASH_WEIGHT.toFixed(2)}, CLIP ${CLIP_WEIGHT.toFixed(2)}</div>
+  `;
+}
+
+function renderForcedPacks() {
+  const el = document.getElementById('sbi-forced');
+  if (!el) return;
+  const toggle = document.getElementById('sbi-force-toggle');
+  if (toggle && !toggle.checked) { el.hidden = true; return; }
+
+  const rows = FORCE_PACKS.map(name => {
+    const info = _lastMatchDetails[name] || {};
+    const hashScore = isFinite(info.finalScore) ? info.finalScore : (_lastAllScores[name] || 0);
+    const aiScore = _lastForcedCombined && isFinite(_lastForcedCombined[name]) ? _lastForcedCombined[name] : null;
+    const total = aiScore !== null ? aiScore : hashScore;
+    const clip = _lastClipScores[name];
+    const disp = name.replace(/_/g, ' ');
+    return `<tr>
+      <td><a href="/p/${encodeURIComponent(name)}/">${disp}</a></td>
+      <td>${fmtPct(total)}</td>
+      <td>${fmtPct(hashScore)}</td>
+      <td>${fmtPct(info.slotScore)}</td>
+      <td>${fmtPct(info.widgetScore)}</td>
+      <td>${fmtPct(info.healthScore)}</td>
+      <td>${fmtPct(info.hungerScore)}</td>
+      <td>${fmtPct(info.armorScore)}</td>
+      <td>${clip === undefined ? '-' : fmtPct(clip)}</td>
+    </tr>`;
+  }).join('');
+
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sbi-forced-title">Forced Packs</div>
+    <table class="sbi-forced-table">
+      <thead>
+        <tr><th>Pack</th><th>Total</th><th>Hash</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>CLIP</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 function handleClipResults(clipScores) {
@@ -158,10 +231,20 @@ function handleClipResults(clipScores) {
     if (!hashScore && hasClip) score *= 0.85;
     combined.push({ name, score });
   }
+  _lastForcedCombined = {};
+  for (const name of FORCE_PACKS) {
+    const hashScore = _lastAllScores[name] || 0;
+    const hasClip = Object.prototype.hasOwnProperty.call(clipMap, name);
+    const clipScore = hasClip ? clipMap[name] : hashScore;
+    let score = hasClip ? (CLIP_HASH_WEIGHT * hashScore + CLIP_WEIGHT * clipScore) : hashScore;
+    if (!hashScore && hasClip) score *= 0.85;
+    _lastForcedCombined[name] = score;
+  }
   combined.sort((a, b) => b.score - a.score);
   const top10 = combined.slice(0, 10);
   renderResults(top10, 'AI Enhanced');
   renderDebugPanel(top10, 'ai');
+  renderForcedPacks();
   if (statusEl) { statusEl.textContent = '✓ AI analysis complete'; statusEl.dataset.state = 'ready'; }
 
   const thumbCanvas = document.createElement('canvas');
@@ -338,6 +421,78 @@ function maskSlotNoise(data, w, h) {
   return out;
 }
 
+function zeroRgbForTransparent(data) {
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) { data[i] = 0; data[i + 1] = 0; data[i + 2] = 0; }
+  }
+  return data;
+}
+
+function suppressSlotBackground(data, w, h) {
+  if (w * h > 24 * 24) return data;
+
+  const out = new Uint8ClampedArray(data);
+  const cornerSize = Math.max(1, Math.min(3, Math.floor(Math.min(w, h) / 4)));
+  let sr = 0, sg = 0, sb = 0, n = 0;
+  const corners = [
+    [0, 0],
+    [w - cornerSize, 0],
+    [0, h - cornerSize],
+    [w - cornerSize, h - cornerSize],
+  ];
+  for (const [cx, cy] of corners) {
+    for (let yy = 0; yy < cornerSize; yy++) {
+      for (let xx = 0; xx < cornerSize; xx++) {
+        const x = cx + xx, y = cy + yy;
+        if (x < 0 || y < 0 || x >= w || y >= h) continue;
+        const i = (y * w + x) * 4;
+        const a = out[i + 3];
+        if (a < 128) continue;
+        sr += out[i]; sg += out[i + 1]; sb += out[i + 2]; n++;
+      }
+    }
+  }
+  if (!n) return out;
+  const br = sr / n, bg = sg / n, bb = sb / n;
+  const thr2 = 5200;
+
+  const seen = new Uint8Array(w * h);
+  const q = [];
+  const push = (x, y) => {
+    const idx = y * w + x;
+    if (seen[idx]) return;
+    const i = idx * 4;
+    if (out[i + 3] < 128) return;
+    const dr = out[i] - br;
+    const dg = out[i + 1] - bg;
+    const db = out[i + 2] - bb;
+    if (dr * dr + dg * dg + db * db > thr2) return;
+    seen[idx] = 1;
+    q.push(idx);
+  };
+  push(0, 0);
+  push(w - 1, 0);
+  push(0, h - 1);
+  push(w - 1, h - 1);
+
+  while (q.length) {
+    const idx = q.pop();
+    const x = idx % w;
+    const y = Math.floor(idx / w);
+    if (x > 0) push(x - 1, y);
+    if (x + 1 < w) push(x + 1, y);
+    if (y > 0) push(x, y - 1);
+    if (y + 1 < h) push(x, y + 1);
+  }
+
+  for (let i = 0; i < seen.length; i++) {
+    if (!seen[i]) continue;
+    const p = i * 4;
+    out[p] = 0; out[p + 1] = 0; out[p + 2] = 0; out[p + 3] = 0;
+  }
+  return out;
+}
+
 function buildSlotVariants(ctx, x, y, sz, imgW, imgH) {
   const variants = [];
   const offsets = [
@@ -364,9 +519,13 @@ function buildSlotVariants(ctx, x, y, sz, imgW, imgH) {
 
 function computeFeatures(imageData, w, h, isScreenshot, mode) {
   const BG_THRESHOLD = isScreenshot ? 50 : 0;
-  const effectiveData = (isScreenshot && mode === 'slot')
+  let effectiveData = (isScreenshot && mode === 'slot')
     ? maskSlotNoise(imageData.data, w, h)
     : imageData.data;
+  if (isScreenshot && mode === 'slot') {
+    effectiveData = suppressSlotBackground(effectiveData, w, h);
+    effectiveData = zeroRgbForTransparent(effectiveData);
+  }
   const effectiveImage = (effectiveData === imageData.data)
     ? imageData
     : new ImageData(effectiveData, w, h);
@@ -424,25 +583,7 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
     if (armorFeat) { armor.push(armorFeat); armorBoxes.push({ x: heartX, y: armorY, w: iconSize, h: iconSize }); }
   }
 
-  const xpBox = {
-    x: widgetRect.x,
-    y: widgetRect.y - 7 * unit,
-    w: 182 * unit,
-    h: 5 * unit
-  };
-  const xpBar = tryExtractFeature(
-    ctx,
-    xpBox.x,
-    xpBox.y,
-    xpBox.w,
-    xpBox.h,
-    imgW,
-    imgH,
-    64,
-    16
-  );
-
-  return { hearts, hunger, armor, xpBar, heartBoxes, hungerBoxes, armorBoxes, xpBox };
+  return { hearts, hunger, armor, heartBoxes, hungerBoxes, armorBoxes };
 }
 
 function estimateWidgetConfidence(widgetFeatures) {
@@ -515,6 +656,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
   let bestSlots = [];
   let bestConfidence = -Infinity;
+  let bestWidgetBoost = -Infinity;
   let bestWidgetFeatures = null;
   let bestWidgetRect = null;
   let bestHudFeatures = null;
@@ -562,17 +704,19 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
     const widgetBoost = estimateWidgetConfidence(widgetFeatures);
     const hudCoverage = hudFeatures
-      ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30) + (hudFeatures.xpBar ? 0.2 : 0)
+      ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30)
       : 0;
 
-    const confidence = activeCount * 260 + totalActivity * 200 + totalQuality * 8 + hudCoverage * 540 + widgetBoost * 220;
-    if (confidence > bestConfidence) {
+    const confidence = activeCount * 260 + totalActivity * 200 + totalQuality * 8 + hudCoverage * 540;
+    const boostDelta = widgetBoost - bestWidgetBoost;
+    if (boostDelta > 0.001 || (Math.abs(boostDelta) <= 0.001 && confidence > bestConfidence)) {
       bestConfidence = confidence;
+      bestWidgetBoost = widgetBoost;
       bestSlots = slots;
       bestWidgetFeatures = widgetFeatures;
       bestWidgetRect = widgetRect;
       bestHudFeatures = hudFeatures;
-      bestSearchInfo = { mode: 'strict-ratio', unit: c.unit, bottomRatio: c.bottomRatio, confidence };
+      bestSearchInfo = { mode: 'strict-ratio', unit: c.unit, bottomRatio: c.bottomRatio, confidence, widgetBoost };
     }
   }
 
@@ -600,20 +744,6 @@ function compareHudCells(cells, variants) {
   let sum = 0;
   for (let i = 0; i < take; i++) sum += sims[i];
   return take ? sum / take : 0;
-}
-
-function compareHudXp(xpBar, bgTex, fillTex) {
-  if (!xpBar) return 0;
-  const sims = [];
-  if (bgTex) sims.push(compare(xpBar, bgTex));
-  if (fillTex) sims.push(compare(xpBar, fillTex));
-  if (!sims.length) return 0;
-  let max = -Infinity, sum = 0;
-  for (const s of sims) {
-    if (s > max) max = s;
-    sum += s;
-  }
-  return 0.7 * max + 0.3 * (sum / sims.length);
 }
 
 function compareSlotToType(slot, packTex) {
@@ -707,16 +837,17 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   if (!slots.length) return { results: [], slotTypes: [], details: {} };
   const displaySlotTypes = inferDisplaySlotTypes(slots);
   const ITEM_TYPES = SLOT_ITEM_TYPES;
-  const TYPE_WEIGHT = { diamond_sword: 1.5, ender_pearl: 1.3, splash_potion: 1.0, steak: 0.8, golden_carrot: 0.8, apple_golden: 0.9, iron_sword: 1.2 };
+  const TYPE_WEIGHT = SBI_SCORE_WEIGHTS.type;
   const results = [];
   const details = {};
   let bestScore = -Infinity;
 
   for (const [packName, packData] of Object.entries(fingerprints.packs)) {
+    const isForced = FORCE_PACKS.includes(packName);
     let slotWeighted = 0, slotWeights = 0;
     let slotPenalty = 0, certaintySum = 0;
     let activeSlots = 0, strongSlots = 0;
-    let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0, xpSim = 0;
+    let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0;
 
     for (const slot of slots) {
       let bestSim = 0, secondSim = 0, bestType = '';
@@ -763,26 +894,23 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       healthSim = compareHudCells(hudFeatures.hearts, [packData.health_empty, packData.health_half, packData.health_full]);
       hungerSim = compareHudCells(hudFeatures.hunger, [packData.hunger_empty, packData.hunger_half, packData.hunger_full]);
       armorSim = compareHudCells(hudFeatures.armor, [packData.armor_empty, packData.armor_half, packData.armor_full]);
-      xpSim = compareHudXp(hudFeatures.xpBar, packData.xp_bar_bg, packData.xp_bar_fill);
 
-      if (healthSim > 0) { hudWeighted += healthSim * 1.35; hudWeights += 1.35; }
-      if (hungerSim > 0) { hudWeighted += hungerSim * 1.2; hudWeights += 1.2; }
-      if (armorSim > 0) { hudWeighted += armorSim * 1.25; hudWeights += 1.25; }
-      if (xpSim > 0) { hudWeighted += xpSim * 0.45; hudWeights += 0.45; }
+      if (healthSim > 0) { hudWeighted += healthSim * SBI_SCORE_WEIGHTS.hud.health; hudWeights += SBI_SCORE_WEIGHTS.hud.health; }
+      if (hungerSim > 0) { hudWeighted += hungerSim * SBI_SCORE_WEIGHTS.hud.hunger; hudWeights += SBI_SCORE_WEIGHTS.hud.hunger; }
+      if (armorSim > 0) { hudWeighted += armorSim * SBI_SCORE_WEIGHTS.hud.armor; hudWeights += SBI_SCORE_WEIGHTS.hud.armor; }
     }
 
     const hudComposite = hudWeights ? (hudWeighted / hudWeights) : 0;
     let rawScore;
-    if (hudWeights > 0) rawScore = slotComposite * 0.72 + hudComposite * 0.24 + widgetSim * 0.04;
-    else rawScore = slotComposite * 0.94 + widgetSim * 0.06;
+    if (hudWeights > 0) rawScore = slotComposite * SBI_SCORE_WEIGHTS.mix.slot + hudComposite * SBI_SCORE_WEIGHTS.mix.hud + widgetSim * SBI_SCORE_WEIGHTS.mix.widget;
+    else rawScore = slotComposite * SBI_SCORE_WEIGHTS.mix.slotNoHud + widgetSim * SBI_SCORE_WEIGHTS.mix.widgetNoHud;
 
-    rawScore += (slotCoverage - 0.5) * 0.09;
+    rawScore += (slotCoverage - 0.5) * 0.1;
     rawScore -= slotPenaltyNorm * 0.22;
     rawScore = clamp01(rawScore);
 
     const finalScore = sharpenSimilarityScore(rawScore);
-    if (finalScore > 0.28) {
-      results.push({ name: packName, score: finalScore });
+    if (finalScore > 0.28 || isForced) {
       details[packName] = {
         finalScore,
         slotScore: slotComposite,
@@ -790,11 +918,13 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
         healthScore: healthSim,
         hungerScore: hungerSim,
         armorScore: armorSim,
-        xpScore: xpSim,
         slotCoverage,
         slotCertainty,
         slotTypes: displaySlotTypes,
       };
+    }
+    if (finalScore > 0.28) {
+      results.push({ name: packName, score: finalScore });
       if (finalScore > bestScore) bestScore = finalScore;
     }
   }
@@ -819,10 +949,6 @@ function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
   for (const b of hudFeatures.hungerBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
   ctx.strokeStyle = '#9ca3af';
   for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-  if (hudFeatures.xpBox) {
-    ctx.strokeStyle = '#86efac';
-    ctx.strokeRect(hudFeatures.xpBox.x, hudFeatures.xpBox.y, hudFeatures.xpBox.w, hudFeatures.xpBox.h);
-  }
 }
 
 function scoreColor(pct) {
@@ -921,17 +1047,22 @@ async function processImage(file) {
       heartCount: hudFeatures && hudFeatures.hearts ? hudFeatures.hearts.length : 0,
       hungerCount: hudFeatures && hudFeatures.hunger ? hudFeatures.hunger.length : 0,
       armorCount: hudFeatures && hudFeatures.armor ? hudFeatures.armor.length : 0,
-      hasXp: Boolean(hudFeatures && hudFeatures.xpBar),
     };
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     progress.hidden = true;
     renderResults(stage1Top10);
     renderDebugPanel(stage1Top10, 'hash');
+    _lastForcedCombined = {};
+    renderForcedPacks();
 
     // Cache hash scores for later CLIP combination
     _lastHashResults = results.slice(0, 40);
     _lastAllScores = {};
     for (const r of results) _lastAllScores[r.name] = r.score;
+    for (const name of FORCE_PACKS) {
+      const info = details && details[name];
+      if (info && isFinite(info.finalScore)) _lastAllScores[name] = info.finalScore;
+    }
 
     // Stage 2: CLIP refinement (async)
     if (widgetRect && slots.length > 0) {
@@ -1018,6 +1149,10 @@ function init() {
     popup.hidden = false;
     setTimeout(() => { popup.hidden = true; }, 4000);
   }
+
+  const forceToggle = document.getElementById('sbi-force-toggle');
+  if (forceToggle) forceToggle.addEventListener('change', () => renderForcedPacks());
+  renderScoreBreakdown();
 
   // Pre-load worker in background
   initClipWorker();
