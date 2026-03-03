@@ -84,8 +84,8 @@ const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
 const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
   type: { diamond_sword: 2.5, ender_pearl: 2.5, splash_potion: 1.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
-  hud: { health: 3.0, hunger: 0.5, armor: 1.0 },
-  mix: { slot: 0.20, hud: 0.40, widget: 0.40, slotNoHud: 0.45, widgetNoHud: 0.55 },
+  hud: { health: 3.4, hunger: 0.35, armor: 0.8 },
+  mix: { slot: 0.16, hud: 0.38, widget: 0.46, slotNoHud: 0.35, widgetNoHud: 0.65 },
 };
 
 function clamp01(v) {
@@ -418,7 +418,13 @@ function compareWidget(extracted, packWidget) {
   const edgeA = typeof extracted.edge === 'number' ? extracted.edge : 0;
   const edgeB = typeof packWidget.edge === 'number' ? packWidget.edge : 0;
   const edgeSim = 1 - Math.abs(edgeA - edgeB);
-  return 0.45 * histSim + 0.35 * momentSim + 0.20 * edgeSim;
+  const dirSim = clamp01(meanRgbDirSim(extracted.moments, packWidget.moments));
+  const chromaA = extracted && extracted.moments ? Math.max(extracted.moments[0], extracted.moments[1], extracted.moments[2]) - Math.min(extracted.moments[0], extracted.moments[1], extracted.moments[2]) : 0;
+  const chromaB = packWidget && packWidget.moments ? Math.max(packWidget.moments[0], packWidget.moments[1], packWidget.moments[2]) - Math.min(packWidget.moments[0], packWidget.moments[1], packWidget.moments[2]) : 0;
+  const chromaSim = clamp01(1 - Math.abs(chromaA - chromaB) / (Math.max(chromaA, chromaB) + 0.08));
+  const base = 0.34 * histSim + 0.24 * momentSim + 0.14 * edgeSim + 0.18 * dirSim + 0.10 * chromaSim;
+  const colorGate = 0.70 + 0.30 * Math.min(dirSim, chromaSim);
+  return base * colorGate;
 }
 
 // --- Region extraction helpers ---
@@ -719,10 +725,12 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
   const heartBoxes = [];
   const hungerBoxes = [];
   const armorBoxes = [];
+  const leftHudShift = 0.32 * unit;
+  const rightHudShift = -0.32 * unit;
 
   for (let i = 0; i < 10; i++) {
-    const heartX = widgetRect.x + (1 + i * 8) * unit;
-    const hungerX = widgetRect.x + (182 - 10 - i * 8) * unit;
+    const heartX = widgetRect.x + (1 + i * 8) * unit + leftHudShift;
+    const hungerX = widgetRect.x + (182 - 10 - i * 8) * unit + rightHudShift;
 
     const heartFeat = tryExtractFeature(ctx, heartX, heartsY, iconSize, iconSize, imgW, imgH, 16, 16);
     const hungerFeat = tryExtractFeature(ctx, hungerX, heartsY, iconSize, iconSize, imgW, imgH, 16, 16);
@@ -953,18 +961,13 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
   if (!slot) { canvas.classList.add('sbi-crop-hidden'); return; }
-
-  const src = document.createElement('canvas');
-  src.width = 16;
-  src.height = 16;
   const sx = Math.round(slot.x);
   const sy = Math.round(slot.y);
   const sw = Math.max(2, Math.round(slot.sz));
   const sh = sw;
   if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
-  src.getContext('2d').putImageData(extractRegion(ctx, sx, sy, sw, sh, 16, 16), 0, 0);
 
-  const size = outSize || 96;
+  const size = outSize || Math.max(96, sw * 2);
   canvas.classList.remove('sbi-crop-hidden');
   canvas.width = size;
   canvas.height = size;
@@ -972,7 +975,7 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   cctx.imageSmoothingEnabled = false;
   cctx.fillStyle = '#141414';
   cctx.fillRect(0, 0, size, size);
-  cctx.drawImage(src, 0, 0, 16, 16, 0, 0, size, size);
+  cctx.drawImage(ctx.canvas, sx, sy, sw, sh, 0, 0, size, size);
 }
 
 function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes) {
