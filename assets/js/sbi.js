@@ -121,11 +121,13 @@ function renderDebugPanel(results, phase) {
   panel.hidden = false;
   const d = _lastDetectionMeta || {};
   const rect = d.widgetRect ? `x=${d.widgetRect.x}, y=${d.widgetRect.y}, w=${d.widgetRect.w}, h=${d.widgetRect.h}` : 'none';
-  const search = d.searchInfo
-    ? `unit=${d.searchInfo.unit.toFixed(3)}, mode=${d.searchInfo.mode || 'strict'}, by=${d.searchInfo.bottomRatio === undefined ? '-' : d.searchInfo.bottomRatio.toFixed(3)}, boost=${d.searchInfo.widgetBoost === undefined ? '-' : d.searchInfo.widgetBoost.toFixed(3)}, conf=${Math.round(d.searchInfo.confidence)}`
+  const s = d.searchInfo || null;
+  const search = s
+    ? `unit=${s.unit.toFixed(3)}, off=${s.bottomOffset === undefined ? '-' : s.bottomOffset}, mode=${s.mode || 'strict'}, by=${s.bottomRatio === undefined ? '-' : s.bottomRatio.toFixed(3)}, g=${s.gridScore === undefined ? '-' : s.gridScore.toFixed(2)}, bp=${s.bottomPref === undefined ? '-' : s.bottomPref.toFixed(2)}, up=${s.unitPref === undefined ? '-' : s.unitPref.toFixed(2)}, wb=${s.widgetBoost === undefined ? '-' : s.widgetBoost.toFixed(3)}, hb=${s.hudBoost === undefined ? '-' : s.hudBoost.toFixed(3)}, sb=${s.slotBoost === undefined ? '-' : s.slotBoost.toFixed(3)}, conf=${Math.round(s.confidence)}`
     : 'none';
   meta.textContent =
-    `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}`;
+    `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}` +
+    (s && s.preTop ? `\npre=${s.preTop}` : '');
 
   body.innerHTML = (results || []).slice(0, 10).map((r, i) => {
     const info = _lastMatchDetails[r.name] || {};
@@ -500,6 +502,7 @@ function computeWidgetGridScore(data, w, h) {
   const boundaryMask = new Uint8Array(edgeX.length);
   const scale = w / 182;
   let bSum = 0, bCount = 0;
+  const bVals = [];
   for (let k = 0; k <= 9; k++) {
     const b = Math.round(k * 20 * scale);
     let m = 0;
@@ -511,6 +514,7 @@ function computeWidgetGridScore(data, w, h) {
     }
     bSum += m;
     bCount++;
+    bVals.push(m);
   }
   let iSum = 0, iCount = 0;
   for (let x = 0; x < edgeX.length; x++) {
@@ -520,8 +524,15 @@ function computeWidgetGridScore(data, w, h) {
   }
   const bAvg = bCount ? (bSum / bCount) : 0;
   const iAvg = iCount ? (iSum / iCount) : 0;
-  const ratio = bAvg / (iAvg + 1e-6);
-  return clamp01((ratio - 1) / 2);
+  const iBase = iAvg + 1e-6;
+  bVals.sort((a, b) => a - b);
+  const bP30 = bVals[Math.min(bVals.length - 1, Math.floor(bVals.length * 0.3))] || 0;
+  let strong = 0;
+  const thr = iAvg * 1.3;
+  for (const v of bVals) if (v > thr) strong++;
+  const coverage = clamp01((strong - 4) / 6);
+  const ratio = bP30 / iBase;
+  return clamp01((ratio - 1) / 2) * (0.65 + 0.35 * coverage);
 }
 
 function maskSlotNoise(data, w, h) {
@@ -1051,8 +1062,11 @@ function buildClipCompositePixels(ctx, imgW, imgH, widgetRect, slots, slotTypes)
 // Strict proportional crop only: centered hotbar + fixed bottom ratio candidates
 function extractHotbarSlots(ctx, imgW, imgH) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
-  const pre = [];
   const PRE_K = 80;
+  const PER_UNIT_K = 14;
+  const preByUnit = new Map();
+  const mustByUnit = new Map();
+  const all = [];
   let bestSlots = [];
   let bestConfidence = -Infinity;
   let bestBoost = -Infinity;
@@ -1069,15 +1083,60 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     if (wx < 0 || wy < 0 || wx + ww > imgW || wy + wh > imgH) continue;
 
     const widgetStrip = extractRegion(ctx, wx, wy, ww, wh, 182, 22);
-    const gridScore = computeWidgetGridScore(widgetStrip.data, 182, 22);
-    const bottomPref = clamp01(1 - (c.bottomOffset || 0) / (c.unit * 8 + 1e-6));
-    const score = gridScore * (0.85 + 0.15 * bottomPref);
-    if (pre.length < PRE_K || score > pre[pre.length - 1].score) {
-      pre.push({ c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, score });
-      pre.sort((a, b) => b.score - a.score);
-      if (pre.length > PRE_K) pre.length = PRE_K;
+    const maskedStrip = maskWidgetItems(widgetStrip.data, 182, 22);
+    const gridScore = computeWidgetGridScore(maskedStrip, 182, 22);
+    const bottomPref = clamp01(1 - (c.bottomOffset || 0) / (c.unit * 4 + 1e-6));
+    const unitRounded = Math.max(1, Math.min(6, Math.round(c.unit)));
+    const unitPref = clamp01(1 - Math.abs(c.unit - unitRounded) / 0.18);
+    const score = (0.70 * gridScore + 0.30 * bottomPref) * (0.90 + 0.10 * unitPref);
+    const entry = { c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, unitPref, score, unitRounded };
+    all.push(entry);
+
+    const list = preByUnit.get(unitRounded) || [];
+    if (list.length < PER_UNIT_K || score > list[list.length - 1].score) {
+      list.push(entry);
+      list.sort((a, b) => b.score - a.score);
+      if (list.length > PER_UNIT_K) list.length = PER_UNIT_K;
+      preByUnit.set(unitRounded, list);
+    }
+
+    if ((c.bottomOffset || 0) === 0) {
+      const prev = mustByUnit.get(unitRounded);
+      if (!prev) {
+        mustByUnit.set(unitRounded, entry);
+      } else {
+        const d1 = Math.abs(c.unit - unitRounded);
+        const d0 = Math.abs(prev.c.unit - unitRounded);
+        if (d1 + 1e-6 < d0 || (Math.abs(d1 - d0) <= 1e-6 && score > prev.score)) mustByUnit.set(unitRounded, entry);
+      }
     }
   }
+
+  const pre = [];
+  const seen = new Set();
+  const keyOf = (cand) => `${cand.wx},${cand.wy},${cand.ww},${cand.wh}`;
+  const add = (cand) => {
+    if (!cand) return;
+    const k = keyOf(cand);
+    if (seen.has(k)) return;
+    seen.add(k);
+    pre.push(cand);
+  };
+
+  const must = Array.from(mustByUnit.values()).sort((a, b) => b.score - a.score);
+  for (const cand of must) add(cand);
+  const merged = [];
+  for (const list of preByUnit.values()) merged.push(...list);
+  merged.sort((a, b) => b.score - a.score);
+  for (const cand of merged) { if (pre.length >= PRE_K) break; add(cand); }
+  if (pre.length < PRE_K) {
+    all.sort((a, b) => b.score - a.score);
+    for (const cand of all) { if (pre.length >= PRE_K) break; add(cand); }
+  }
+
+  const preTop = [...pre].sort((a, b) => b.score - a.score).slice(0, 8).map(p =>
+    `u=${p.c.unit.toFixed(2)} off=${p.c.bottomOffset || 0} g=${p.gridScore.toFixed(2)} b=${p.bottomPref.toFixed(2)} s=${p.score.toFixed(2)}`
+  ).join(' | ');
 
   for (const cand of pre) {
     const c = cand.c;
@@ -1125,7 +1184,10 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const baseBoost = hudFeatures
       ? (0.45 * widgetBoost + 0.45 * hudBoost + 0.10 * slotBoost)
       : (0.70 * widgetBoost + 0.30 * slotBoost);
-    const combinedBoost = baseBoost * (0.70 + 0.30 * cand.gridScore) * (0.92 + 0.08 * cand.bottomPref);
+    const combinedBoost = baseBoost
+      * (0.78 + 0.22 * cand.gridScore)
+      * (0.86 + 0.14 * cand.bottomPref)
+      * (0.92 + 0.08 * (cand.unitPref || 0));
     const hudCoverage = hudFeatures
       ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30)
       : 0;
@@ -1143,12 +1205,16 @@ function extractHotbarSlots(ctx, imgW, imgH) {
         mode: 'strict-ratio',
         unit: c.unit,
         bottomRatio: c.bottomRatio,
+        bottomOffset: c.bottomOffset || 0,
         confidence,
         combinedBoost,
         widgetBoost,
         hudBoost,
         slotBoost,
         gridScore: cand.gridScore,
+        bottomPref: cand.bottomPref,
+        unitPref: cand.unitPref,
+        preTop,
         widgetBest: widgetCand.bestName,
         hudBest: hudCand.bestName,
         slotBest: slotCand.bestName,
