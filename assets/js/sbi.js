@@ -76,7 +76,7 @@ const SLOT_COLOR_MAP = {
 };
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
-const STRICT_BOTTOM_OFFSET_RATIOS = [0, 0.015, 0.03, 0.045];
+const STRICT_BOTTOM_OFFSET_RATIOS = [0, 0.01, 0.02, 0.03, 0.045, 0.06, 0.075, 0.09];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
 const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
 const SBI_SCORE_WEIGHTS = {
@@ -465,6 +465,68 @@ function maskWidgetItems(data, w, h) {
   return out;
 }
 
+function suppressWidgetHighlights(data, w, h) {
+  const out = new Uint8ClampedArray(data);
+  const lum = [];
+  for (let i = 0; i < w * h; i++) {
+    const a = out[i * 4 + 3];
+    if (a < 128) continue;
+    const r = out[i * 4], g = out[i * 4 + 1], b = out[i * 4 + 2];
+    lum.push(0.299 * r + 0.587 * g + 0.114 * b);
+  }
+  if (lum.length < 32) return out;
+  lum.sort((a, b) => a - b);
+  const thr = lum[Math.min(lum.length - 1, Math.floor(lum.length * 0.985))];
+  for (let i = 0; i < w * h; i++) {
+    const p = i * 4;
+    if (out[p + 3] < 128) continue;
+    const L = 0.299 * out[p] + 0.587 * out[p + 1] + 0.114 * out[p + 2];
+    if (L > thr) out[p + 3] = 0;
+  }
+  return out;
+}
+
+function computeWidgetGridScore(data, w, h) {
+  if (!data || w < 80 || h < 10) return 0;
+  const edgeX = new Float64Array(Math.max(1, w - 1));
+  for (let y = 0; y < h; y++) {
+    const row = y * w * 4;
+    for (let x = 0; x + 1 < w; x++) {
+      const i = row + x * 4;
+      if (data[i + 3] < 128 || data[i + 7] < 128) continue;
+      const l1 = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      const l2 = 0.299 * data[i + 4] + 0.587 * data[i + 5] + 0.114 * data[i + 6];
+      edgeX[x] += Math.abs(l1 - l2);
+    }
+  }
+
+  const boundaryMask = new Uint8Array(edgeX.length);
+  const scale = w / 182;
+  let bSum = 0, bCount = 0;
+  for (let k = 0; k <= 9; k++) {
+    const b = Math.round(k * 20 * scale);
+    let m = 0;
+    for (let dx = -1; dx <= 1; dx++) {
+      const x = b + dx;
+      if (x < 0 || x >= edgeX.length) continue;
+      boundaryMask[x] = 1;
+      m = Math.max(m, edgeX[x]);
+    }
+    bSum += m;
+    bCount++;
+  }
+  let iSum = 0, iCount = 0;
+  for (let x = 0; x < edgeX.length; x++) {
+    if (boundaryMask[x]) continue;
+    iSum += edgeX[x];
+    iCount++;
+  }
+  const bAvg = bCount ? (bSum / bCount) : 0;
+  const iAvg = iCount ? (iSum / iCount) : 0;
+  const ratio = bAvg / (iAvg + 1e-6);
+  return clamp01((ratio - 1) / 2);
+}
+
 function maskSlotNoise(data, w, h) {
   const out = new Uint8ClampedArray(data);
   const durabilityY = Math.floor(h * 0.78);
@@ -705,6 +767,37 @@ function estimateHudConfidence(hudFeatures, packNames) {
   return { best, bestName };
 }
 
+function estimateSlotConfidence(slots, packNames) {
+  if (!slots || !slots.length || !fingerprints || !fingerprints.packs) return { best: 0, bestName: '' };
+  const names = (packNames && packNames.length) ? packNames : Object.keys(fingerprints.packs);
+  const slotTypes = inferDisplaySlotTypes(slots);
+  const swordSlot = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0);
+  const pearlSlot = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1);
+  const potionSlot = pickSlotForClip(slots, slotTypes, 'splash_potion', 5);
+
+  let best = 0, bestName = '';
+  for (const name of names) {
+    const p = fingerprints.packs[name];
+    if (!p) continue;
+    let sum = 0, wSum = 0;
+    if (swordSlot && (swordSlot.activity || 0) >= 0.28 && p.diamond_sword) {
+      sum += compareSlotToType(swordSlot, p.diamond_sword, 'diamond_sword') * 1.0;
+      wSum += 1.0;
+    }
+    if (pearlSlot && (pearlSlot.activity || 0) >= 0.28 && p.ender_pearl) {
+      sum += compareSlotToType(pearlSlot, p.ender_pearl, 'ender_pearl') * 1.0;
+      wSum += 1.0;
+    }
+    if (potionSlot && (potionSlot.activity || 0) >= 0.28 && p.splash_potion) {
+      sum += compareSlotToType(potionSlot, p.splash_potion, 'splash_potion') * 0.6;
+      wSum += 0.6;
+    }
+    const score = wSum ? (sum / wSum) : 0;
+    if (score > best) { best = score; bestName = name; }
+  }
+  return { best, bestName };
+}
+
 function buildStrictCropCandidates(imgW, imgH) {
   const unitSet = new Set();
   const aspect = imgH / Math.max(1, imgW);
@@ -715,6 +808,8 @@ function buildStrictCropCandidates(imgW, imgH) {
   // Prefer Minecraft-like GUI scale factors (integer), plus ratio-consistent fallbacks for rescaled screenshots.
   const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
   for (let u = 1; u <= maxScale; u++) unitSet.add(u.toFixed(3));
+  const denseMax = Math.min(6, maxScale + 0.75);
+  for (let u = 0.8; u <= denseMax + 1e-6; u += 0.05) unitSet.add(u.toFixed(3));
 
   // Hotbar-only crops: the widget can span (almost) the full image width.
   // These units are harmless for full screenshots (filtered out by range).
@@ -954,33 +1049,47 @@ function buildClipCompositePixels(ctx, imgW, imgH, widgetRect, slots, slotTypes)
 // Strict proportional crop only: centered hotbar + fixed bottom ratio candidates
 function extractHotbarSlots(ctx, imgW, imgH) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
+  const pre = [];
+  const PRE_K = 18;
   let bestSlots = [];
   let bestConfidence = -Infinity;
   let bestBoost = -Infinity;
-  let bestWidgetBoost = -Infinity;
-  let bestHudBoost = -Infinity;
   let bestWidgetFeatures = null;
   let bestWidgetRect = null;
   let bestHudFeatures = null;
   let bestSearchInfo = null;
 
   for (const c of candidates) {
+    const wx = Math.round(c.widgetX);
+    const wy = Math.round(c.widgetY);
+    const ww = Math.round(c.widgetW);
+    const wh = Math.round(c.widgetH);
+    if (wx < 0 || wy < 0 || wx + ww > imgW || wy + wh > imgH) continue;
+
+    const widgetStrip = extractRegion(ctx, wx, wy, ww, wh, 182, 22);
+    const gridScore = computeWidgetGridScore(maskWidgetItems(widgetStrip.data, 182, 22), 182, 22);
+    const score = gridScore;
+    if (pre.length < PRE_K || score > pre[pre.length - 1].score) {
+      pre.push({ c, wx, wy, ww, wh, widgetStrip, gridScore, score });
+      pre.sort((a, b) => b.score - a.score);
+      if (pre.length > PRE_K) pre.length = PRE_K;
+    }
+  }
+
+  for (const cand of pre) {
+    const c = cand.c;
     const unit = c.unit;
-    const widgetW = 182 * unit;
-    const widgetH = 22 * unit;
     const itemOffX = 3 * unit;
     const itemW = 16 * unit;
     const slotStep = 20 * unit;
-    const widgetX = c.widgetX;
-    const widgetY = c.widgetY;
-    const itemY = imgH - 19 * unit - c.bottomOffset;
+    const itemY = cand.wy + 3 * unit;
 
     const slots = [];
     let activeCount = 0;
     let totalActivity = 0;
     let totalQuality = 0;
     for (let i = 0; i < 9; i++) {
-      const x = widgetX + itemOffX + i * slotStep;
+      const x = cand.wx + itemOffX + i * slotStep;
       const slot = extractSlotFeatures(ctx, x, itemY, itemW, imgW, imgH, i);
       if (!slot) continue;
       slots.push(slot);
@@ -990,22 +1099,15 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     }
     if (slots.length !== 9) continue;
 
-    const wx = Math.round(widgetX);
-    const wy = Math.round(widgetY);
-    const ww = Math.round(widgetW);
-    const wh = Math.round(widgetH);
-    if (wx < 0 || wy < 0 || wx + ww > imgW || wy + wh > imgH) continue;
-
-    // Compute widget features on a masked widget strip to reduce item overlays' influence.
-    const widgetStrip = extractRegion(ctx, wx, wy, ww, wh, 182, 22);
-    const widgetMasked = new ImageData(maskWidgetItems(widgetStrip.data, 182, 22), 182, 22);
+    const widgetMasked = new ImageData(maskWidgetItems(cand.widgetStrip.data, 182, 22), 182, 22);
     const widgetRegion = resizeImageDataNearest(widgetMasked, 182, 22, 16, 16);
+    const widgetClean = suppressWidgetHighlights(widgetRegion.data, 16, 16);
     const widgetFeatures = {
-      hist: computeHistogram(widgetRegion.data, 256, 0),
-      moments: computeColorMoments(widgetRegion.data, 256, 0),
-      edge: computeEdgeDensity(widgetRegion.data, 16, 16)
+      hist: computeHistogram(widgetClean, 256, 0),
+      moments: computeColorMoments(widgetClean, 256, 0),
+      edge: computeEdgeDensity(widgetClean, 16, 16)
     };
-    const widgetRect = { x: wx, y: wy, w: ww, h: wh };
+    const widgetRect = { x: cand.wx, y: cand.wy, w: cand.ww, h: cand.wh };
     const hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
 
     const widgetCand = estimateWidgetCandidates(widgetFeatures, 8);
@@ -1014,18 +1116,22 @@ function extractHotbarSlots(ctx, imgW, imgH) {
       ? estimateHudConfidence(hudFeatures, widgetCand.top.map(t => t.name))
       : { best: 0, bestName: '' };
     const hudBoost = hudCand.best;
-    const combinedBoost = hudFeatures ? (0.55 * widgetBoost + 0.45 * hudBoost) : widgetBoost;
+    const slotCand = estimateSlotConfidence(slots, widgetCand.top.map(t => t.name));
+    const slotBoost = slotCand.best;
+
+    const baseBoost = hudFeatures
+      ? (0.55 * widgetBoost + 0.30 * hudBoost + 0.15 * slotBoost)
+      : (0.75 * widgetBoost + 0.25 * slotBoost);
+    const combinedBoost = baseBoost * (0.70 + 0.30 * cand.gridScore);
     const hudCoverage = hudFeatures
       ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30)
       : 0;
+    const confidence = activeCount * 220 + totalActivity * 160 + totalQuality * 6 + hudCoverage * 700;
 
-    const confidence = activeCount * 260 + totalActivity * 200 + totalQuality * 8 + hudCoverage * 540;
     const boostDelta = combinedBoost - bestBoost;
     if (boostDelta > 0.001 || (Math.abs(boostDelta) <= 0.001 && confidence > bestConfidence)) {
       bestConfidence = confidence;
       bestBoost = combinedBoost;
-      bestWidgetBoost = widgetBoost;
-      bestHudBoost = hudBoost;
       bestSlots = slots;
       bestWidgetFeatures = widgetFeatures;
       bestWidgetRect = widgetRect;
@@ -1038,8 +1144,11 @@ function extractHotbarSlots(ctx, imgW, imgH) {
         combinedBoost,
         widgetBoost,
         hudBoost,
+        slotBoost,
+        gridScore: cand.gridScore,
         widgetBest: widgetCand.bestName,
         hudBest: hudCand.bestName,
+        slotBest: slotCand.bestName,
       };
     }
   }
