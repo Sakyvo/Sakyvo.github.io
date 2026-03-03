@@ -5,6 +5,7 @@ let fingerprints = null;
 let clipWorker = null;
 let clipWorkerReady = false;
 let clipWorkerError = null;
+const ENABLE_CLIP = false;
 
 function setClipWorkerError(errorMsg) {
   clipWorkerReady = false;
@@ -20,6 +21,7 @@ function setClipWorkerError(errorMsg) {
 }
 
 function initClipWorker() {
+  if (!ENABLE_CLIP) return;
   if (clipWorker) return;
   clipWorker = new Worker('/assets/js/sbi-worker.js', { type: 'module' });
   clipWorker.onmessage = ({ data }) => {
@@ -76,14 +78,14 @@ const SLOT_COLOR_MAP = {
 };
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
-const STRICT_BOTTOM_OFFSET_RATIOS = [0, 0.01, 0.02, 0.03, 0.045, 0.06, 0.075, 0.09];
+const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
 const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
 const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
   type: { diamond_sword: 2.5, ender_pearl: 2.5, splash_potion: 1.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
-  hud: { health: 2.0, hunger: 1.5, armor: 2.0 },
-  mix: { slot: 0.25, hud: 0.45, widget: 0.30, slotNoHud: 0.55, widgetNoHud: 0.45 },
+  hud: { health: 3.0, hunger: 0.5, armor: 1.0 },
+  mix: { slot: 0.20, hud: 0.40, widget: 0.40, slotNoHud: 0.45, widgetNoHud: 0.55 },
 };
 
 function clamp01(v) {
@@ -127,7 +129,6 @@ function renderDebugPanel(results, phase) {
 
   body.innerHTML = (results || []).slice(0, 10).map((r, i) => {
     const info = _lastMatchDetails[r.name] || {};
-    const clip = _lastClipScores[r.name];
     return `<tr>
       <td>${i + 1}</td>
       <td>${r.name}</td>
@@ -137,7 +138,6 @@ function renderDebugPanel(results, phase) {
       <td>${fmtPct(info.healthScore)}</td>
       <td>${fmtPct(info.hungerScore)}</td>
       <td>${fmtPct(info.armorScore)}</td>
-      <td>${clip === undefined ? '-' : fmtPct(clip)}</td>
       <td>${summarizeSlotTypes(info.slotTypes)}</td>
     </tr>`;
   }).join('');
@@ -152,7 +152,7 @@ function renderScoreBreakdown() {
     return `<tr><td>${label}</td><td>${k}</td><td>${v.toFixed(2)}</td></tr>`;
   }).join('');
   el.innerHTML = `
-    <div>XP is ignored. AI uses a (widget + sword + pearl) composite; final score mixes Slot/HUD/Widget and can be reranked by AI.</div>
+    <div>XP is ignored. Final score mixes Slot/HUD/Widget.</div>
     <table class="sbi-weight-table">
       <thead><tr><th>Item</th><th>Key</th><th>Weight</th></tr></thead>
       <tbody>${typeRows}</tbody>
@@ -167,7 +167,6 @@ function renderScoreBreakdown() {
     </table>
     <div>Mix (with HUD): Slot ${SBI_SCORE_WEIGHTS.mix.slot.toFixed(2)}, HUD ${SBI_SCORE_WEIGHTS.mix.hud.toFixed(2)}, Widget ${SBI_SCORE_WEIGHTS.mix.widget.toFixed(2)}</div>
     <div>Mix (no HUD): Slot ${SBI_SCORE_WEIGHTS.mix.slotNoHud.toFixed(2)}, Widget ${SBI_SCORE_WEIGHTS.mix.widgetNoHud.toFixed(2)}</div>
-    <div>AI rerank: Total = Hash × (${CLIP_RERANK_BASE.toFixed(2)} + ${CLIP_RERANK_WEIGHT.toFixed(2)} × CLIP), CLIP-only scale ${CLIP_ONLY_SCALE.toFixed(2)}</div>
   `;
 }
 
@@ -180,9 +179,7 @@ function renderForcedPacks() {
   const rows = FORCE_PACKS.map(name => {
     const info = _lastMatchDetails[name] || {};
     const hashScore = isFinite(info.finalScore) ? info.finalScore : (_lastAllScores[name] || 0);
-    const aiScore = _lastForcedCombined && isFinite(_lastForcedCombined[name]) ? _lastForcedCombined[name] : null;
-    const total = aiScore !== null ? aiScore : hashScore;
-    const clip = _lastClipScores[name];
+    const total = hashScore;
     const disp = name.replace(/_/g, ' ');
     return `<tr>
       <td><a href="/p/${encodeURIComponent(name)}/">${disp}</a></td>
@@ -193,7 +190,6 @@ function renderForcedPacks() {
       <td>${fmtPct(info.healthScore)}</td>
       <td>${fmtPct(info.hungerScore)}</td>
       <td>${fmtPct(info.armorScore)}</td>
-      <td>${clip === undefined ? '-' : fmtPct(clip)}</td>
     </tr>`;
   }).join('');
 
@@ -202,7 +198,7 @@ function renderForcedPacks() {
     <div class="sbi-forced-title">Forced Packs</div>
     <table class="sbi-forced-table">
       <thead>
-        <tr><th>Pack</th><th>Total</th><th>Hash</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>CLIP</th></tr>
+        <tr><th>Pack</th><th>Total</th><th>Hash</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
@@ -210,6 +206,7 @@ function renderForcedPacks() {
 }
 
 function handleClipResults(clipScores) {
+  if (!ENABLE_CLIP) return;
   const statusEl = document.getElementById('sbi-clip-status');
   const sortedClip = [...clipScores].sort((a, b) => b.clipScore - a.clipScore);
   // Build lookup: packName → normalized clip score (per-query range over returned top-K)
@@ -809,7 +806,7 @@ function buildStrictCropCandidates(imgW, imgH) {
   const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
   for (let u = 1; u <= maxScale; u++) unitSet.add(u.toFixed(3));
   const denseMax = Math.min(6, maxScale + 0.75);
-  for (let u = 0.8; u <= denseMax + 1e-6; u += 0.05) unitSet.add(u.toFixed(3));
+  for (let u = 1.0; u <= denseMax + 1e-6; u += 0.05) unitSet.add(u.toFixed(3));
 
   // Hotbar-only crops: the widget can span (almost) the full image width.
   // These units are harmless for full screenshots (filtered out by range).
@@ -840,7 +837,7 @@ function buildStrictCropCandidates(imgW, imgH) {
     for (const ratio of STRICT_WIDGET_WIDTH_RATIOS) unitSet.add((imgW * ratio / 182).toFixed(3));
     for (const ratio of STRICT_WIDGET_HEIGHT_RATIOS) unitSet.add((imgH * ratio / 22).toFixed(3));
   }
-  const units = Array.from(unitSet).map(Number).filter(u => u >= 0.8 && u <= 6).sort((a, b) => a - b);
+  const units = Array.from(unitSet).map(Number).filter(u => u >= 1.0 && u <= 6).sort((a, b) => a - b);
   const out = [];
   for (const unit of units) {
     const widgetW = 182 * unit;
@@ -853,8 +850,9 @@ function buildStrictCropCandidates(imgW, imgH) {
       xSet.add((imgW - widgetW).toFixed(3));
     }
     const xCandidates = Array.from(xSet).map(Number).filter(x => isFinite(x) && x >= 0 && x + widgetW <= imgW + 1e-3);
-    for (const bottomRatio of STRICT_BOTTOM_OFFSET_RATIOS) {
-      const bottomOffset = imgH * bottomRatio;
+    const bottomOffsets = new Set(STRICT_BOTTOM_OFFSET_UNIT_STEPS.map(s => Math.round(s * unit)));
+    for (const bottomOffset of bottomOffsets) {
+      const bottomRatio = bottomOffset / imgH;
       const widgetY = imgH - widgetH - bottomOffset;
       if (widgetY < 0 || widgetY + widgetH > imgH) continue;
       for (const widgetX of xCandidates) {
@@ -1050,7 +1048,7 @@ function buildClipCompositePixels(ctx, imgW, imgH, widgetRect, slots, slotTypes)
 function extractHotbarSlots(ctx, imgW, imgH) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
   const pre = [];
-  const PRE_K = 18;
+  const PRE_K = 80;
   let bestSlots = [];
   let bestConfidence = -Infinity;
   let bestBoost = -Infinity;
@@ -1067,10 +1065,11 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     if (wx < 0 || wy < 0 || wx + ww > imgW || wy + wh > imgH) continue;
 
     const widgetStrip = extractRegion(ctx, wx, wy, ww, wh, 182, 22);
-    const gridScore = computeWidgetGridScore(maskWidgetItems(widgetStrip.data, 182, 22), 182, 22);
-    const score = gridScore;
+    const gridScore = computeWidgetGridScore(widgetStrip.data, 182, 22);
+    const bottomPref = clamp01(1 - (c.bottomOffset || 0) / (c.unit * 8 + 1e-6));
+    const score = gridScore * (0.85 + 0.15 * bottomPref);
     if (pre.length < PRE_K || score > pre[pre.length - 1].score) {
-      pre.push({ c, wx, wy, ww, wh, widgetStrip, gridScore, score });
+      pre.push({ c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, score });
       pre.sort((a, b) => b.score - a.score);
       if (pre.length > PRE_K) pre.length = PRE_K;
     }
@@ -1120,9 +1119,9 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const slotBoost = slotCand.best;
 
     const baseBoost = hudFeatures
-      ? (0.55 * widgetBoost + 0.30 * hudBoost + 0.15 * slotBoost)
-      : (0.75 * widgetBoost + 0.25 * slotBoost);
-    const combinedBoost = baseBoost * (0.70 + 0.30 * cand.gridScore);
+      ? (0.45 * widgetBoost + 0.45 * hudBoost + 0.10 * slotBoost)
+      : (0.70 * widgetBoost + 0.30 * slotBoost);
+    const combinedBoost = baseBoost * (0.70 + 0.30 * cand.gridScore) * (0.92 + 0.08 * cand.bottomPref);
     const hudCoverage = hudFeatures
       ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30)
       : 0;
@@ -1504,7 +1503,7 @@ async function processImage(file) {
     }
 
     // Stage 2: CLIP refinement (async)
-    if (widgetRect && slots.length > 0) {
+    if (ENABLE_CLIP && widgetRect && slots.length > 0) {
       const statusEl = document.getElementById('sbi-clip-status');
       if (statusEl) { statusEl.hidden = true; statusEl.textContent = ''; }
       if (clipWorkerError) {
@@ -1575,25 +1574,10 @@ function init() {
     }
   });
 
-  // AI badge toggle
-  const badge = document.getElementById('sbi-ai-badge');
-  const popup = document.getElementById('sbi-ai-popup');
-  if (badge && popup) {
-    badge.addEventListener('click', () => popup.hidden = !popup.hidden);
-    document.addEventListener('click', e => {
-      if (!badge.contains(e.target) && !popup.contains(e.target)) popup.hidden = true;
-    });
-    // Show popup on first load
-    popup.hidden = false;
-    setTimeout(() => { popup.hidden = true; }, 4000);
-  }
-
   const forceToggle = document.getElementById('sbi-force-toggle');
   if (forceToggle) forceToggle.addEventListener('change', () => renderForcedPacks());
   renderScoreBreakdown();
-
-  // Pre-load worker in background
-  initClipWorker();
+  if (ENABLE_CLIP) initClipWorker();
 }
 
 init();

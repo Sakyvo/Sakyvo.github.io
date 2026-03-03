@@ -12,14 +12,8 @@
     <a href="/" class="logo">VALE</a>
     <nav>
       <a href="/sbi/history/" class="nav-btn" title="Search history">🕐</a>
-      <button class="sbi-ai-badge" id="sbi-ai-badge" data-state="loading" title="AI Model Status">AI</button>
     </nav>
   </header>
-
-  <div class="sbi-ai-popup" id="sbi-ai-popup" hidden>
-    <div class="sbi-ai-popup-indicator" id="sbi-ai-dot"></div>
-    <span id="sbi-ai-msg">Loading AI model (~86MB, cached after first use)...</span>
-  </div>
 
   <div class="sbi-container">
     <h2 class="sbi-title">Search by Image</h2>
@@ -34,10 +28,6 @@
       <div class="sbi-spinner"></div>
       <p>Analyzing...</p>
     </div>
-
-    <div class="sbi-clip-status" id="sbi-clip-status" hidden></div>
-
-    <div class="sbi-results" id="sbi-results" hidden></div>
 
     <div class="sbi-preview" id="sbi-preview" hidden>
       <canvas id="sbi-canvas"></canvas>
@@ -91,6 +81,8 @@
       </div>
     </div>
 
+    <div class="sbi-results" id="sbi-results" hidden></div>
+
     <details class="sbi-debug" id="sbi-debug" hidden>
       <summary>Diagnostics</summary>
       <div class="sbi-debug-meta" id="sbi-debug-meta"></div>
@@ -106,7 +98,6 @@
               <th>HP</th>
               <th>Hun</th>
               <th>Arm</th>
-              <th>CLIP</th>
               <th>Slot Types</th>
             </tr>
           </thead>
@@ -133,6 +124,6 @@
     <p>VALE Project</p>
   </footer>
 
-  <script src="/assets/js/sbi.js?v=18"></script>
+  <script src="/assets/js/sbi.js?v=20"></script>
 </body>
 </html>
