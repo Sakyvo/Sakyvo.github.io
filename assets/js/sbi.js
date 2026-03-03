@@ -81,8 +81,8 @@ const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak
 const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
 const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
-  type: { diamond_sword: 2.2, ender_pearl: 2.2, splash_potion: 1.2, steak: 0.8, golden_carrot: 1.0, apple_golden: 1.0, iron_sword: 1.35 },
-  hud: { health: 3.2, hunger: 0.6, armor: 3.2 },
+  type: { diamond_sword: 2.5, ender_pearl: 2.5, splash_potion: 1.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
+  hud: { health: 2.0, hunger: 1.5, armor: 2.0 },
   mix: { slot: 0.25, hud: 0.45, widget: 0.30, slotNoHud: 0.55, widgetNoHud: 0.45 },
 };
 
@@ -104,7 +104,7 @@ function summarizeSlotTypes(types) {
     splash_potion: 'HL',
     steak: 'SK',
     golden_carrot: 'GC',
-    apple_golden: 'GC',
+    apple_golden: 'AG',
     none: 'NN',
   };
   return types.map(t => map[t] || '?').join(' ');
@@ -637,8 +637,11 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
   if (!isFinite(unit) || unit <= 0) return null;
 
   const iconSize = Math.max(4, 9 * unit);
-  const heartsY = widgetRect.y - 17 * unit;
-  const armorY = heartsY - 10 * unit;
+  let heartsY = widgetRect.y - 17 * unit;
+  let armorY = heartsY - 10 * unit;
+  const yShift = armorY < 0 ? -armorY : (heartsY < 0 ? -heartsY : 0);
+  heartsY += yShift;
+  armorY += yShift;
 
   const hearts = [];
   const hunger = [];
@@ -704,6 +707,10 @@ function estimateHudConfidence(hudFeatures, packNames) {
 
 function buildStrictCropCandidates(imgW, imgH) {
   const unitSet = new Set();
+  const aspect = imgH / Math.max(1, imgW);
+  const isHudCrop = aspect < 0.35;
+  const maxWidgetW = imgW * (isHudCrop ? 1.02 : 0.92);
+  const maxWidgetH = imgH * (isHudCrop ? 0.78 : 0.2);
 
   // Prefer Minecraft-like GUI scale factors (integer), plus ratio-consistent fallbacks for rescaled screenshots.
   const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
@@ -743,13 +750,22 @@ function buildStrictCropCandidates(imgW, imgH) {
   for (const unit of units) {
     const widgetW = 182 * unit;
     const widgetH = 22 * unit;
-    if (widgetW > imgW * 0.92 || widgetH > imgH * 0.2) continue;
-    const widgetX = (imgW - widgetW) / 2;
+    if (widgetW > maxWidgetW || widgetH > maxWidgetH) continue;
+    const cx = (imgW - widgetW) / 2;
+    const xSet = new Set([cx.toFixed(3)]);
+    if (isHudCrop) {
+      xSet.add('0.000');
+      xSet.add((imgW - widgetW).toFixed(3));
+    }
+    const xCandidates = Array.from(xSet).map(Number).filter(x => isFinite(x) && x >= 0 && x + widgetW <= imgW + 1e-3);
     for (const bottomRatio of STRICT_BOTTOM_OFFSET_RATIOS) {
       const bottomOffset = imgH * bottomRatio;
       const widgetY = imgH - widgetH - bottomOffset;
-      if (widgetX < 0 || widgetY < 0 || widgetX + widgetW > imgW || widgetY + widgetH > imgH) continue;
-      out.push({ unit, bottomRatio, bottomOffset, widgetX, widgetY, widgetW, widgetH });
+      if (widgetY < 0 || widgetY + widgetH > imgH) continue;
+      for (const widgetX of xCandidates) {
+        if (widgetX < 0 || widgetX + widgetW > imgW) continue;
+        out.push({ unit, bottomRatio, bottomOffset, widgetX, widgetY, widgetW, widgetH });
+      }
     }
   }
   return out;
@@ -830,21 +846,15 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   if (!canvas) return;
   if (!slot) { canvas.classList.add('sbi-crop-hidden'); return; }
 
-  const inset = Math.max(1, Math.round(slot.sz * 0.12));
-  const sx = Math.round(slot.x + inset);
-  const sy = Math.round(slot.y + inset);
-  const sw = Math.max(2, Math.round(slot.sz - inset * 2));
-  const sh = Math.max(2, Math.round(slot.sz - inset * 2));
-  if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
-
-  const region = extractRegion(ctx, sx, sy, sw, sh, 16, 16);
-  let eff = maskSlotNoise(region.data, 16, 16);
-  eff = suppressSlotBackground(eff, 16, 16);
-  eff = zeroRgbForTransparent(eff);
-
   const src = document.createElement('canvas');
-  src.width = 16; src.height = 16;
-  src.getContext('2d').putImageData(new ImageData(eff, 16, 16), 0, 0);
+  src.width = 16;
+  src.height = 16;
+  const sx = Math.round(slot.x);
+  const sy = Math.round(slot.y);
+  const sw = Math.max(2, Math.round(slot.sz));
+  const sh = sw;
+  if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
+  src.getContext('2d').putImageData(extractRegion(ctx, sx, sy, sw, sh, 16, 16), 0, 0);
 
   const size = outSize || 96;
   canvas.classList.remove('sbi-crop-hidden');
@@ -1160,6 +1170,8 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 
       const targetType = displaySlotTypes[slot.index] || 'none';
       if (targetType === 'none') continue;
+      const typeW = TYPE_WEIGHT[targetType] || 0;
+      if (typeW <= 0) continue;
       const targetTex = packData[targetType];
       if (!targetTex) continue;
 
@@ -1167,6 +1179,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       let altBest = 0;
       for (const type of ITEM_TYPES) {
         if (type === targetType) continue;
+        if ((TYPE_WEIGHT[type] || 0) <= 0) continue;
         if (!packData[type]) continue;
         altBest = Math.max(altBest, compareSlotToType(slot, packData[type], type));
       }
@@ -1174,7 +1187,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       activeSlots++;
       const certainty = Math.max(0, sim - altBest);
       const qualityNorm = clamp01((slot.quality || 0) / 13);
-      const w = (TYPE_WEIGHT[targetType] || 1) * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
+      const w = typeW * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
       slotWeighted += sim * w;
       slotWeights += w;
       certaintySum += certainty;
@@ -1336,6 +1349,12 @@ async function processImage(file) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0);
 
+  const rawCanvas = document.createElement('canvas');
+  rawCanvas.width = img.width;
+  rawCanvas.height = img.height;
+  const rawCtx = rawCanvas.getContext('2d', { willReadFrequently: true });
+  rawCtx.drawImage(img, 0, 0);
+
   try {
     if (!fingerprints) {
       const resp = await fetch('/data/sbi-fingerprints.json?v=' + SBI_FINGERPRINT_VERSION);
@@ -1343,7 +1362,7 @@ async function processImage(file) {
       fingerprints = await resp.json();
     }
 
-    const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(ctx, img.width, img.height);
+    const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height);
 
     // Stage 1: Hash-based instant results
     const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
@@ -1358,7 +1377,7 @@ async function processImage(file) {
       hungerCount: hudFeatures && hudFeatures.hunger ? hudFeatures.hunger.length : 0,
       armorCount: hudFeatures && hudFeatures.armor ? hudFeatures.armor.length : 0,
     };
-    renderCrops(ctx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes);
+    renderCrops(rawCtx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     progress.hidden = true;
     renderResults(stage1Top10);
@@ -1384,7 +1403,7 @@ async function processImage(file) {
       }
 
       if (!clipWorkerError && widgetRect.x >= 0 && widgetRect.y >= 0 && widgetRect.x + widgetRect.w <= img.width && widgetRect.y + widgetRect.h <= img.height) {
-        const pixels = buildClipCompositePixels(ctx, img.width, img.height, widgetRect, slots, slotTypes);
+        const pixels = buildClipCompositePixels(rawCtx, img.width, img.height, widgetRect, slots, slotTypes);
         if (pixels) {
           const sendSearch = () => clipWorker.postMessage({ type: 'search', pixels, width: 224, height: 224 }, [pixels]);
           if (clipWorkerReady) sendSearch();
