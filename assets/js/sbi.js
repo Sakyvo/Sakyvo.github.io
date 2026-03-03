@@ -454,15 +454,18 @@ function maskWidgetItems(data, w, h) {
   if (w < 40 || h < 12) return out;
 
   // Normalize to vanilla widget strip (182x22): item squares live at x=3+i*20, y=3, size=16.
+  // Keep slot-frame/background color signal by masking only center icon area.
   const sx = w / 182;
   const sy = h / 22;
   const itemSize = Math.max(1, Math.round(16 * Math.min(sx, sy)));
   const itemY = Math.round(3 * sy);
+  const maskSize = Math.max(6, Math.min(itemSize - 2, Math.round(itemSize * 0.5)));
+  const inset = Math.max(0, Math.floor((itemSize - maskSize) / 2));
 
   for (let i = 0; i < 9; i++) {
     const itemX = Math.round((3 + i * 20) * sx);
-    const x1 = Math.max(0, itemX), x2 = Math.min(w, itemX + itemSize);
-    const y1 = Math.max(0, itemY), y2 = Math.min(h, itemY + itemSize);
+    const x1 = Math.max(0, itemX + inset), x2 = Math.min(w, itemX + inset + maskSize);
+    const y1 = Math.max(0, itemY + inset), y2 = Math.min(h, itemY + inset + maskSize);
     for (let y = y1; y < y2; y++) {
       for (let x = x1; x < x2; x++) out[(y * w + x) * 4 + 3] = 0;
     }
