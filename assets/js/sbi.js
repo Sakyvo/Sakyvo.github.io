@@ -859,11 +859,7 @@ function buildStrictCropCandidates(imgW, imgH) {
     for (const ratio of STRICT_WIDGET_WIDTH_RATIOS) unitSet.add((imgW * ratio / 182).toFixed(3));
     for (const ratio of STRICT_WIDGET_HEIGHT_RATIOS) unitSet.add((imgH * ratio / 22).toFixed(3));
   }
-  let units = Array.from(unitSet).map(Number).filter(u => u >= 1.0 && u <= 6).sort((a, b) => a - b);
-  if (!isHudCrop && Math.min(imgW, imgH) >= 600) {
-    const nearInt = units.filter(u => Math.abs(u - Math.round(u)) <= 0.18);
-    if (nearInt.length >= 3) units = nearInt;
-  }
+  const units = Array.from(unitSet).map(Number).filter(u => u >= 1.0 && u <= 6).sort((a, b) => a - b);
   const out = [];
   for (const unit of units) {
     const widgetW = 182 * unit;
