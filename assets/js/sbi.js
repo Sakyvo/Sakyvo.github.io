@@ -946,6 +946,25 @@ function bboxOfBoxes(boxes) {
   return { x: minX, y: minY, w: Math.max(1, maxX - minX), h: Math.max(1, maxY - minY) };
 }
 
+function getSlotDisplayRect(slot, imgW, imgH) {
+  if (!slot) return null;
+  const src = slot.displayRect || slot;
+  const sx = Math.round(src.x);
+  const sy = Math.round(src.y);
+  const ss = Math.max(2, Math.round(src.sz));
+  let left = sx;
+  let top = sy;
+  let right = sx + ss;
+  let bottom = sy + ss;
+  if (left < 0) left = 0;
+  if (top < 0) top = 0;
+  if (right > imgW) right = imgW;
+  if (bottom > imgH) bottom = imgH;
+  const side = Math.min(right - left, bottom - top);
+  if (side < 2) return null;
+  return { x: left, y: top, sz: side };
+}
+
 function renderCropCanvas(id, imageData) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
@@ -959,12 +978,12 @@ function renderCropCanvas(id, imageData) {
 function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
-  if (!slot) { canvas.classList.add('sbi-crop-hidden'); return; }
-  const sx = Math.round(slot.x);
-  const sy = Math.round(slot.y);
-  const sw = Math.max(2, Math.round(slot.sz));
-  const sh = sw;
-  if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
+  const rect = getSlotDisplayRect(slot, imgW, imgH);
+  if (!rect) { canvas.classList.add('sbi-crop-hidden'); return; }
+  const sx = rect.x;
+  const sy = rect.y;
+  const sw = rect.sz;
+  const sh = rect.sz;
 
   const size = outSize || Math.max(96, sw * 2);
   canvas.classList.remove('sbi-crop-hidden');
@@ -1163,6 +1182,11 @@ function extractHotbarSlots(ctx, imgW, imgH) {
       const x = cand.wx + itemOffX + i * slotStep;
       const slot = extractSlotFeatures(ctx, x, itemY, itemW, imgW, imgH, i);
       if (!slot) continue;
+      slot.displayRect = {
+        x: cand.wx + (1 + i * 20) * unit,
+        y: cand.wy + unit,
+        sz: 20 * unit,
+      };
       slots.push(slot);
       totalActivity += slot.activity;
       totalQuality += slot.quality;
@@ -1447,7 +1471,9 @@ function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
     const slot = slots[i];
     const slotType = slotTypes && slotTypes[i] ? slotTypes[i] : '';
     ctx.strokeStyle = SLOT_COLOR_MAP[slotType] || '#ff0';
-    ctx.strokeRect(slot.x, slot.y, slot.sz, slot.sz);
+    const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
+    if (!rect) continue;
+    ctx.strokeRect(rect.x, rect.y, rect.sz, rect.sz);
   }
   if (!hudFeatures) return;
   ctx.lineWidth = 2;
