@@ -969,17 +969,8 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   const sw = Math.max(2, Math.round(slot.sz));
   const sh = sw;
   if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
-  const insetLeft = Math.max(1, Math.round(sw * 0.14));
-  const insetTop = Math.max(1, Math.round(sh * 0.12));
-  const insetRight = Math.max(insetLeft + 1, Math.round(sw * 0.22));
-  const insetBottom = Math.max(insetTop + 1, Math.round(sh * 0.22));
-  const cx = sx + insetLeft;
-  const cy = sy + insetTop;
-  const cw = Math.max(2, sw - insetLeft - insetRight);
-  const ch = Math.max(2, sh - insetTop - insetBottom);
-  if (cx < 0 || cy < 0 || cx + cw > imgW || cy + ch > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
 
-  const size = outSize || Math.max(96, cw * 2);
+  const size = outSize || Math.max(96, sw * 2);
   canvas.classList.remove('sbi-crop-hidden');
   canvas.width = size;
   canvas.height = size;
@@ -987,7 +978,7 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   cctx.imageSmoothingEnabled = false;
   cctx.fillStyle = '#141414';
   cctx.fillRect(0, 0, size, size);
-  cctx.drawImage(ctx.canvas, cx, cy, cw, ch, 0, 0, size, size);
+  cctx.drawImage(ctx.canvas, sx, sy, sw, sh, 0, 0, size, size);
 }
 
 function pickSlotByIndex(slots, index) {
@@ -1020,10 +1011,10 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   renderHudBar('sbi-crop-health', heartBox);
   renderHudBar('sbi-crop-hunger', hungerBox);
 
-  const ds = pickSlotByIndex(slots, 0) || pickSlotForClip(slots, slotTypes, 'diamond_sword', 0);
-  const ep = pickSlotByIndex(slots, 1) || pickSlotForClip(slots, slotTypes, 'ender_pearl', 1);
-  const hl = pickSlotByIndex(slots, 5) || pickSlotForClip(slots, slotTypes, 'splash_potion', 5);
-  const food = pickSlotByIndex(slots, 8) || pickSlotByIndex(slots, 7) || pickSlotForClip(slots, slotTypes, 'golden_carrot', 8) || pickSlotForClip(slots, slotTypes, 'steak', 8);
+  const ds = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0) || pickSlotByIndex(slots, 0);
+  const ep = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1) || pickSlotByIndex(slots, 1);
+  const hl = pickSlotForClip(slots, slotTypes, 'splash_potion', 5) || pickSlotByIndex(slots, 5);
+  const food = pickSlotForClip(slots, slotTypes, 'golden_carrot', 8) || pickSlotForClip(slots, slotTypes, 'steak', 8) || pickSlotByIndex(slots, 8) || pickSlotByIndex(slots, 7);
   renderItemCropCanvas('sbi-crop-ds', ctx, imgW, imgH, ds, 96);
   renderItemCropCanvas('sbi-crop-ep', ctx, imgW, imgH, ep, 96);
   renderItemCropCanvas('sbi-crop-hl', ctx, imgW, imgH, hl, 96);
