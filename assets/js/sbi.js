@@ -916,7 +916,10 @@ function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index) {
   const activity = 0.62 * varScore + 0.38 * edgeScore;
   const quality = Math.sqrt(Math.max(0, variance)) * (0.55 + features.edge) * (0.45 + activity);
 
-  return { index, features, variants, x: sx, y: sy, sz: ss, quality, activity, variance };
+  const pad = Math.max(1, Math.round(ss * 0.125));
+  const fullSz = Math.max(ss + 2, Math.round(ss * 1.25));
+  const displayRect = { x: sx - pad, y: sy - pad, sz: fullSz };
+  return { index, features, variants, x: sx, y: sy, sz: ss, displayRect, quality, activity, variance };
 }
 
 function pickSlotForClip(slots, slotTypes, wantedType, fallbackIndex) {
@@ -1182,11 +1185,6 @@ function extractHotbarSlots(ctx, imgW, imgH) {
       const x = cand.wx + itemOffX + i * slotStep;
       const slot = extractSlotFeatures(ctx, x, itemY, itemW, imgW, imgH, i);
       if (!slot) continue;
-      slot.displayRect = {
-        x: cand.wx + (1 + i * 20) * unit,
-        y: cand.wy + unit,
-        sz: 20 * unit,
-      };
       slots.push(slot);
       totalActivity += slot.activity;
       totalQuality += slot.quality;
