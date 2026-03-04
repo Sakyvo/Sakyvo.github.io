@@ -1212,8 +1212,10 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const slotCand = estimateSlotConfidence(slots, widgetCand.top.map(t => t.name));
     const slotBoost = slotCand.best;
 
+    // For full screenshots, HUD icon alignment is a stronger geometric anchor than
+    // widget-strip color/texture, which can overfit to a too-small centered crop.
     const baseBoost = hudFeatures
-      ? (0.45 * widgetBoost + 0.45 * hudBoost + 0.10 * slotBoost)
+      ? (0.25 * widgetBoost + 0.65 * hudBoost + 0.10 * slotBoost)
       : (0.70 * widgetBoost + 0.30 * slotBoost);
     const combinedBoost = baseBoost
       * (0.78 + 0.22 * cand.gridScore)
@@ -1222,12 +1224,14 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const hudCoverage = hudFeatures
       ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30)
       : 0;
+    const geomBoost = hudFeatures ? (0.82 + 0.18 * clamp01(hudCoverage)) : 1;
+    const boostedCombined = combinedBoost * geomBoost;
     const confidence = activeCount * 220 + totalActivity * 160 + totalQuality * 6 + hudCoverage * 700;
 
-    const boostDelta = combinedBoost - bestBoost;
+    const boostDelta = boostedCombined - bestBoost;
     if (boostDelta > 0.001 || (Math.abs(boostDelta) <= 0.001 && confidence > bestConfidence)) {
       bestConfidence = confidence;
-      bestBoost = combinedBoost;
+      bestBoost = boostedCombined;
       bestSlots = slots;
       bestWidgetFeatures = widgetFeatures;
       bestWidgetRect = widgetRect;
@@ -1238,7 +1242,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
         bottomRatio: c.bottomRatio,
         bottomOffset: c.bottomOffset || 0,
         confidence,
-        combinedBoost,
+        combinedBoost: boostedCombined,
         widgetBoost,
         hudBoost,
         slotBoost,
