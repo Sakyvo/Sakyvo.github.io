@@ -1267,23 +1267,36 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     }
   }
 
-  // For full screenshots, snap to nearest integer GUI scale so the crop
-  // covers the entire hotbar regardless of fractional-unit drift.
-  if (!isHudCrop && bestWidgetRect && bestSearchInfo) {
-    const detectedUnit = bestWidgetRect.w / 182;
-    const snapped = Math.max(1, Math.min(6, Math.round(detectedUnit)));
-    const fixedW = 182 * snapped;
-    const fixedH = 22 * snapped;
+  // For full screenshots, determine the correct integer GUI scale by
+  // testing each candidate at the centered, bottom-aligned position and
+  // picking the one whose widget strip has the strongest grid pattern.
+  if (!isHudCrop && bestWidgetRect) {
+    const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
+    const bOff = Math.round((bestSearchInfo && bestSearchInfo.bottomOffset) || 0);
+    let bestGU = Math.round(bestWidgetRect.w / 182);
+    let bestGS = -1;
+    for (let u = 1; u <= maxScale; u++) {
+      const w = 182 * u, h = 22 * u;
+      const x = Math.round((imgW - w) / 2);
+      const y = imgH - h - bOff;
+      if (x < 0 || y < 0 || x + w > imgW || y + h > imgH) continue;
+      const strip = extractRegion(ctx, x, y, w, h, 182, 22);
+      const masked = maskWidgetItems(strip.data, 182, 22);
+      const gs = computeWidgetGridScore(masked, 182, 22);
+      if (gs > bestGS) { bestGS = gs; bestGU = u; }
+    }
+    const fixedW = 182 * bestGU;
+    const fixedH = 22 * bestGU;
     const fixedX = Math.round((imgW - fixedW) / 2);
-    const fixedY = imgH - fixedH - Math.round(bestSearchInfo.bottomOffset || 0);
+    const fixedY = imgH - fixedH - bOff;
     if (fixedX >= 0 && fixedY >= 0 && fixedX + fixedW <= imgW && fixedY + fixedH <= imgH) {
       bestWidgetRect = { x: fixedX, y: fixedY, w: fixedW, h: fixedH };
       bestHudFeatures = extractHudFeatures(ctx, bestWidgetRect, imgW, imgH);
       for (let i = 0; i < bestSlots.length; i++) {
         bestSlots[i].displayRect = {
-          x: fixedX + (1 + i * 20) * snapped,
-          y: fixedY + snapped,
-          sz: 20 * snapped,
+          x: fixedX + (1 + i * 20) * bestGU,
+          y: fixedY + bestGU,
+          sz: 20 * bestGU,
         };
       }
     }
