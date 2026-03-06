@@ -1011,32 +1011,60 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   if (!wrap) return;
   if (!widgetRect) { wrap.hidden = true; return; }
 
+  const unit = widgetRect.w / 182;
+
   renderCropCanvas(
     'sbi-crop-hotbar',
     extractRegion(ctx, widgetRect.x, widgetRect.y, widgetRect.w, widgetRect.h, 256, Math.max(1, Math.round(256 * widgetRect.h / widgetRect.w)))
   );
 
-  const armorBox = hudFeatures ? bboxOfBoxes(hudFeatures.armorBoxes) : null;
-  const heartBox = hudFeatures ? bboxOfBoxes(hudFeatures.heartBoxes) : null;
-  const hungerBox = hudFeatures ? bboxOfBoxes(hudFeatures.hungerBoxes) : null;
-  const renderHudBar = (id, box) => {
-    if (!box) { renderCropCanvas(id, null); return; }
-    const w = 256;
-    const h = Math.max(1, Math.round(w * box.h / box.w));
-    renderCropCanvas(id, extractRegion(ctx, box.x, box.y, box.w, box.h, w, h));
+  // HUD bars — fixed geometry derived from widgetRect
+  const iconH = 9 * unit;
+  const barW = 81 * unit;
+  const heartsY = widgetRect.y - 17 * unit;
+  const armorY = heartsY - 10 * unit;
+  const leftX = widgetRect.x + unit;
+  const rightX = widgetRect.x + 100 * unit;
+  const renderFixedBar = (id, x, y, w, h) => {
+    const ix = Math.round(x), iy = Math.round(y), iw = Math.round(w), ih = Math.round(h);
+    if (ix < 0 || iy < 0 || ix + iw > imgW || iy + ih > imgH || iw < 2 || ih < 2) {
+      renderCropCanvas(id, null); return;
+    }
+    const outW = 256, outH = Math.max(1, Math.round(outW * ih / iw));
+    renderCropCanvas(id, extractRegion(ctx, ix, iy, iw, ih, outW, outH));
   };
-  renderHudBar('sbi-crop-armor', armorBox);
-  renderHudBar('sbi-crop-health', heartBox);
-  renderHudBar('sbi-crop-hunger', hungerBox);
+  renderFixedBar('sbi-crop-armor', leftX, armorY, barW, iconH);
+  renderFixedBar('sbi-crop-health', leftX, heartsY, barW, iconH);
+  renderFixedBar('sbi-crop-hunger', rightX, heartsY, barW, iconH);
+
+  // Items — fixed slot rects derived from widgetRect
+  const renderFixedSlot = (id, index, outSize) => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    const rx = Math.round(widgetRect.x + (1 + index * 20) * unit);
+    const ry = Math.round(widgetRect.y + unit);
+    const rsz = Math.round(20 * unit);
+    let left = Math.max(0, rx), top = Math.max(0, ry);
+    let right = Math.min(imgW, rx + rsz), bottom = Math.min(imgH, ry + rsz);
+    const side = Math.min(right - left, bottom - top);
+    if (side < 2) { canvas.classList.add('sbi-crop-hidden'); return; }
+    canvas.classList.remove('sbi-crop-hidden');
+    canvas.width = outSize; canvas.height = outSize;
+    const cctx = canvas.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    cctx.fillStyle = '#141414';
+    cctx.fillRect(0, 0, outSize, outSize);
+    cctx.drawImage(ctx.canvas, left, top, side, side, 0, 0, outSize, outSize);
+  };
 
   const ds = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0) || pickSlotByIndex(slots, 0);
   const ep = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1) || pickSlotByIndex(slots, 1);
   const hl = pickSlotForClip(slots, slotTypes, 'splash_potion', 5) || pickSlotByIndex(slots, 5);
   const food = pickSlotForClip(slots, slotTypes, 'golden_carrot', 8) || pickSlotForClip(slots, slotTypes, 'steak', 8) || pickSlotByIndex(slots, 8) || pickSlotByIndex(slots, 7);
-  renderItemCropCanvas('sbi-crop-ds', ctx, imgW, imgH, ds, 96);
-  renderItemCropCanvas('sbi-crop-ep', ctx, imgW, imgH, ep, 96);
-  renderItemCropCanvas('sbi-crop-hl', ctx, imgW, imgH, hl, 96);
-  renderItemCropCanvas('sbi-crop-food', ctx, imgW, imgH, food, 96);
+  renderFixedSlot('sbi-crop-ds', ds ? ds.index : 0, 96);
+  renderFixedSlot('sbi-crop-ep', ep ? ep.index : 1, 96);
+  renderFixedSlot('sbi-crop-hl', hl ? hl.index : 5, 96);
+  renderFixedSlot('sbi-crop-food', food ? food.index : 8, 96);
 
   wrap.hidden = false;
 }
