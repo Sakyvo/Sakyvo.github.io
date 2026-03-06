@@ -1093,6 +1093,8 @@ function buildClipCompositePixels(ctx, imgW, imgH, widgetRect, slots, slotTypes)
 // Strict proportional crop only: centered hotbar + fixed bottom ratio candidates
 function extractHotbarSlots(ctx, imgW, imgH) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
+  const aspect = imgH / Math.max(1, imgW);
+  const isHudCrop = aspect < 0.35;
   const PRE_K = 80;
   const PER_UNIT_K = 14;
   const preByUnit = new Map();
@@ -1185,6 +1187,11 @@ function extractHotbarSlots(ctx, imgW, imgH) {
       const x = cand.wx + itemOffX + i * slotStep;
       const slot = extractSlotFeatures(ctx, x, itemY, itemW, imgW, imgH, i);
       if (!slot) continue;
+      slot.displayRect = {
+        x: cand.wx + (1 + i * 20) * unit,
+        y: cand.wy + unit,
+        sz: 20 * unit,
+      };
       slots.push(slot);
       totalActivity += slot.activity;
       totalQuality += slot.quality;
@@ -1217,10 +1224,13 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const baseBoost = hudFeatures
       ? (0.25 * widgetBoost + 0.65 * hudBoost + 0.10 * slotBoost)
       : (0.70 * widgetBoost + 0.30 * slotBoost);
+    // Full screenshots use integer GUI scale; strongly prefer near-integer units
+    // to prevent HUD-driven selection of fractional units that shift the crop.
+    const unitPrefW = isHudCrop ? 0.08 : 0.50;
     const combinedBoost = baseBoost
       * (0.78 + 0.22 * cand.gridScore)
       * (0.86 + 0.14 * cand.bottomPref)
-      * (0.92 + 0.08 * (cand.unitPref || 0));
+      * ((1 - unitPrefW) + unitPrefW * (cand.unitPref || 0));
     const hudCoverage = hudFeatures
       ? ((hudFeatures.hearts.length + hudFeatures.hunger.length + hudFeatures.armor.length) / 30)
       : 0;
