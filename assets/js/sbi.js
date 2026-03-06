@@ -1267,6 +1267,28 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     }
   }
 
+  // For full screenshots, snap to nearest integer GUI scale so the crop
+  // covers the entire hotbar regardless of fractional-unit drift.
+  if (!isHudCrop && bestWidgetRect && bestSearchInfo) {
+    const detectedUnit = bestWidgetRect.w / 182;
+    const snapped = Math.max(1, Math.min(6, Math.round(detectedUnit)));
+    const fixedW = 182 * snapped;
+    const fixedH = 22 * snapped;
+    const fixedX = Math.round((imgW - fixedW) / 2);
+    const fixedY = imgH - fixedH - Math.round(bestSearchInfo.bottomOffset || 0);
+    if (fixedX >= 0 && fixedY >= 0 && fixedX + fixedW <= imgW && fixedY + fixedH <= imgH) {
+      bestWidgetRect = { x: fixedX, y: fixedY, w: fixedW, h: fixedH };
+      bestHudFeatures = extractHudFeatures(ctx, bestWidgetRect, imgW, imgH);
+      for (let i = 0; i < bestSlots.length; i++) {
+        bestSlots[i].displayRect = {
+          x: fixedX + (1 + i * 20) * snapped,
+          y: fixedY + snapped,
+          sz: 20 * snapped,
+        };
+      }
+    }
+  }
+
   return {
     slots: bestSlots,
     widgetFeatures: bestWidgetFeatures,
