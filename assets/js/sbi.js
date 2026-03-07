@@ -1001,37 +1001,80 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
 }
 
 
+function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
+  const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
+  let best = hintRect;
+  let bestGS = -1;
+  for (let u = 1; u <= maxScale; u++) {
+    const w = 182 * u, h = 22 * u;
+    const x = Math.round((imgW - w) / 2);
+    for (let bOff = 0; bOff <= 8; bOff++) {
+      const y = imgH - h - bOff;
+      if (x < 0 || y < 0 || x + w > imgW || y + h > imgH) continue;
+      const strip = extractRegion(ctx, x, y, w, h, 182, 22);
+      const masked = maskWidgetItems(strip.data, 182, 22);
+      const gs = computeWidgetGridScore(masked, 182, 22);
+      if (gs > bestGS) { bestGS = gs; best = { x, y, w, h }; }
+    }
+  }
+  return best;
+}
+
 function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes) {
   const wrap = document.getElementById('sbi-crops');
   if (!wrap) return;
   if (!widgetRect) { wrap.hidden = true; return; }
 
+  const aspect = imgH / Math.max(1, imgW);
+  const dRect = aspect < 0.35 ? widgetRect : findDisplayWidgetRect(ctx, imgW, imgH, widgetRect);
+  const unit = dRect.w / 182;
+
   renderCropCanvas(
     'sbi-crop-hotbar',
-    extractRegion(ctx, widgetRect.x, widgetRect.y, widgetRect.w, widgetRect.h, 256, Math.max(1, Math.round(256 * widgetRect.h / widgetRect.w)))
+    extractRegion(ctx, dRect.x, dRect.y, dRect.w, dRect.h, 256, Math.max(1, Math.round(256 * dRect.h / dRect.w)))
   );
 
-  const armorBox = hudFeatures ? bboxOfBoxes(hudFeatures.armorBoxes) : null;
-  const heartBox = hudFeatures ? bboxOfBoxes(hudFeatures.heartBoxes) : null;
-  const hungerBox = hudFeatures ? bboxOfBoxes(hudFeatures.hungerBoxes) : null;
-  const renderHudBar = (id, box) => {
-    if (!box) { renderCropCanvas(id, null); return; }
-    const w = 256;
-    const h = Math.max(1, Math.round(w * box.h / box.w));
-    renderCropCanvas(id, extractRegion(ctx, box.x, box.y, box.w, box.h, w, h));
+  const iconH = 9 * unit;
+  const barW = 81 * unit;
+  const heartsY = dRect.y - 17 * unit;
+  const armorY = heartsY - 10 * unit;
+  const leftX = dRect.x + unit;
+  const rightX = dRect.x + 100 * unit;
+  const renderBar = (id, x, y, w, h) => {
+    const ix = Math.round(x), iy = Math.round(y), iw = Math.round(w), ih = Math.round(h);
+    if (ix < 0 || iy < 0 || ix + iw > imgW || iy + ih > imgH || iw < 2 || ih < 2) {
+      renderCropCanvas(id, null); return;
+    }
+    const outW = 256, outH = Math.max(1, Math.round(outW * ih / iw));
+    renderCropCanvas(id, extractRegion(ctx, ix, iy, iw, ih, outW, outH));
   };
-  renderHudBar('sbi-crop-armor', armorBox);
-  renderHudBar('sbi-crop-health', heartBox);
-  renderHudBar('sbi-crop-hunger', hungerBox);
+  renderBar('sbi-crop-armor', leftX, armorY, barW, iconH);
+  renderBar('sbi-crop-health', leftX, heartsY, barW, iconH);
+  renderBar('sbi-crop-hunger', rightX, heartsY, barW, iconH);
 
-  const ds = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0);
-  const ep = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1);
-  const hl = pickSlotForClip(slots, slotTypes, 'splash_potion', 5);
-  const food = pickSlotForClip(slots, slotTypes, 'golden_carrot', 8) || pickSlotForClip(slots, slotTypes, 'steak', 8);
-  renderItemCropCanvas('sbi-crop-ds', ctx, imgW, imgH, ds, 96);
-  renderItemCropCanvas('sbi-crop-ep', ctx, imgW, imgH, ep, 96);
-  renderItemCropCanvas('sbi-crop-hl', ctx, imgW, imgH, hl, 96);
-  renderItemCropCanvas('sbi-crop-food', ctx, imgW, imgH, food, 96);
+  const renderSlot = (id, index, outSize) => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    const rx = Math.round(dRect.x + (3 + index * 20) * unit);
+    const ry = Math.round(dRect.y + 3 * unit);
+    const rsz = Math.round(16 * unit);
+    let left = Math.max(0, rx), top = Math.max(0, ry);
+    let right = Math.min(imgW, rx + rsz), bottom = Math.min(imgH, ry + rsz);
+    const side = Math.min(right - left, bottom - top);
+    if (side < 2) { canvas.classList.add('sbi-crop-hidden'); return; }
+    canvas.classList.remove('sbi-crop-hidden');
+    canvas.width = outSize;
+    canvas.height = outSize;
+    const cctx = canvas.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    cctx.fillStyle = '#141414';
+    cctx.fillRect(0, 0, outSize, outSize);
+    cctx.drawImage(ctx.canvas, left, top, side, side, 0, 0, outSize, outSize);
+  };
+  renderSlot('sbi-crop-ds', 0, 96);
+  renderSlot('sbi-crop-ep', 1, 96);
+  renderSlot('sbi-crop-hl', 5, 96);
+  renderSlot('sbi-crop-food', 8, 96);
 
   wrap.hidden = false;
 }
