@@ -981,14 +981,19 @@ function renderCropCanvas(id, imageData) {
 function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
-  const rect = getSlotDisplayRect(slot, imgW, imgH);
-  if (!rect) { canvas.classList.add('sbi-crop-hidden'); return; }
-  const sx = rect.x;
-  const sy = rect.y;
-  const sw = rect.sz;
-  const sh = rect.sz;
+  if (!slot) { canvas.classList.add('sbi-crop-hidden'); return; }
 
-  const size = outSize || Math.max(96, sw * 2);
+  const src = document.createElement('canvas');
+  src.width = 16;
+  src.height = 16;
+  const sx = Math.round(slot.x);
+  const sy = Math.round(slot.y);
+  const sw = Math.max(2, Math.round(slot.sz));
+  const sh = sw;
+  if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
+  src.getContext('2d').putImageData(extractRegion(ctx, sx, sy, sw, sh, 16, 16), 0, 0);
+
+  const size = outSize || 96;
   canvas.classList.remove('sbi-crop-hidden');
   canvas.width = size;
   canvas.height = size;
@@ -996,7 +1001,7 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   cctx.imageSmoothingEnabled = false;
   cctx.fillStyle = '#141414';
   cctx.fillRect(0, 0, size, size);
-  cctx.drawImage(ctx.canvas, sx, sy, sw, sh, 0, 0, size, size);
+  cctx.drawImage(src, 0, 0, 16, 16, 0, 0, size, size);
 }
 
 function pickSlotByIndex(slots, index) {
@@ -1037,34 +1042,14 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   renderFixedBar('sbi-crop-health', leftX, heartsY, barW, iconH);
   renderFixedBar('sbi-crop-hunger', rightX, heartsY, barW, iconH);
 
-  // Items — fixed slot rects derived from widgetRect
-  const renderFixedSlot = (id, index, outSize) => {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
-    const rx = Math.round(widgetRect.x + (1 + index * 20) * unit);
-    const ry = Math.round(widgetRect.y + unit);
-    const rsz = Math.round(20 * unit);
-    let left = Math.max(0, rx), top = Math.max(0, ry);
-    let right = Math.min(imgW, rx + rsz), bottom = Math.min(imgH, ry + rsz);
-    const side = Math.min(right - left, bottom - top);
-    if (side < 2) { canvas.classList.add('sbi-crop-hidden'); return; }
-    canvas.classList.remove('sbi-crop-hidden');
-    canvas.width = outSize; canvas.height = outSize;
-    const cctx = canvas.getContext('2d');
-    cctx.imageSmoothingEnabled = false;
-    cctx.fillStyle = '#141414';
-    cctx.fillRect(0, 0, outSize, outSize);
-    cctx.drawImage(ctx.canvas, left, top, side, side, 0, 0, outSize, outSize);
-  };
-
   const ds = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0) || pickSlotByIndex(slots, 0);
   const ep = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1) || pickSlotByIndex(slots, 1);
   const hl = pickSlotForClip(slots, slotTypes, 'splash_potion', 5) || pickSlotByIndex(slots, 5);
   const food = pickSlotForClip(slots, slotTypes, 'golden_carrot', 8) || pickSlotForClip(slots, slotTypes, 'steak', 8) || pickSlotByIndex(slots, 8) || pickSlotByIndex(slots, 7);
-  renderFixedSlot('sbi-crop-ds', ds ? ds.index : 0, 96);
-  renderFixedSlot('sbi-crop-ep', ep ? ep.index : 1, 96);
-  renderFixedSlot('sbi-crop-hl', hl ? hl.index : 5, 96);
-  renderFixedSlot('sbi-crop-food', food ? food.index : 8, 96);
+  renderItemCropCanvas('sbi-crop-ds', ctx, imgW, imgH, ds, 96);
+  renderItemCropCanvas('sbi-crop-ep', ctx, imgW, imgH, ep, 96);
+  renderItemCropCanvas('sbi-crop-hl', ctx, imgW, imgH, hl, 96);
+  renderItemCropCanvas('sbi-crop-food', ctx, imgW, imgH, food, 96);
 
   wrap.hidden = false;
 }
