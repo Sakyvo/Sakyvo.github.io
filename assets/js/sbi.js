@@ -1032,14 +1032,30 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   renderFixedBar('sbi-crop-health', leftX, heartsY, barW, iconH);
   renderFixedBar('sbi-crop-hunger', rightX, heartsY, barW, iconH);
 
-  const ds = pickSlotForClip(slots, slotTypes, 'diamond_sword', 0);
-  const ep = pickSlotForClip(slots, slotTypes, 'ender_pearl', 1);
-  const hl = pickSlotForClip(slots, slotTypes, 'splash_potion', 5);
-  const food = pickSlotForClip(slots, slotTypes, 'golden_carrot', 8) || pickSlotForClip(slots, slotTypes, 'steak', 8);
-  renderItemCropCanvas('sbi-crop-ds', ctx, imgW, imgH, ds, 96);
-  renderItemCropCanvas('sbi-crop-ep', ctx, imgW, imgH, ep, 96);
-  renderItemCropCanvas('sbi-crop-hl', ctx, imgW, imgH, hl, 96);
-  renderItemCropCanvas('sbi-crop-food', ctx, imgW, imgH, food, 96);
+  const renderFixedSlot = (id, index, outSize) => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    const rx = Math.round(widgetRect.x + (1 + index * 20) * unit);
+    const ry = Math.round(widgetRect.y + unit);
+    const rsz = Math.round(20 * unit);
+    let left = Math.max(0, rx), top = Math.max(0, ry);
+    let right = Math.min(imgW, rx + rsz), bottom = Math.min(imgH, ry + rsz);
+    const side = Math.min(right - left, bottom - top);
+    if (side < 2) { canvas.classList.add('sbi-crop-hidden'); return; }
+    canvas.classList.remove('sbi-crop-hidden');
+    canvas.width = outSize;
+    canvas.height = outSize;
+    const cctx = canvas.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    cctx.fillStyle = '#141414';
+    cctx.fillRect(0, 0, outSize, outSize);
+    cctx.drawImage(ctx.canvas, left, top, side, side, 0, 0, outSize, outSize);
+  };
+
+  renderFixedSlot('sbi-crop-ds', 0, 96);
+  renderFixedSlot('sbi-crop-ep', 1, 96);
+  renderFixedSlot('sbi-crop-hl', 5, 96);
+  renderFixedSlot('sbi-crop-food', 8, 96);
 
   wrap.hidden = false;
 }
