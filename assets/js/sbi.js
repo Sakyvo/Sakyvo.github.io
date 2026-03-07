@@ -1029,6 +1029,11 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   const dRect = aspect < 0.35 ? widgetRect : findDisplayWidgetRect(ctx, imgW, imgH, widgetRect);
   const unit = dRect.w / 182;
 
+  // Temporary debug: show detection vs display rects
+  let dbg = wrap.querySelector('.sbi-crop-debug');
+  if (!dbg) { dbg = document.createElement('div'); dbg.className = 'sbi-crop-debug'; dbg.style.cssText = 'font:11px monospace;color:#c00;padding:4px;word-break:break-all'; wrap.prepend(dbg); }
+  dbg.textContent = `img=${imgW}x${imgH} aspect=${aspect.toFixed(3)} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | slot0.xy=${slots&&slots[0]?slots[0].x+','+slots[0].y+','+slots[0].sz:'?'} disp=${slots&&slots[0]&&slots[0].displayRect?slots[0].displayRect.x+','+slots[0].displayRect.y+','+slots[0].displayRect.sz:'?'}`;
+
   renderCropCanvas(
     'sbi-crop-hotbar',
     extractRegion(ctx, dRect.x, dRect.y, dRect.w, dRect.h, 256, Math.max(1, Math.round(256 * dRect.h / dRect.w)))
