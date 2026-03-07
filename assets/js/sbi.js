@@ -968,32 +968,6 @@ function getSlotDisplayRect(slot, imgW, imgH) {
   return { x: left, y: top, sz: side };
 }
 
-function getSlotItemRect(slot, imgW, imgH) {
-  if (!slot) return null;
-  let sx = slot.x;
-  let sy = slot.y;
-  let ss = slot.sz;
-  if (slot.displayRect && isFinite(slot.displayRect.x) && isFinite(slot.displayRect.y) && isFinite(slot.displayRect.sz)) {
-    const unit = slot.displayRect.sz / 20;
-    sx = slot.displayRect.x + 3 * unit;
-    sy = slot.displayRect.y + 3 * unit;
-    ss = 16 * unit;
-  }
-  sx = Math.round(sx);
-  sy = Math.round(sy);
-  ss = Math.max(2, Math.round(ss));
-  let left = sx;
-  let top = sy;
-  let right = sx + ss;
-  let bottom = sy + ss;
-  if (left < 0) left = 0;
-  if (top < 0) top = 0;
-  if (right > imgW) right = imgW;
-  if (bottom > imgH) bottom = imgH;
-  const side = Math.min(right - left, bottom - top);
-  if (side < 2) return null;
-  return { x: left, y: top, sz: side };
-}
 
 function renderCropCanvas(id, imageData) {
   const canvas = document.getElementById(id);
@@ -1008,12 +982,12 @@ function renderCropCanvas(id, imageData) {
 function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
-  const rect = getSlotItemRect(slot, imgW, imgH);
-  if (!rect) { canvas.classList.add('sbi-crop-hidden'); return; }
-  const sx = rect.x;
-  const sy = rect.y;
-  const sw = rect.sz;
-  const sh = rect.sz;
+  if (!slot) { canvas.classList.add('sbi-crop-hidden'); return; }
+  const sx = Math.round(slot.x);
+  const sy = Math.round(slot.y);
+  const sw = Math.max(2, Math.round(slot.sz));
+  const sh = sw;
+  if (sx < 0 || sy < 0 || sx + sw > imgW || sy + sh > imgH) { canvas.classList.add('sbi-crop-hidden'); return; }
 
   const size = outSize || Math.max(96, sw * 2);
   canvas.classList.remove('sbi-crop-hidden');
