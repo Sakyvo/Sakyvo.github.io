@@ -76,6 +76,7 @@ const SLOT_COLOR_MAP = {
   apple_golden: '#fde68a',
   none: '#94a3b8',
 };
+const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
@@ -90,6 +91,10 @@ const SBI_SCORE_WEIGHTS = {
 
 function clamp01(v) {
   return Math.max(0, Math.min(1, v));
+}
+
+function getMaxGuiScale(imgW, imgH) {
+  return Math.max(1, Math.min(MAX_GUI_SCALE, Math.floor(Math.min(imgW / 320, imgH / 240))));
 }
 
 function fmtPct(v) {
@@ -123,7 +128,7 @@ function renderDebugPanel(results, phase) {
   const rect = d.widgetRect ? `x=${d.widgetRect.x}, y=${d.widgetRect.y}, w=${d.widgetRect.w}, h=${d.widgetRect.h}` : 'none';
   const s = d.searchInfo || null;
   const search = s
-    ? `unit=${s.unit.toFixed(3)}, off=${s.bottomOffset === undefined ? '-' : s.bottomOffset}, mode=${s.mode || 'strict'}, by=${s.bottomRatio === undefined ? '-' : s.bottomRatio.toFixed(3)}, g=${s.gridScore === undefined ? '-' : s.gridScore.toFixed(2)}, bp=${s.bottomPref === undefined ? '-' : s.bottomPref.toFixed(2)}, up=${s.unitPref === undefined ? '-' : s.unitPref.toFixed(2)}, wb=${s.widgetBoost === undefined ? '-' : s.widgetBoost.toFixed(3)}, hb=${s.hudBoost === undefined ? '-' : s.hudBoost.toFixed(3)}, sb=${s.slotBoost === undefined ? '-' : s.slotBoost.toFixed(3)}, conf=${Math.round(s.confidence)}`
+    ? `unit=${s.unit.toFixed(3)}${s.snappedUnit === undefined ? '' : `→${s.snappedUnit.toFixed(3)}`}, off=${s.bottomOffset === undefined ? '-' : s.bottomOffset}, mode=${s.mode || 'strict'}, by=${s.bottomRatio === undefined ? '-' : s.bottomRatio.toFixed(3)}, g=${s.gridScore === undefined ? '-' : s.gridScore.toFixed(2)}, bp=${s.bottomPref === undefined ? '-' : s.bottomPref.toFixed(2)}, up=${s.unitPref === undefined ? '-' : s.unitPref.toFixed(2)}, wb=${s.widgetBoost === undefined ? '-' : s.widgetBoost.toFixed(3)}, hb=${s.hudBoost === undefined ? '-' : s.hudBoost.toFixed(3)}, sb=${s.slotBoost === undefined ? '-' : s.slotBoost.toFixed(3)}, conf=${Math.round(s.confidence)}`
     : 'none';
   meta.textContent =
     `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}` +
@@ -710,6 +715,24 @@ function tryExtractFeature(ctx, x, y, w, h, imgW, imgH, targetW, targetH) {
   return computeFeatures(region, targetW, targetH, true, 'hud');
 }
 
+function buildWidgetFeatures(widgetStrip) {
+  const widgetMasked = new ImageData(maskWidgetItems(widgetStrip.data, 182, 22), 182, 22);
+  const widgetRegion = resizeImageDataNearest(widgetMasked, 182, 22, 16, 16);
+  const widgetClean = suppressWidgetHighlights(widgetRegion.data, 16, 16);
+  return {
+    hist: computeHistogram(widgetClean, 256, 0),
+    moments: computeColorMoments(widgetClean, 256, 0),
+    edge: computeEdgeDensity(widgetClean, 16, 16)
+  };
+}
+
+function extractWidgetFeatures(ctx, widgetRect) {
+  const ix = Math.round(widgetRect.x), iy = Math.round(widgetRect.y);
+  const iw = Math.round(widgetRect.w), ih = Math.round(widgetRect.h);
+  if (iw <= 1 || ih <= 1) return null;
+  return buildWidgetFeatures(extractRegion(ctx, ix, iy, iw, ih, 182, 22));
+}
+
 function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
   if (!widgetRect) return null;
   const unit = widgetRect.w / 182;
@@ -823,26 +846,29 @@ function buildStrictCropCandidates(imgW, imgH) {
   const isHudCrop = aspect < 0.35;
   const maxWidgetW = imgW * (isHudCrop ? 1.02 : 0.92);
   const maxWidgetH = imgH * (isHudCrop ? 0.78 : 0.2);
+  const maxScale = getMaxGuiScale(imgW, imgH);
+  const maxCandidateUnit = isHudCrop
+    ? Math.max(maxScale, Math.min(MAX_GUI_SCALE, Math.ceil(Math.max(maxWidgetW / 182, maxWidgetH / 22))))
+    : maxScale;
 
   // Prefer Minecraft-like GUI scale factors (integer), plus ratio-consistent fallbacks for rescaled screenshots.
-  const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
   for (let u = 1; u <= maxScale; u++) unitSet.add(u.toFixed(3));
-  const denseMax = Math.min(6, maxScale + 0.75);
+  const denseMax = isHudCrop ? maxCandidateUnit : Math.min(maxCandidateUnit, maxScale + 0.75);
   for (let u = 1.0; u <= denseMax + 1e-6; u += 0.05) unitSet.add(u.toFixed(3));
 
   // Hotbar-only crops: the widget can span (almost) the full image width.
   // These units are harmless for full screenshots (filtered out by range).
   const uFullW = imgW / 182;
   if (isFinite(uFullW)) {
-    if (uFullW >= 0.8 && uFullW <= 6) unitSet.add(uFullW.toFixed(3));
+    if (uFullW >= 0.8 && uFullW <= maxCandidateUnit) unitSet.add(uFullW.toFixed(3));
     const ur = Math.round(uFullW);
-    if (ur >= 1 && ur <= 6) unitSet.add(ur.toFixed(3));
+    if (ur >= 1 && ur <= maxCandidateUnit) unitSet.add(ur.toFixed(3));
   }
   const uFullH = imgH / 22;
   if (isFinite(uFullH)) {
-    if (uFullH >= 0.8 && uFullH <= 6) unitSet.add(uFullH.toFixed(3));
+    if (uFullH >= 0.8 && uFullH <= maxCandidateUnit) unitSet.add(uFullH.toFixed(3));
     const ur = Math.round(uFullH);
-    if (ur >= 1 && ur <= 6) unitSet.add(ur.toFixed(3));
+    if (ur >= 1 && ur <= maxCandidateUnit) unitSet.add(ur.toFixed(3));
   }
 
   for (const rw of STRICT_WIDGET_WIDTH_RATIOS) {
@@ -859,7 +885,7 @@ function buildStrictCropCandidates(imgW, imgH) {
     for (const ratio of STRICT_WIDGET_WIDTH_RATIOS) unitSet.add((imgW * ratio / 182).toFixed(3));
     for (const ratio of STRICT_WIDGET_HEIGHT_RATIOS) unitSet.add((imgH * ratio / 22).toFixed(3));
   }
-  const units = Array.from(unitSet).map(Number).filter(u => u >= 1.0 && u <= 6).sort((a, b) => a - b);
+  const units = Array.from(unitSet).map(Number).filter(u => u >= 1.0 && u <= maxCandidateUnit).sort((a, b) => a - b);
   const out = [];
   for (const unit of units) {
     const widgetW = 182 * unit;
@@ -1003,13 +1029,17 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
 
 window._displayDebug = {};
 function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
-  const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
-  const u = Math.min(maxScale, 3);
+  const maxScale = getMaxGuiScale(imgW, imgH);
+  const detectedScale = hintRect && hintRect.w ? (hintRect.w / 182) : 0;
+  const u = Math.max(1, Math.min(maxScale, Math.round(detectedScale || maxScale)));
   const w = 182 * u, h = 22 * u;
   const x = Math.round((imgW - w) / 2);
-  const y = imgH - h;
+  const bottomOffset = hintRect
+    ? Math.max(0, Math.round(imgH - (hintRect.y + hintRect.h)))
+    : 0;
+  const y = imgH - h - bottomOffset;
   if (x < 0 || y < 0 || x + w > imgW) return hintRect;
-  window._displayDebug = { maxScale, fixedScale: u };
+  window._displayDebug = { maxScale, fixedScale: u, detectedScale, bottomOffset };
   return { x, y, w, h };
 }
 
@@ -1026,7 +1056,7 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   let dbg = wrap.querySelector('.sbi-crop-debug');
   if (!dbg) { dbg = document.createElement('div'); dbg.className = 'sbi-crop-debug'; dbg.style.cssText = 'font:11px monospace;color:#c00;padding:4px;word-break:break-all'; wrap.prepend(dbg); }
   const dd = window._displayDebug || {};
-  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | fixedSc=${dd.fixedScale} maxSc=${dd.maxScale}`;
+  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | detSc=${dd.detectedScale === undefined ? '-' : dd.detectedScale.toFixed(2)} fixedSc=${dd.fixedScale} maxSc=${dd.maxScale} bOff=${dd.bottomOffset}`;
 
   renderCropCanvas(
     'sbi-crop-hotbar',
@@ -1156,7 +1186,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const maskedStrip = maskWidgetItems(widgetStrip.data, 182, 22);
     const gridScore = computeWidgetGridScore(maskedStrip, 182, 22);
     const bottomPref = clamp01(1 - (c.bottomOffset || 0) / (c.unit * 4 + 1e-6));
-    const unitRounded = Math.max(1, Math.min(6, Math.round(c.unit)));
+    const unitRounded = Math.max(1, Math.round(c.unit));
     const unitPref = clamp01(1 - Math.abs(c.unit - unitRounded) / 0.18);
     const score = (0.70 * gridScore + 0.30 * bottomPref) * (0.90 + 0.10 * unitPref);
     const entry = { c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, unitPref, score, unitRounded };
@@ -1236,14 +1266,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     }
     if (slots.length !== 9) continue;
 
-    const widgetMasked = new ImageData(maskWidgetItems(cand.widgetStrip.data, 182, 22), 182, 22);
-    const widgetRegion = resizeImageDataNearest(widgetMasked, 182, 22, 16, 16);
-    const widgetClean = suppressWidgetHighlights(widgetRegion.data, 16, 16);
-    const widgetFeatures = {
-      hist: computeHistogram(widgetClean, 256, 0),
-      moments: computeColorMoments(widgetClean, 256, 0),
-      edge: computeEdgeDensity(widgetClean, 16, 16)
-    };
+    const widgetFeatures = buildWidgetFeatures(cand.widgetStrip);
     const widgetRect = { x: cand.wx, y: cand.wy, w: cand.ww, h: cand.wh };
     const hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
 
@@ -1304,26 +1327,26 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     }
   }
 
-  // For full screenshots, lock GUI scale to min(maxScale, 3).
-  // Grid-score-based scale detection is unreliable for transparent/minimal
-  // PvP hotbar textures, so use a fixed scale for consistent crops.
+  // For full screenshots, snap the detected widget to the nearest valid GUI scale
+  // for the current screenshot instead of forcing a 1080p-sized crop.
   if (!isHudCrop && bestWidgetRect) {
-    const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
-    const bOff = Math.round((bestSearchInfo && bestSearchInfo.bottomOffset) || 0);
-    const bestGU = Math.min(maxScale, 3);
-    const fixedW = 182 * bestGU;
-    const fixedH = 22 * bestGU;
-    const fixedX = Math.round((imgW - fixedW) / 2);
-    const fixedY = imgH - fixedH - bOff;
-    if (fixedX >= 0 && fixedY >= 0 && fixedX + fixedW <= imgW && fixedY + fixedH <= imgH) {
-      bestWidgetRect = { x: fixedX, y: fixedY, w: fixedW, h: fixedH };
+    const fixedRect = findDisplayWidgetRect(ctx, imgW, imgH, bestWidgetRect);
+    const bestGU = fixedRect && fixedRect.w ? (fixedRect.w / 182) : (bestWidgetRect.w / 182);
+    if (fixedRect) {
+      bestWidgetRect = fixedRect;
+      bestWidgetFeatures = extractWidgetFeatures(ctx, bestWidgetRect);
       bestHudFeatures = extractHudFeatures(ctx, bestWidgetRect, imgW, imgH);
       for (let i = 0; i < bestSlots.length; i++) {
         bestSlots[i].displayRect = {
-          x: fixedX + (1 + i * 20) * bestGU,
-          y: fixedY + bestGU,
+          x: bestWidgetRect.x + (1 + i * 20) * bestGU,
+          y: bestWidgetRect.y + bestGU,
           sz: 20 * bestGU,
         };
+      }
+      if (bestSearchInfo) {
+        bestSearchInfo.snappedUnit = bestGU;
+        bestSearchInfo.bottomOffset = Math.max(0, Math.round(imgH - (bestWidgetRect.y + bestWidgetRect.h)));
+        bestSearchInfo.mode = 'strict-ratio-snapped';
       }
     }
   }
@@ -1760,4 +1783,3 @@ function init() {
 
 init();
 })();
-
