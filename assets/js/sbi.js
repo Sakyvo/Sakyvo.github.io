@@ -1001,11 +1001,13 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
 }
 
 
+window._displayDebug = {};
 function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
   const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
   let best = hintRect;
   let bestScore = -1;
   const raw = ctx.getImageData(0, 0, imgW, imgH).data;
+  window._displayDebug = { maxScale, perScale: {} };
   for (let u = 1; u <= maxScale; u++) {
     const w = 182 * u, h = 22 * u;
     const x = Math.round((imgW - w) / 2);
@@ -1035,6 +1037,9 @@ function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
         bc = cnt ? Math.min(1, diff / cnt / 40) : 0;
       }
       const score = gs * (0.55 + 0.45 * bc);
+      if (!window._displayDebug.perScale[u] || score > window._displayDebug.perScale[u].score) {
+        window._displayDebug.perScale[u] = { gs: gs.toFixed(4), bc: bc.toFixed(4), score: score.toFixed(4), bOff, x, y, w, h };
+      }
       if (score > bestScore) { bestScore = score; best = { x, y, w, h }; }
     }
   }
@@ -1053,7 +1058,9 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   // Temporary debug: show detection vs display rects
   let dbg = wrap.querySelector('.sbi-crop-debug');
   if (!dbg) { dbg = document.createElement('div'); dbg.className = 'sbi-crop-debug'; dbg.style.cssText = 'font:11px monospace;color:#c00;padding:4px;word-break:break-all'; wrap.prepend(dbg); }
-  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)}`;
+  const dd = window._displayDebug || {};
+  const scaleInfo = dd.perScale ? Object.entries(dd.perScale).map(([u, d]) => `s${u}(gs=${d.gs} bc=${d.bc} sc=${d.score} bOff=${d.bOff})`).join(' | ') : 'N/A';
+  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | maxSc=${dd.maxScale} | ${scaleInfo}`;
 
   renderCropCanvas(
     'sbi-crop-hotbar',
