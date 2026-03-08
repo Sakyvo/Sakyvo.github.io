@@ -1004,7 +1004,8 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
 function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
   const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
   let best = hintRect;
-  let bestGS = -1;
+  let bestScore = -1;
+  const raw = ctx.getImageData(0, 0, imgW, imgH).data;
   for (let u = 1; u <= maxScale; u++) {
     const w = 182 * u, h = 22 * u;
     const x = Math.round((imgW - w) / 2);
@@ -1014,7 +1015,27 @@ function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
       const strip = extractRegion(ctx, x, y, w, h, 182, 22);
       const masked = maskWidgetItems(strip.data, 182, 22);
       const gs = computeWidgetGridScore(masked, 182, 22);
-      if (gs > bestGS) { bestGS = gs; best = { x, y, w, h }; }
+      // Boundary contrast: at the correct scale, widget edges transition
+      // from game world to hotbar background (high contrast). At a wrong
+      // smaller scale inside the real hotbar, both sides are hotbar content.
+      let bc = 0;
+      if (x >= 1 && x + w < imgW) {
+        let diff = 0, cnt = 0;
+        for (let row = y; row < y + h && row < imgH; row++) {
+          const li = (row * imgW + x - 1) * 4, ri = (row * imgW + x) * 4;
+          diff += Math.abs(
+            (0.299*raw[li] + 0.587*raw[li+1] + 0.114*raw[li+2]) -
+            (0.299*raw[ri] + 0.587*raw[ri+1] + 0.114*raw[ri+2]));
+          const li2 = (row * imgW + x + w - 1) * 4, ri2 = (row * imgW + x + w) * 4;
+          diff += Math.abs(
+            (0.299*raw[li2] + 0.587*raw[li2+1] + 0.114*raw[li2+2]) -
+            (0.299*raw[ri2] + 0.587*raw[ri2+1] + 0.114*raw[ri2+2]));
+          cnt += 2;
+        }
+        bc = cnt ? Math.min(1, diff / cnt / 40) : 0;
+      }
+      const score = gs * (0.55 + 0.45 * bc);
+      if (score > bestScore) { bestScore = score; best = { x, y, w, h }; }
     }
   }
   return best;
@@ -1032,7 +1053,7 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   // Temporary debug: show detection vs display rects
   let dbg = wrap.querySelector('.sbi-crop-debug');
   if (!dbg) { dbg = document.createElement('div'); dbg.className = 'sbi-crop-debug'; dbg.style.cssText = 'font:11px monospace;color:#c00;padding:4px;word-break:break-all'; wrap.prepend(dbg); }
-  dbg.textContent = `img=${imgW}x${imgH} aspect=${aspect.toFixed(3)} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | slot0.xy=${slots&&slots[0]?slots[0].x+','+slots[0].y+','+slots[0].sz:'?'} disp=${slots&&slots[0]&&slots[0].displayRect?slots[0].displayRect.x+','+slots[0].displayRect.y+','+slots[0].displayRect.sz:'?'}`;
+  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)}`;
 
   renderCropCanvas(
     'sbi-crop-hotbar',
