@@ -1004,60 +1004,28 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
 window._displayDebug = {};
 function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
   const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
-  let best = hintRect;
-  let bestScore = -1;
+  const u = Math.min(maxScale, 3);
+  const w = 182 * u, h = 22 * u;
+  const x = Math.round((imgW - w) / 2);
+  if (x < 0 || imgH - h < 0 || x + w > imgW) return hintRect;
+  let best = { x, y: imgH - h, w, h };
+  let bestTc = -1;
   const raw = ctx.getImageData(0, 0, imgW, imgH).data;
-  window._displayDebug = { maxScale, perScale: {} };
-  for (let u = 1; u <= maxScale; u++) {
-    const w = 182 * u, h = 22 * u;
-    const x = Math.round((imgW - w) / 2);
-    for (let bOff = 0; bOff <= 8; bOff++) {
-      const y = imgH - h - bOff;
-      if (x < 0 || y < 0 || x + w > imgW || y + h > imgH) continue;
-      const strip = extractRegion(ctx, x, y, w, h, 182, 22);
-      const masked = maskWidgetItems(strip.data, 182, 22);
-      const gs = computeWidgetGridScore(masked, 182, 22);
-      // Side boundary contrast: at the correct scale, widget edges transition
-      // from game world to hotbar background (high contrast). At a wrong
-      // smaller scale inside the real hotbar, both sides are hotbar content.
-      let bc = 0;
-      if (x >= 1 && x + w < imgW) {
-        let diff = 0, cnt = 0;
-        for (let row = y; row < y + h && row < imgH; row++) {
-          const li = (row * imgW + x - 1) * 4, ri = (row * imgW + x) * 4;
-          diff += Math.abs(
-            (0.299*raw[li] + 0.587*raw[li+1] + 0.114*raw[li+2]) -
-            (0.299*raw[ri] + 0.587*raw[ri+1] + 0.114*raw[ri+2]));
-          const li2 = (row * imgW + x + w - 1) * 4, ri2 = (row * imgW + x + w) * 4;
-          diff += Math.abs(
-            (0.299*raw[li2] + 0.587*raw[li2+1] + 0.114*raw[li2+2]) -
-            (0.299*raw[ri2] + 0.587*raw[ri2+1] + 0.114*raw[ri2+2]));
-          cnt += 2;
-        }
-        bc = cnt ? Math.min(1, diff / cnt / 40) : 0;
-      }
-      // Top-edge contrast: correct scale has game-world-to-hotbar transition
-      // at the top; wrong smaller scale sits inside the real hotbar so both
-      // sides of the top edge are hotbar content (low contrast).
-      let tc = 0;
-      if (y >= 1) {
-        let tdiff = 0, tcnt = 0;
-        for (let col = x; col < x + w && col < imgW; col++) {
-          const ai = ((y - 1) * imgW + col) * 4;
-          const bi = (y * imgW + col) * 4;
-          tdiff += Math.abs(
-            (0.299*raw[ai] + 0.587*raw[ai+1] + 0.114*raw[ai+2]) -
-            (0.299*raw[bi] + 0.587*raw[bi+1] + 0.114*raw[bi+2]));
-          tcnt++;
-        }
-        tc = tcnt ? Math.min(1, tdiff / tcnt / 40) : 0;
-      }
-      const score = gs * (0.40 + 0.25 * bc + 0.35 * tc);
-      if (!window._displayDebug.perScale[u] || score > window._displayDebug.perScale[u].score) {
-        window._displayDebug.perScale[u] = { gs: gs.toFixed(4), bc: bc.toFixed(4), tc: tc.toFixed(4), score: score.toFixed(4), bOff, x, y, w, h };
-      }
-      if (score > bestScore) { bestScore = score; best = { x, y, w, h }; }
+  window._displayDebug = { maxScale, fixedScale: u, bestBOff: 0, bestTc: 0 };
+  for (let bOff = 0; bOff <= 8; bOff++) {
+    const y = imgH - h - bOff;
+    if (y < 1) continue;
+    let tdiff = 0, tcnt = 0;
+    for (let col = x; col < x + w && col < imgW; col++) {
+      const ai = ((y - 1) * imgW + col) * 4;
+      const bi = (y * imgW + col) * 4;
+      tdiff += Math.abs(
+        (0.299*raw[ai] + 0.587*raw[ai+1] + 0.114*raw[ai+2]) -
+        (0.299*raw[bi] + 0.587*raw[bi+1] + 0.114*raw[bi+2]));
+      tcnt++;
     }
+    const tc = tcnt ? Math.min(1, tdiff / tcnt / 40) : 0;
+    if (tc > bestTc) { bestTc = tc; best = { x, y, w, h }; window._displayDebug.bestBOff = bOff; window._displayDebug.bestTc = tc; }
   }
   return best;
 }
@@ -1075,8 +1043,7 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   let dbg = wrap.querySelector('.sbi-crop-debug');
   if (!dbg) { dbg = document.createElement('div'); dbg.className = 'sbi-crop-debug'; dbg.style.cssText = 'font:11px monospace;color:#c00;padding:4px;word-break:break-all'; wrap.prepend(dbg); }
   const dd = window._displayDebug || {};
-  const scaleInfo = dd.perScale ? Object.entries(dd.perScale).map(([u, d]) => `s${u}(gs=${d.gs} bc=${d.bc} tc=${d.tc} sc=${d.score} bOff=${d.bOff})`).join(' | ') : 'N/A';
-  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | maxSc=${dd.maxScale} | ${scaleInfo}`;
+  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | fixedSc=${dd.fixedScale} maxSc=${dd.maxScale} bOff=${dd.bestBOff} tc=${(dd.bestTc||0).toFixed(4)}`;
 
   renderCropCanvas(
     'sbi-crop-hotbar',
@@ -1354,56 +1321,13 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     }
   }
 
-  // For full screenshots, determine the correct integer GUI scale by
-  // testing each candidate at the centered, bottom-aligned position and
-  // picking the one whose widget strip has the strongest grid pattern
-  // combined with boundary contrast (side + top edge transitions).
+  // For full screenshots, lock GUI scale to min(maxScale, 3).
+  // Grid-score-based scale detection is unreliable for transparent/minimal
+  // PvP hotbar textures, so use a fixed scale for consistent crops.
   if (!isHudCrop && bestWidgetRect) {
     const maxScale = Math.max(1, Math.min(6, Math.floor(Math.min(imgW / 320, imgH / 240))));
     const bOff = Math.round((bestSearchInfo && bestSearchInfo.bottomOffset) || 0);
-    let bestGU = Math.round(bestWidgetRect.w / 182);
-    let bestGS = -1;
-    const scaleRaw = ctx.getImageData(0, 0, imgW, imgH).data;
-    for (let u = 1; u <= maxScale; u++) {
-      const w = 182 * u, h = 22 * u;
-      const x = Math.round((imgW - w) / 2);
-      const y = imgH - h - bOff;
-      if (x < 0 || y < 0 || x + w > imgW || y + h > imgH) continue;
-      const strip = extractRegion(ctx, x, y, w, h, 182, 22);
-      const masked = maskWidgetItems(strip.data, 182, 22);
-      const gs = computeWidgetGridScore(masked, 182, 22);
-      let bc = 0;
-      if (x >= 1 && x + w < imgW) {
-        let diff = 0, cnt = 0;
-        for (let row = y; row < y + h && row < imgH; row++) {
-          const li = (row * imgW + x - 1) * 4, ri = (row * imgW + x) * 4;
-          diff += Math.abs(
-            (0.299*scaleRaw[li] + 0.587*scaleRaw[li+1] + 0.114*scaleRaw[li+2]) -
-            (0.299*scaleRaw[ri] + 0.587*scaleRaw[ri+1] + 0.114*scaleRaw[ri+2]));
-          const li2 = (row * imgW + x + w - 1) * 4, ri2 = (row * imgW + x + w) * 4;
-          diff += Math.abs(
-            (0.299*scaleRaw[li2] + 0.587*scaleRaw[li2+1] + 0.114*scaleRaw[li2+2]) -
-            (0.299*scaleRaw[ri2] + 0.587*scaleRaw[ri2+1] + 0.114*scaleRaw[ri2+2]));
-          cnt += 2;
-        }
-        bc = cnt ? Math.min(1, diff / cnt / 40) : 0;
-      }
-      let tc = 0;
-      if (y >= 1) {
-        let tdiff = 0, tcnt = 0;
-        for (let col = x; col < x + w && col < imgW; col++) {
-          const ai = ((y - 1) * imgW + col) * 4;
-          const bi = (y * imgW + col) * 4;
-          tdiff += Math.abs(
-            (0.299*scaleRaw[ai] + 0.587*scaleRaw[ai+1] + 0.114*scaleRaw[ai+2]) -
-            (0.299*scaleRaw[bi] + 0.587*scaleRaw[bi+1] + 0.114*scaleRaw[bi+2]));
-          tcnt++;
-        }
-        tc = tcnt ? Math.min(1, tdiff / tcnt / 40) : 0;
-      }
-      const score = gs * (0.40 + 0.25 * bc + 0.35 * tc);
-      if (score > bestGS) { bestGS = score; bestGU = u; }
-    }
+    const bestGU = Math.min(maxScale, 3);
     const fixedW = 182 * bestGU;
     const fixedH = 22 * bestGU;
     const fixedX = Math.round((imgW - fixedW) / 2);
