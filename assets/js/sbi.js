@@ -1007,27 +1007,10 @@ function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
   const u = Math.min(maxScale, 3);
   const w = 182 * u, h = 22 * u;
   const x = Math.round((imgW - w) / 2);
-  if (x < 0 || imgH - h < 0 || x + w > imgW) return hintRect;
-  let best = { x, y: imgH - h, w, h };
-  let bestTc = -1;
-  const raw = ctx.getImageData(0, 0, imgW, imgH).data;
-  window._displayDebug = { maxScale, fixedScale: u, bestBOff: 0, bestTc: 0 };
-  for (let bOff = 0; bOff <= 8; bOff++) {
-    const y = imgH - h - bOff;
-    if (y < 1) continue;
-    let tdiff = 0, tcnt = 0;
-    for (let col = x; col < x + w && col < imgW; col++) {
-      const ai = ((y - 1) * imgW + col) * 4;
-      const bi = (y * imgW + col) * 4;
-      tdiff += Math.abs(
-        (0.299*raw[ai] + 0.587*raw[ai+1] + 0.114*raw[ai+2]) -
-        (0.299*raw[bi] + 0.587*raw[bi+1] + 0.114*raw[bi+2]));
-      tcnt++;
-    }
-    const tc = tcnt ? Math.min(1, tdiff / tcnt / 40) : 0;
-    if (tc > bestTc) { bestTc = tc; best = { x, y, w, h }; window._displayDebug.bestBOff = bOff; window._displayDebug.bestTc = tc; }
-  }
-  return best;
+  const y = imgH - h;
+  if (x < 0 || y < 0 || x + w > imgW) return hintRect;
+  window._displayDebug = { maxScale, fixedScale: u };
+  return { x, y, w, h };
 }
 
 function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes) {
@@ -1043,7 +1026,7 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   let dbg = wrap.querySelector('.sbi-crop-debug');
   if (!dbg) { dbg = document.createElement('div'); dbg.className = 'sbi-crop-debug'; dbg.style.cssText = 'font:11px monospace;color:#c00;padding:4px;word-break:break-all'; wrap.prepend(dbg); }
   const dd = window._displayDebug || {};
-  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | fixedSc=${dd.fixedScale} maxSc=${dd.maxScale} bOff=${dd.bestBOff} tc=${(dd.bestTc||0).toFixed(4)}`;
+  dbg.textContent = `img=${imgW}x${imgH} | wR={x:${widgetRect.x},y:${widgetRect.y},w:${widgetRect.w},h:${widgetRect.h}} u=${(widgetRect.w/182).toFixed(2)} | dR={x:${dRect.x},y:${dRect.y},w:${dRect.w},h:${dRect.h}} u=${unit.toFixed(2)} | fixedSc=${dd.fixedScale} maxSc=${dd.maxScale}`;
 
   renderCropCanvas(
     'sbi-crop-hotbar',
