@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VALE - Search by Image</title>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=3">
+  <link rel="stylesheet" href="/assets/css/style.css?v=4">
 </head>
 <body>
   <header>
@@ -106,24 +106,23 @@
       </div>
     </details>
 
-    <div class="sbi-forced-wrap" id="sbi-forced-wrap">
-      <label class="sbi-force-toggle">
-        <input type="checkbox" id="sbi-force-toggle" checked>
-        Force show Eum3 Blue Revamp scores
-      </label>
-      <div class="sbi-forced" id="sbi-forced" hidden></div>
-    </div>
-
     <details class="sbi-breakdown" id="sbi-breakdown">
       <summary>Scoring Weights</summary>
       <div class="sbi-breakdown-body" id="sbi-breakdown-body"></div>
     </details>
+
+    <div class="sbi-search-wrap" id="sbi-search-wrap">
+      <div class="sbi-search-title">Search Scores</div>
+      <input class="sbi-search-input" id="sbi-search-input" type="search" placeholder="Search pack name, e.g. Eum3 Blue Revamp" autocomplete="off" spellcheck="false">
+      <div class="sbi-search-meta" id="sbi-search-meta">Upload a screenshot to search current scores.</div>
+      <div class="sbi-search-results" id="sbi-search-results" hidden></div>
+    </div>
   </div>
 
   <footer>
     <p>VALE Project</p>
   </footer>
 
-  <script src="/assets/js/sbi.js?v=36"></script>
+  <script src="/assets/js/sbi.js?v=37"></script>
 </body>
 </html>

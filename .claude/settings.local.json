@@ -51,7 +51,9 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "mcp__ace-tool__search_context",
-      "mcp__tavily-remote-mcp__tavily_search"
+      "mcp__tavily-remote-mcp__tavily_search",
+      "mcp__fetch__fetch",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

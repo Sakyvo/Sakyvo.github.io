@@ -64,7 +64,7 @@ const CLIP_RERANK_WEIGHT = 0.65;
 const CLIP_ONLY_SCALE = 0.72;
 let _lastMatchDetails = {};
 let _lastClipScores = {};
-let _lastForcedCombined = {};
+let _lastVisibleScores = {};
 let _lastDetectionMeta = null;
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
@@ -81,7 +81,6 @@ const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
-const FORCE_PACKS = ['Eum3_Blue_Revamp', 'Eum3Blue_Revamp'];
 const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
   type: { diamond_sword: 2.5, ender_pearl: 2.5, splash_potion: 1.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
@@ -97,9 +96,23 @@ function getMaxGuiScale(imgW, imgH) {
   return Math.max(1, Math.min(MAX_GUI_SCALE, Math.floor(Math.min(imgW / 320, imgH / 240))));
 }
 
+function getWide16By9Unit(imgW, imgH) {
+  if (!imgW || !imgH) return 0;
+  if (Math.abs(imgW / imgH - 16 / 9) > 0.02) return 0;
+  return ((imgW / 640) + (imgH / 360)) * 0.5;
+}
+
 function fmtPct(v) {
   if (!isFinite(v)) return '-';
   return (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + '%';
+}
+
+function getPackDisplayName(name) {
+  return String(name || '').replace(/_/g, ' ');
+}
+
+function normalizePackSearchTerm(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 
 function summarizeSlotTypes(types) {
@@ -128,7 +141,7 @@ function renderDebugPanel(results, phase) {
   const rect = d.widgetRect ? `x=${d.widgetRect.x}, y=${d.widgetRect.y}, w=${d.widgetRect.w}, h=${d.widgetRect.h}` : 'none';
   const s = d.searchInfo || null;
   const search = s
-    ? `unit=${s.unit.toFixed(3)}${s.snappedUnit === undefined ? '' : `→${s.snappedUnit.toFixed(3)}`}, off=${s.bottomOffset === undefined ? '-' : s.bottomOffset}, mode=${s.mode || 'strict'}, by=${s.bottomRatio === undefined ? '-' : s.bottomRatio.toFixed(3)}, g=${s.gridScore === undefined ? '-' : s.gridScore.toFixed(2)}, bp=${s.bottomPref === undefined ? '-' : s.bottomPref.toFixed(2)}, up=${s.unitPref === undefined ? '-' : s.unitPref.toFixed(2)}, wb=${s.widgetBoost === undefined ? '-' : s.widgetBoost.toFixed(3)}, hb=${s.hudBoost === undefined ? '-' : s.hudBoost.toFixed(3)}, sb=${s.slotBoost === undefined ? '-' : s.slotBoost.toFixed(3)}, conf=${Math.round(s.confidence)}`
+    ? `unit=${s.unit.toFixed(3)}${s.snappedUnit === undefined ? '' : `→${s.snappedUnit.toFixed(3)}`}, target=${s.targetUnit === undefined ? '-' : s.targetUnit.toFixed(3)}, off=${s.bottomOffset === undefined ? '-' : s.bottomOffset}, mode=${s.mode || 'strict'}, by=${s.bottomRatio === undefined ? '-' : s.bottomRatio.toFixed(3)}, g=${s.gridScore === undefined ? '-' : s.gridScore.toFixed(2)}, bp=${s.bottomPref === undefined ? '-' : s.bottomPref.toFixed(2)}, up=${s.unitPref === undefined ? '-' : s.unitPref.toFixed(2)}, wb=${s.widgetBoost === undefined ? '-' : s.widgetBoost.toFixed(3)}, hb=${s.hudBoost === undefined ? '-' : s.hudBoost.toFixed(3)}, sb=${s.slotBoost === undefined ? '-' : s.slotBoost.toFixed(3)}, conf=${Math.round(s.confidence)}`
     : 'none';
   meta.textContent =
     `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}` +
@@ -138,7 +151,7 @@ function renderDebugPanel(results, phase) {
     const info = _lastMatchDetails[r.name] || {};
     return `<tr>
       <td>${i + 1}</td>
-      <td>${r.name}</td>
+      <td title="${r.name}">${r.name}</td>
       <td>${fmtPct(r.score)}</td>
       <td>${fmtPct(info.slotScore)}</td>
       <td>${fmtPct(info.widgetScore)}</td>
@@ -177,37 +190,91 @@ function renderScoreBreakdown() {
   `;
 }
 
-function renderForcedPacks() {
-  const el = document.getElementById('sbi-forced');
-  if (!el) return;
-  const toggle = document.getElementById('sbi-force-toggle');
-  if (toggle && !toggle.checked) { el.hidden = true; return; }
+function findPackScoreMatches(query) {
+  if (!fingerprints || !fingerprints.packs) return [];
+  const normalizedQuery = normalizePackSearchTerm(query);
+  const tokens = String(query || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+  if (!normalizedQuery && !tokens.length) return [];
 
-  const rows = FORCE_PACKS.map(name => {
+  return Object.keys(fingerprints.packs).map(name => {
+    const loweredName = name.toLowerCase();
+    const displayName = getPackDisplayName(name);
+    const normalizedName = normalizePackSearchTerm(name);
+    const normalizedDisplay = normalizePackSearchTerm(displayName);
+    let rank = 0;
+    if (normalizedQuery && (normalizedName === normalizedQuery || normalizedDisplay === normalizedQuery)) rank = 3;
+    else if (normalizedQuery && (normalizedName.includes(normalizedQuery) || normalizedDisplay.includes(normalizedQuery))) rank = 2;
+    else if (tokens.length && tokens.every(token => loweredName.includes(token) || displayName.toLowerCase().includes(token))) rank = 1;
+    if (!rank) return null;
     const info = _lastMatchDetails[name] || {};
-    const hashScore = isFinite(info.finalScore) ? info.finalScore : (_lastAllScores[name] || 0);
-    const total = hashScore;
-    const disp = name.replace(/_/g, ' ');
-    return `<tr>
-      <td><a href="/p/${encodeURIComponent(name)}/">${disp}</a></td>
-      <td>${fmtPct(total)}</td>
-      <td>${fmtPct(hashScore)}</td>
-      <td>${fmtPct(info.slotScore)}</td>
-      <td>${fmtPct(info.widgetScore)}</td>
-      <td>${fmtPct(info.healthScore)}</td>
-      <td>${fmtPct(info.hungerScore)}</td>
-      <td>${fmtPct(info.armorScore)}</td>
-    </tr>`;
-  }).join('');
+    const totalScore = isFinite(_lastVisibleScores[name]) ? _lastVisibleScores[name] : (isFinite(info.finalScore) ? info.finalScore : 0);
+    return {
+      name,
+      displayName,
+      rank,
+      totalScore,
+      slotScore: info.slotScore,
+      widgetScore: info.widgetScore,
+      healthScore: info.healthScore,
+      hungerScore: info.hungerScore,
+      armorScore: info.armorScore,
+      slotTypes: info.slotTypes,
+    };
+  }).filter(Boolean).sort((a, b) =>
+    b.rank - a.rank ||
+    b.totalScore - a.totalScore ||
+    a.displayName.localeCompare(b.displayName)
+  );
+}
+
+function renderPackScoreSearch() {
+  const input = document.getElementById('sbi-search-input');
+  const meta = document.getElementById('sbi-search-meta');
+  const el = document.getElementById('sbi-search-results');
+  if (!input || !meta || !el) return;
+
+  const query = input.value.trim();
+  if (!Object.keys(_lastMatchDetails).length) {
+    meta.textContent = 'Upload a screenshot to search current scores.';
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+  if (!query) {
+    meta.textContent = 'Enter a pack name to inspect related score details.';
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+
+  const matches = findPackScoreMatches(query).slice(0, 30);
+  meta.textContent = matches.length
+    ? `Found ${matches.length} related pack${matches.length === 1 ? '' : 's'}.`
+    : 'No related packs found.';
+  if (!matches.length) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
 
   el.hidden = false;
   el.innerHTML = `
-    <div class="sbi-forced-title">Forced Packs</div>
-    <table class="sbi-forced-table">
+    <table class="sbi-search-table">
       <thead>
-        <tr><th>Pack</th><th>Total</th><th>Hash</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th></tr>
+        <tr><th>Pack</th><th>Total</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Slot Types</th></tr>
       </thead>
-      <tbody>${rows}</tbody>
+      <tbody>${matches.map(row => `
+        <tr>
+          <td title="${row.name}"><a href="/p/${encodeURIComponent(row.name)}/">${row.displayName}</a></td>
+          <td>${fmtPct(row.totalScore)}</td>
+          <td>${fmtPct(row.slotScore)}</td>
+          <td>${fmtPct(row.widgetScore)}</td>
+          <td>${fmtPct(row.healthScore)}</td>
+          <td>${fmtPct(row.hungerScore)}</td>
+          <td>${fmtPct(row.armorScore)}</td>
+          <td>${summarizeSlotTypes(row.slotTypes)}</td>
+        </tr>
+      `).join('')}</tbody>
     </table>
   `;
 }
@@ -233,7 +300,6 @@ function handleClipResults(clipScores) {
     ..._lastHashResults.map(r => r.name),
     ...sortedClip.slice(0, 40).map(s => s.name)
   ]);
-  for (const name of FORCE_PACKS) allNames.add(name);
   for (const name of allNames) {
     const hashScore = _lastAllScores[name] || 0;
     const hasClip = Object.prototype.hasOwnProperty.call(clipMap, name);
@@ -246,24 +312,13 @@ function handleClipResults(clipScores) {
     else score = 0;
     combined.push({ name, score });
   }
-  _lastForcedCombined = {};
-  for (const name of FORCE_PACKS) {
-    const hashScore = _lastAllScores[name] || 0;
-    const hasClip = Object.prototype.hasOwnProperty.call(clipMap, name);
-    const clipScore = hasClip ? clipMap[name] : 0;
-    const hasHash = hashScore > 0;
-    let score;
-    if (hasHash && hasClip) score = hashScore * (CLIP_RERANK_BASE + CLIP_RERANK_WEIGHT * clipScore);
-    else if (hasHash) score = hashScore;
-    else if (hasClip) score = clipScore * CLIP_ONLY_SCALE;
-    else score = 0;
-    _lastForcedCombined[name] = score;
-  }
+  _lastVisibleScores = {};
+  for (const row of combined) _lastVisibleScores[row.name] = row.score;
   combined.sort((a, b) => b.score - a.score);
   const top10 = combined.slice(0, 10);
   renderResults(top10, 'AI Enhanced');
   renderDebugPanel(top10, 'ai');
-  renderForcedPacks();
+  renderPackScoreSearch();
   if (statusEl) { statusEl.hidden = true; statusEl.textContent = ''; statusEl.dataset.state = 'ready'; }
 
   const thumbCanvas = document.createElement('canvas');
@@ -855,6 +910,8 @@ function buildStrictCropCandidates(imgW, imgH) {
   for (let u = 1; u <= maxScale; u++) unitSet.add(u.toFixed(3));
   const denseMax = isHudCrop ? maxCandidateUnit : Math.min(maxCandidateUnit, maxScale + 0.75);
   for (let u = 1.0; u <= denseMax + 1e-6; u += 0.05) unitSet.add(u.toFixed(3));
+  const wideUnit = getWide16By9Unit(imgW, imgH);
+  if (!isHudCrop && wideUnit >= 1 && wideUnit <= maxCandidateUnit) unitSet.add(wideUnit.toFixed(3));
 
   // Hotbar-only crops: the widget can span (almost) the full image width.
   // These units are harmless for full screenshots (filtered out by range).
@@ -1031,7 +1088,10 @@ window._displayDebug = {};
 function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
   const maxScale = getMaxGuiScale(imgW, imgH);
   const detectedScale = hintRect && hintRect.w ? (hintRect.w / 182) : 0;
-  const u = Math.max(1, Math.min(maxScale, Math.round(detectedScale || maxScale)));
+  const preferredScale = getWide16By9Unit(imgW, imgH);
+  const u = preferredScale >= 1
+    ? preferredScale
+    : Math.max(1, Math.min(maxScale, Math.round(detectedScale || maxScale)));
   const w = 182 * u, h = 22 * u;
   const x = Math.round((imgW - w) / 2);
   const bottomOffset = hintRect
@@ -1039,7 +1099,7 @@ function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
     : 0;
   const y = imgH - h - bottomOffset;
   if (x < 0 || y < 0 || x + w > imgW) return hintRect;
-  window._displayDebug = { maxScale, fixedScale: u, detectedScale, bottomOffset };
+  window._displayDebug = { maxScale, fixedScale: u, detectedScale, preferredScale, bottomOffset };
   return { x, y, w, h };
 }
 
@@ -1162,6 +1222,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
   const aspect = imgH / Math.max(1, imgW);
   const isHudCrop = aspect < 0.35;
+  const targetUnit = isHudCrop ? 0 : getWide16By9Unit(imgW, imgH);
   const PRE_K = 80;
   const PER_UNIT_K = 14;
   const preByUnit = new Map();
@@ -1187,7 +1248,8 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const gridScore = computeWidgetGridScore(maskedStrip, 182, 22);
     const bottomPref = clamp01(1 - (c.bottomOffset || 0) / (c.unit * 4 + 1e-6));
     const unitRounded = Math.max(1, Math.round(c.unit));
-    const unitPref = clamp01(1 - Math.abs(c.unit - unitRounded) / 0.18);
+    const unitPrefTarget = targetUnit >= 1 ? targetUnit : unitRounded;
+    const unitPref = clamp01(1 - Math.abs(c.unit - unitPrefTarget) / (targetUnit >= 1 ? 0.08 : 0.18));
     const score = (0.70 * gridScore + 0.30 * bottomPref) * (0.90 + 0.10 * unitPref);
     const entry = { c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, unitPref, score, unitRounded };
     all.push(entry);
@@ -1312,6 +1374,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
         bottomRatio: c.bottomRatio,
         bottomOffset: c.bottomOffset || 0,
         confidence,
+        targetUnit: unitPrefTarget,
         combinedBoost: boostedCombined,
         widgetBoost,
         hudBoost,
@@ -1465,7 +1528,6 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   let bestScore = -Infinity;
 
   for (const [packName, packData] of Object.entries(fingerprints.packs)) {
-    const isForced = FORCE_PACKS.includes(packName);
     let slotWeighted = 0, slotWeights = 0;
     let slotPenalty = 0, certaintySum = 0;
     let activeSlots = 0, strongSlots = 0;
@@ -1501,9 +1563,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       if (sim >= 0.54) strongSlots++;
       else slotPenalty += (0.54 - sim) * (0.8 + activity * 0.7);
     }
-    if (!slotWeights || activeSlots < 3) {
-      if (!isForced) continue;
-    }
+    const canRank = !!slotWeights && activeSlots >= 3;
 
     const slotScore = slotWeights ? (slotWeighted / slotWeights) : 0;
     const slotCoverage = activeSlots ? (strongSlots / activeSlots) : 0;
@@ -1538,20 +1598,18 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     rawScore = clamp01(rawScore);
 
     const finalScore = sharpenSimilarityScore(rawScore);
-    if (finalScore > 0.28 || isForced) {
-      details[packName] = {
-        finalScore,
-        slotScore: slotComposite,
-        widgetScore: widgetSim,
-        healthScore: healthSim,
-        hungerScore: hungerSim,
-        armorScore: armorSim,
-        slotCoverage,
-        slotCertainty,
-        slotTypes: displaySlotTypes,
-      };
-    }
-    if (finalScore > 0.28) {
+    details[packName] = {
+      finalScore,
+      slotScore: slotComposite,
+      widgetScore: widgetSim,
+      healthScore: healthSim,
+      hungerScore: hungerSim,
+      armorScore: armorSim,
+      slotCoverage,
+      slotCertainty,
+      slotTypes: displaySlotTypes,
+    };
+    if (canRank && finalScore > 0.28) {
       results.push({ name: packName, score: finalScore });
       if (finalScore > bestScore) bestScore = finalScore;
     }
@@ -1600,7 +1658,7 @@ function renderResults(results, label) {
     const color = scoreColor(pct);
     const coverUrl = '/thumbnails/' + encodeURIComponent(r.name) + '/cover.png';
     const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
-    const displayName = r.name.replace(/_/g, ' ');
+    const displayName = getPackDisplayName(r.name);
     return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/">
       <span class="sbi-rank">${i + 1}</span>
       <span class="sbi-divider"></span>
@@ -1648,6 +1706,10 @@ async function processImage(file) {
   if (debugPanel) debugPanel.hidden = true;
   if (debugBody) debugBody.innerHTML = '';
   if (debugMeta) debugMeta.textContent = '';
+  _lastMatchDetails = {};
+  _lastAllScores = {};
+  _lastVisibleScores = {};
+  renderPackScoreSearch();
 
   const img = new Image();
   const url = URL.createObjectURL(file);
@@ -1691,17 +1753,14 @@ async function processImage(file) {
     progress.hidden = true;
     renderResults(stage1Top10);
     renderDebugPanel(stage1Top10, 'hash');
-    _lastForcedCombined = {};
-    renderForcedPacks();
+    _lastVisibleScores = {};
+    for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = isFinite(info.finalScore) ? info.finalScore : 0;
+    renderPackScoreSearch();
 
     // Cache hash scores for later CLIP combination
     _lastHashResults = results.slice(0, 40);
     _lastAllScores = {};
-    for (const r of results) _lastAllScores[r.name] = r.score;
-    for (const name of FORCE_PACKS) {
-      const info = details && details[name];
-      if (info && isFinite(info.finalScore)) _lastAllScores[name] = info.finalScore;
-    }
+    for (const [name, info] of Object.entries(details)) _lastAllScores[name] = isFinite(info.finalScore) ? info.finalScore : 0;
 
     // Stage 2: CLIP refinement (async)
     if (ENABLE_CLIP && widgetRect && slots.length > 0) {
@@ -1775,9 +1834,10 @@ function init() {
     }
   });
 
-  const forceToggle = document.getElementById('sbi-force-toggle');
-  if (forceToggle) forceToggle.addEventListener('change', () => renderForcedPacks());
+  const searchInput = document.getElementById('sbi-search-input');
+  if (searchInput) searchInput.addEventListener('input', () => renderPackScoreSearch());
   renderScoreBreakdown();
+  renderPackScoreSearch();
   if (ENABLE_CLIP) initClipWorker();
 }
 
