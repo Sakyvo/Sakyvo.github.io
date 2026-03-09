@@ -105,7 +105,7 @@ function getWide16By9Unit(imgW, imgH) {
 function getHudHorizontalShift(unit, imgW, imgH) {
   const wideUnit = getWide16By9Unit(imgW, imgH);
   const baseUnit = wideUnit >= 1 ? wideUnit : unit;
-  return Math.max(1, Math.round(baseUnit * (2 / 3)));
+  return Math.max(1, Math.round(baseUnit * 1.4));
 }
 
 function fmtPct(v) {
