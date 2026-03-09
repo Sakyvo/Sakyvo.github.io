@@ -1251,7 +1251,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
     const unitPrefTarget = targetUnit >= 1 ? targetUnit : unitRounded;
     const unitPref = clamp01(1 - Math.abs(c.unit - unitPrefTarget) / (targetUnit >= 1 ? 0.08 : 0.18));
     const score = (0.70 * gridScore + 0.30 * bottomPref) * (0.90 + 0.10 * unitPref);
-    const entry = { c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, unitPref, score, unitRounded };
+    const entry = { c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, unitPref, unitPrefTarget, score, unitRounded };
     all.push(entry);
 
     const list = preByUnit.get(unitRounded) || [];
@@ -1374,7 +1374,7 @@ function extractHotbarSlots(ctx, imgW, imgH) {
         bottomRatio: c.bottomRatio,
         bottomOffset: c.bottomOffset || 0,
         confidence,
-        targetUnit: unitPrefTarget,
+        targetUnit: cand.unitPrefTarget,
         combinedBoost: boostedCombined,
         widgetBoost,
         hudBoost,
