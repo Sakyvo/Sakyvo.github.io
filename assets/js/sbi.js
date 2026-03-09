@@ -102,6 +102,12 @@ function getWide16By9Unit(imgW, imgH) {
   return ((imgW / 640) + (imgH / 360)) * 0.5;
 }
 
+function getHudHorizontalShift(unit, imgW, imgH) {
+  const wideUnit = getWide16By9Unit(imgW, imgH);
+  const baseUnit = wideUnit >= 1 ? wideUnit : unit;
+  return Math.max(1, Math.round(baseUnit * (2 / 3)));
+}
+
 function fmtPct(v) {
   if (!isFinite(v)) return '-';
   return (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + '%';
@@ -265,7 +271,7 @@ function renderPackScoreSearch() {
       </thead>
       <tbody>${matches.map(row => `
         <tr>
-          <td title="${row.name}"><a href="/p/${encodeURIComponent(row.name)}/">${row.displayName}</a></td>
+          <td title="${row.name}"><a href="/p/${encodeURIComponent(row.name)}/" target="_blank" rel="noopener noreferrer">${row.displayName}</a></td>
           <td>${fmtPct(row.totalScore)}</td>
           <td>${fmtPct(row.slotScore)}</td>
           <td>${fmtPct(row.widgetScore)}</td>
@@ -806,8 +812,9 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
   const heartBoxes = [];
   const hungerBoxes = [];
   const armorBoxes = [];
-  const leftHudShift = 0.32 * unit;
-  const rightHudShift = -0.32 * unit;
+  const hudShift = getHudHorizontalShift(unit, imgW, imgH);
+  const leftHudShift = hudShift;
+  const rightHudShift = -hudShift;
 
   for (let i = 0; i < 10; i++) {
     const heartX = widgetRect.x + (1 + i * 8) * unit + leftHudShift;
@@ -1127,8 +1134,9 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   const barW = 81 * unit;
   const heartsY = dRect.y - 17 * unit;
   const armorY = heartsY - 10 * unit;
-  const leftX = dRect.x + unit;
-  const rightX = dRect.x + 100 * unit;
+  const hudShift = getHudHorizontalShift(unit, imgW, imgH);
+  const leftX = dRect.x + unit + hudShift;
+  const rightX = dRect.x + 100 * unit - hudShift;
   const renderBar = (id, x, y, w, h) => {
     const ix = Math.round(x), iy = Math.round(y), iw = Math.round(w), ih = Math.round(h);
     if (ix < 0 || iy < 0 || ix + iw > imgW || iy + ih > imgH || iw < 2 || ih < 2) {
@@ -1659,7 +1667,7 @@ function renderResults(results, label) {
     const coverUrl = '/thumbnails/' + encodeURIComponent(r.name) + '/cover.png';
     const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
     const displayName = getPackDisplayName(r.name);
-    return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/">
+    return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/" target="_blank" rel="noopener noreferrer">
       <span class="sbi-rank">${i + 1}</span>
       <span class="sbi-divider"></span>
       <span class="sbi-score" style="color:${color}">${pct}%</span>
