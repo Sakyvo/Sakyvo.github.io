@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VALE - Search by Image</title>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=4">
+  <link rel="stylesheet" href="/assets/css/style.css?v=5">
 </head>
 <body>
   <header>
@@ -30,6 +30,11 @@
     </div>
 
     <div class="sbi-preview" id="sbi-preview" hidden>
+      <img class="sbi-preview-image" id="sbi-preview-image" alt="sbi.png" hidden>
+      <div class="sbi-preview-actions" id="sbi-preview-actions" hidden>
+        <a class="sbi-preview-link" id="sbi-preview-open" target="_blank" rel="noopener noreferrer">Open sbi.png</a>
+        <a class="sbi-preview-link" id="sbi-preview-download" download="sbi.png">Download sbi.png</a>
+      </div>
       <canvas id="sbi-canvas"></canvas>
     </div>
 
@@ -123,6 +128,6 @@
     <p>VALE Project</p>
   </footer>
 
-  <script src="/assets/js/sbi.js?v=37"></script>
+  <script src="/assets/js/sbi.js?v=38"></script>
 </body>
 </html>

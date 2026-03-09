@@ -66,6 +66,7 @@ let _lastMatchDetails = {};
 let _lastClipScores = {};
 let _lastVisibleScores = {};
 let _lastDetectionMeta = null;
+let _previewImageUrl = '';
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -119,6 +120,57 @@ function getPackDisplayName(name) {
 
 function normalizePackSearchTerm(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function revokePreviewImageUrl() {
+  if (!_previewImageUrl) return;
+  URL.revokeObjectURL(_previewImageUrl);
+  _previewImageUrl = '';
+}
+
+function clearPreviewCacheImage() {
+  const previewImage = document.getElementById('sbi-preview-image');
+  const previewActions = document.getElementById('sbi-preview-actions');
+  const previewOpen = document.getElementById('sbi-preview-open');
+  const previewDownload = document.getElementById('sbi-preview-download');
+  revokePreviewImageUrl();
+  if (previewImage) {
+    previewImage.hidden = true;
+    previewImage.removeAttribute('src');
+  }
+  if (previewActions) previewActions.hidden = true;
+  if (previewOpen) previewOpen.removeAttribute('href');
+  if (previewDownload) previewDownload.removeAttribute('href');
+}
+
+function updatePreviewCacheImage(filename) {
+  const canvas = document.getElementById('sbi-canvas');
+  const previewImage = document.getElementById('sbi-preview-image');
+  const previewActions = document.getElementById('sbi-preview-actions');
+  const previewOpen = document.getElementById('sbi-preview-open');
+  const previewDownload = document.getElementById('sbi-preview-download');
+  if (!canvas || !previewImage || !previewActions || !previewOpen || !previewDownload) return Promise.resolve();
+  return new Promise(resolve => {
+    canvas.toBlob(blob => {
+      if (!blob) {
+        clearPreviewCacheImage();
+        resolve();
+        return;
+      }
+      revokePreviewImageUrl();
+      const file = typeof File === 'function'
+        ? new File([blob], filename, { type: 'image/png' })
+        : blob;
+      _previewImageUrl = URL.createObjectURL(file);
+      previewImage.src = _previewImageUrl;
+      previewImage.hidden = false;
+      previewOpen.href = _previewImageUrl;
+      previewDownload.href = _previewImageUrl;
+      previewDownload.download = filename;
+      previewActions.hidden = false;
+      resolve();
+    }, 'image/png');
+  });
 }
 
 function summarizeSlotTypes(types) {
@@ -1714,6 +1766,7 @@ async function processImage(file) {
   if (debugPanel) debugPanel.hidden = true;
   if (debugBody) debugBody.innerHTML = '';
   if (debugMeta) debugMeta.textContent = '';
+  clearPreviewCacheImage();
   _lastMatchDetails = {};
   _lastAllScores = {};
   _lastVisibleScores = {};
@@ -1758,6 +1811,7 @@ async function processImage(file) {
     };
     renderCrops(rawCtx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
+    await updatePreviewCacheImage('sbi.png');
     progress.hidden = true;
     renderResults(stage1Top10);
     renderDebugPanel(stage1Top10, 'hash');
