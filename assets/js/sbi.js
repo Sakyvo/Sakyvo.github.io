@@ -104,9 +104,8 @@ function getWide16By9Unit(imgW, imgH) {
 }
 
 function getHudHorizontalShift(unit, imgW, imgH) {
-  const wideUnit = getWide16By9Unit(imgW, imgH);
-  const baseUnit = wideUnit >= 1 ? wideUnit : unit;
-  return Math.max(1, Math.round(baseUnit * 1.4));
+  // Keep HUD crops aligned to the XP bar endpoints.
+  return 0;
 }
 
 function fmtPct(v) {
