@@ -868,8 +868,8 @@ function extractHudFeatures(ctx, widgetRect, imgW, imgH) {
   const rightHudShift = -hudShift;
 
   for (let i = 0; i < 10; i++) {
-    const heartX = widgetRect.x + (1 + i * 8) * unit + leftHudShift;
-    const hungerX = widgetRect.x + (182 - 10 - i * 8) * unit + rightHudShift;
+    const heartX = widgetRect.x + (i * 8) * unit + leftHudShift;
+    const hungerX = widgetRect.x + (182 - 9 - i * 8) * unit + rightHudShift;
 
     const heartFeat = tryExtractFeature(ctx, heartX, heartsY, iconSize, iconSize, imgW, imgH, 16, 16);
     const hungerFeat = tryExtractFeature(ctx, hungerX, heartsY, iconSize, iconSize, imgW, imgH, 16, 16);
@@ -1186,8 +1186,8 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
   const heartsY = dRect.y - 17 * unit;
   const armorY = heartsY - 10 * unit;
   const hudShift = getHudHorizontalShift(unit, imgW, imgH);
-  const leftX = dRect.x + unit + hudShift;
-  const rightX = dRect.x + 100 * unit - hudShift;
+  const leftX = dRect.x + hudShift;
+  const rightX = dRect.x + 101 * unit - hudShift;
   const renderBar = (id, x, y, w, h) => {
     const ix = Math.round(x), iy = Math.round(y), iw = Math.round(w), ih = Math.round(h);
     if (ix < 0 || iy < 0 || ix + iw > imgW || iy + ih > imgH || iw < 2 || ih < 2) {
