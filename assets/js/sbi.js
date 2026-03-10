@@ -85,7 +85,7 @@ const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak
 const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
   type: { diamond_sword: 2.5, ender_pearl: 2.5, splash_potion: 1.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
-  hud: { health: 3.4, hunger: 0.35, armor: 0.8 },
+  hud: { health: 3.4, hunger: 1.5, armor: 1.0 },
   mix: { slot: 0.16, hud: 0.38, widget: 0.46, slotNoHud: 0.35, widgetNoHud: 0.65 },
 };
 
