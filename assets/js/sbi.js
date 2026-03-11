@@ -67,8 +67,6 @@ let _lastClipScores = {};
 let _lastVisibleScores = {};
 let _lastDetectionMeta = null;
 let _previewImageUrl = '';
-let _lastSlots = [];
-let _lastSlotTypes = [];
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -208,7 +206,7 @@ function renderDebugPanel(results, phase) {
 
   body.innerHTML = (results || []).slice(0, 10).map((r, i) => {
     const info = _lastMatchDetails[r.name] || {};
-    return `<tr>
+    return `<tr data-pack="${r.name.replace(/"/g, '&quot;')}">
       <td>${i + 1}</td>
       <td title="${r.name}">${r.name}</td>
       <td>${fmtPct(r.score)}</td>
@@ -1221,32 +1219,10 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
     cctx.fillRect(0, 0, outSize, outSize);
     cctx.drawImage(ctx.canvas, left, top, side, side, 0, 0, outSize, outSize);
   };
-
-  _lastSlots = slots;
-  _lastSlotTypes = slotTypes;
-  const slotByIndex = {};
-  for (const s of slots) if (s && s.index >= 0 && s.index <= 8) slotByIndex[s.index] = s;
-
-  const TYPE_SHORT = { diamond_sword: 'DS', ender_pearl: 'EP', splash_potion: 'HL', steak: 'SK', golden_carrot: 'GC', iron_sword: 'IS', apple_golden: 'AG', none: '-' };
-  for (let i = 0; i < 9; i++) {
-    renderSlot('sbi-crop-slot-' + i, i, 96);
-    const card = document.querySelector(`.sbi-slot-card[data-slot="${i}"]`);
-    if (!card) continue;
-    const label = card.querySelector('.sbi-crop-label');
-    const detected = slotTypes[i] || 'none';
-    const short = TYPE_SHORT[detected] || '-';
-    if (label) label.textContent = (i + 1) + (short !== '-' ? ' ' + short : '');
-    card.style.borderColor = SLOT_COLOR_MAP[detected] || 'var(--border)';
-
-    const tip = card.querySelector('.sbi-slot-tip');
-    if (!tip) continue;
-    const slot = slotByIndex[i];
-    const scores = computeSlotClassScores(slot);
-    if (!scores) { tip.hidden = true; continue; }
-    tip.innerHTML = Object.entries(scores).map(([k, v]) =>
-      `<span><span class="sbi-tip-type">${k}</span><span class="sbi-tip-val">${(v * 100).toFixed(0)}</span></span>`
-    ).join('');
-  }
+  renderSlot('sbi-crop-ds', 0, 96);
+  renderSlot('sbi-crop-ep', 1, 96);
+  renderSlot('sbi-crop-hl', 5, 96);
+  renderSlot('sbi-crop-food', 8, 96);
 
   wrap.hidden = false;
 }
@@ -1600,27 +1576,7 @@ function inferDisplaySlotTypes(slots) {
   return out;
 }
 
-function computeSlotClassScores(slot) {
-  if (!slot) return null;
-  const activity = clamp01(slot.activity || 0);
-  const variance = slot.variance || 0;
-  if (activity < 0.26 || variance < 220) return null;
-  const sig = slot.features && slot.features.sig;
-  if (!sig || sig.n <= 0 || !isFinite(sig.meanLum)) return null;
-
-  const yellow = sig.yellowFrac || 0;
-  const red = sig.redFrac || 0;
-  const dark = clamp01(1 - sig.meanLum / 130);
-  const blue = clamp01((sig.meanB - sig.meanR) / 60);
-  const small = sig.n < 70 ? 1 : clamp01(1 - (sig.n - 70) / 100);
-
-  return {
-    DS: clamp01(blue * (0.4 + 0.6 * small) * (1 - yellow * 4) * (1 - red * 6)),
-    EP: clamp01(dark * (1 - red * 5) * (1 - yellow * 5) * (0.3 + 0.7 * (1 - blue * 0.5))),
-    HL: clamp01(red / 0.12 * (1 - yellow * 3)),
-    'SK/GC': clamp01(yellow / 0.18),
-  };
-}
+// --- Matching ---
 function matchPacks(slots, widgetFeatures, hudFeatures) {
   if (!slots.length) return { results: [], slotTypes: [], details: {} };
   const displaySlotTypes = inferDisplaySlotTypes(slots);
@@ -1635,6 +1591,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     let slotPenalty = 0, certaintySum = 0;
     let activeSlots = 0, strongSlots = 0;
     let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0;
+    const perTypeScores = {};
 
     for (const slot of slots) {
       const activity = clamp01(slot.activity || 0);
@@ -1648,6 +1605,10 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       if (!targetTex) continue;
 
       const sim = compareSlotToType(slot, targetTex, targetType);
+      const shortKey = targetType === 'steak' || targetType === 'golden_carrot' ? 'SK/GC' :
+        targetType === 'diamond_sword' ? 'DS' : targetType === 'ender_pearl' ? 'EP' :
+        targetType === 'splash_potion' ? 'HL' : null;
+      if (shortKey && (!perTypeScores[shortKey] || sim > perTypeScores[shortKey])) perTypeScores[shortKey] = sim;
       let altBest = 0;
       for (const type of ITEM_TYPES) {
         if (type === targetType) continue;
@@ -1711,6 +1672,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       slotCoverage,
       slotCertainty,
       slotTypes: displaySlotTypes,
+      perTypeScores,
     };
     if (canRank && finalScore > 0.28) {
       results.push({ name: packName, score: finalScore });
@@ -1945,33 +1907,45 @@ function init() {
   renderPackScoreSearch();
   if (ENABLE_CLIP) initClipWorker();
 
-  // Slot tip: hover (desktop) / tap (mobile)
-  const slotsRow = document.getElementById('sbi-slots-row');
-  if (slotsRow) {
-    let activeTip = null;
-    const showTip = card => {
-      const tip = card.querySelector('.sbi-slot-tip');
-      if (!tip || !tip.innerHTML) return;
-      if (activeTip && activeTip !== tip) activeTip.hidden = true;
-      tip.hidden = false;
-      activeTip = tip;
+  // Debug table tooltip: hover (desktop) / tap (mobile)
+  const debugWrap = document.querySelector('.sbi-debug-wrap');
+  const debugTip = document.getElementById('sbi-debug-tip');
+  if (debugWrap && debugTip) {
+    const TYPE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
+    const showTip = (td, packName) => {
+      const info = _lastMatchDetails[packName];
+      if (!info || !info.perTypeScores) { debugTip.hidden = true; return; }
+      const pts = info.perTypeScores;
+      debugTip.innerHTML = `<table><tr>${TYPE_ORDER.map(t => `<th>${t}</th>`).join('')}</tr><tr>${TYPE_ORDER.map(t => `<td>${pts[t] !== undefined ? fmtPct(pts[t]) : '-'}</td>`).join('')}</tr></table>`;
+      const wrapRect = debugWrap.getBoundingClientRect();
+      const tdRect = td.getBoundingClientRect();
+      debugTip.hidden = false;
+      const tipW = debugTip.offsetWidth;
+      let left = tdRect.left - wrapRect.left + tdRect.width / 2 - tipW / 2;
+      left = Math.max(0, Math.min(left, wrapRect.width - tipW));
+      debugTip.style.left = left + 'px';
+      debugTip.style.top = (tdRect.top - wrapRect.top - debugTip.offsetHeight - 4) + 'px';
     };
-    const hideTip = () => { if (activeTip) { activeTip.hidden = true; activeTip = null; } };
+    const hideTip = () => { debugTip.hidden = true; };
 
-    slotsRow.addEventListener('mouseenter', e => {
-      const card = e.target.closest('.sbi-slot-card');
-      if (card) showTip(card);
-    }, true);
-    slotsRow.addEventListener('mouseleave', e => {
-      const card = e.target.closest('.sbi-slot-card');
-      if (card) hideTip();
-    }, true);
-    slotsRow.addEventListener('click', e => {
-      const card = e.target.closest('.sbi-slot-card');
-      if (!card) return;
-      const tip = card.querySelector('.sbi-slot-tip');
-      if (activeTip === tip && !tip.hidden) hideTip();
-      else showTip(card);
+    debugWrap.addEventListener('mouseover', e => {
+      const td = e.target.closest('td');
+      if (!td) return;
+      const tr = td.closest('tr[data-pack]');
+      if (tr) showTip(td, tr.dataset.pack);
+    });
+    debugWrap.addEventListener('mouseout', e => {
+      const td = e.target.closest('td');
+      if (td) hideTip();
+    });
+    let activePack = null;
+    debugWrap.addEventListener('click', e => {
+      const td = e.target.closest('td');
+      if (!td) return;
+      const tr = td.closest('tr[data-pack]');
+      if (!tr) return;
+      if (activePack === tr.dataset.pack && !debugTip.hidden) { hideTip(); activePack = null; }
+      else { showTip(td, tr.dataset.pack); activePack = tr.dataset.pack; }
     });
   }
 }
