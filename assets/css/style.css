@@ -980,6 +980,20 @@ footer {
 .sbi-crop-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbi-crop-card canvas { width: 100%; height: auto; display: block; image-rendering: pixelated; border: 1px solid var(--border); background: #141414; }
 .sbi-crop-square canvas { aspect-ratio: 1 / 1; }
+.sbi-slots-row { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+.sbi-slot-card { position: relative; border: 1px solid var(--border); background: var(--bg, #fff); padding: 4px; text-align: center; cursor: pointer; }
+.sbi-slot-card canvas { width: 100%; aspect-ratio: 1 / 1; display: block; image-rendering: pixelated; border: 1px solid var(--border); background: #141414; }
+.sbi-slot-card .sbi-crop-label { font-size: 10px; color: var(--text-secondary); margin-bottom: 3px; }
+.sbi-slot-tip { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; background: rgba(0,0,0,.88); color: #fff; padding: 4px 8px; font-size: 10px; font-family: monospace; white-space: nowrap; z-index: 20; pointer-events: none; }
+.sbi-slot-tip span { display: flex; flex-direction: column; align-items: center; line-height: 1.3; }
+.sbi-slot-tip .sbi-tip-type { font-weight: 700; font-size: 9px; opacity: .7; }
+.sbi-slot-tip .sbi-tip-val { font-size: 11px; }
+@media (max-width: 600px) {
+  .sbi-slots-row { grid-template-columns: repeat(9, 1fr); gap: 2px; }
+  .sbi-slot-card { padding: 2px; }
+  .sbi-slot-card .sbi-crop-label { font-size: 8px; }
+  .sbi-slot-tip { font-size: 8px; padding: 3px 5px; gap: 4px; }
+}
 .sbi-crop-hidden { display: none; }
 .sbi-debug { margin-top: 14px; border: 2px solid var(--border); background: var(--bg-alt); }
 .sbi-debug > summary { cursor: pointer; font-size: 12px; font-weight: bold; letter-spacing: .06em; text-transform: uppercase; padding: 8px 10px; }

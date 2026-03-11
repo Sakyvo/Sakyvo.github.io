@@ -67,6 +67,8 @@ let _lastClipScores = {};
 let _lastVisibleScores = {};
 let _lastDetectionMeta = null;
 let _previewImageUrl = '';
+let _lastSlots = [];
+let _lastSlotTypes = [];
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -1219,10 +1221,32 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes)
     cctx.fillRect(0, 0, outSize, outSize);
     cctx.drawImage(ctx.canvas, left, top, side, side, 0, 0, outSize, outSize);
   };
-  renderSlot('sbi-crop-ds', 0, 96);
-  renderSlot('sbi-crop-ep', 1, 96);
-  renderSlot('sbi-crop-hl', 5, 96);
-  renderSlot('sbi-crop-food', 8, 96);
+
+  _lastSlots = slots;
+  _lastSlotTypes = slotTypes;
+  const slotByIndex = {};
+  for (const s of slots) if (s && s.index >= 0 && s.index <= 8) slotByIndex[s.index] = s;
+
+  const TYPE_SHORT = { diamond_sword: 'DS', ender_pearl: 'EP', splash_potion: 'HL', steak: 'SK', golden_carrot: 'GC', iron_sword: 'IS', apple_golden: 'AG', none: '-' };
+  for (let i = 0; i < 9; i++) {
+    renderSlot('sbi-crop-slot-' + i, i, 96);
+    const card = document.querySelector(`.sbi-slot-card[data-slot="${i}"]`);
+    if (!card) continue;
+    const label = card.querySelector('.sbi-crop-label');
+    const detected = slotTypes[i] || 'none';
+    const short = TYPE_SHORT[detected] || '-';
+    if (label) label.textContent = (i + 1) + (short !== '-' ? ' ' + short : '');
+    card.style.borderColor = SLOT_COLOR_MAP[detected] || 'var(--border)';
+
+    const tip = card.querySelector('.sbi-slot-tip');
+    if (!tip) continue;
+    const slot = slotByIndex[i];
+    const scores = computeSlotClassScores(slot);
+    if (!scores) { tip.hidden = true; continue; }
+    tip.innerHTML = Object.entries(scores).map(([k, v]) =>
+      `<span><span class="sbi-tip-type">${k}</span><span class="sbi-tip-val">${(v * 100).toFixed(0)}</span></span>`
+    ).join('');
+  }
 
   wrap.hidden = false;
 }
@@ -1576,7 +1600,27 @@ function inferDisplaySlotTypes(slots) {
   return out;
 }
 
-// --- Matching ---
+function computeSlotClassScores(slot) {
+  if (!slot) return null;
+  const activity = clamp01(slot.activity || 0);
+  const variance = slot.variance || 0;
+  if (activity < 0.26 || variance < 220) return null;
+  const sig = slot.features && slot.features.sig;
+  if (!sig || sig.n <= 0 || !isFinite(sig.meanLum)) return null;
+
+  const yellow = sig.yellowFrac || 0;
+  const red = sig.redFrac || 0;
+  const dark = clamp01(1 - sig.meanLum / 130);
+  const blue = clamp01((sig.meanB - sig.meanR) / 60);
+  const small = sig.n < 70 ? 1 : clamp01(1 - (sig.n - 70) / 100);
+
+  return {
+    DS: clamp01(blue * (0.4 + 0.6 * small) * (1 - yellow * 4) * (1 - red * 6)),
+    EP: clamp01(dark * (1 - red * 5) * (1 - yellow * 5) * (0.3 + 0.7 * (1 - blue * 0.5))),
+    HL: clamp01(red / 0.12 * (1 - yellow * 3)),
+    'SK/GC': clamp01(yellow / 0.18),
+  };
+}
 function matchPacks(slots, widgetFeatures, hudFeatures) {
   if (!slots.length) return { results: [], slotTypes: [], details: {} };
   const displaySlotTypes = inferDisplaySlotTypes(slots);
@@ -1900,6 +1944,36 @@ function init() {
   renderScoreBreakdown();
   renderPackScoreSearch();
   if (ENABLE_CLIP) initClipWorker();
+
+  // Slot tip: hover (desktop) / tap (mobile)
+  const slotsRow = document.getElementById('sbi-slots-row');
+  if (slotsRow) {
+    let activeTip = null;
+    const showTip = card => {
+      const tip = card.querySelector('.sbi-slot-tip');
+      if (!tip || !tip.innerHTML) return;
+      if (activeTip && activeTip !== tip) activeTip.hidden = true;
+      tip.hidden = false;
+      activeTip = tip;
+    };
+    const hideTip = () => { if (activeTip) { activeTip.hidden = true; activeTip = null; } };
+
+    slotsRow.addEventListener('mouseenter', e => {
+      const card = e.target.closest('.sbi-slot-card');
+      if (card) showTip(card);
+    }, true);
+    slotsRow.addEventListener('mouseleave', e => {
+      const card = e.target.closest('.sbi-slot-card');
+      if (card) hideTip();
+    }, true);
+    slotsRow.addEventListener('click', e => {
+      const card = e.target.closest('.sbi-slot-card');
+      if (!card) return;
+      const tip = card.querySelector('.sbi-slot-tip');
+      if (activeTip === tip && !tip.hidden) hideTip();
+      else showTip(card);
+    });
+  }
 }
 
 init();
