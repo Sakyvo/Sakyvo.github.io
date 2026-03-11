@@ -1908,23 +1908,25 @@ function init() {
   if (ENABLE_CLIP) initClipWorker();
 
   // Debug table tooltip: hover (desktop) / tap (mobile)
+  const debugPanel = document.getElementById('sbi-debug');
   const debugWrap = document.querySelector('.sbi-debug-wrap');
   const debugTip = document.getElementById('sbi-debug-tip');
-  if (debugWrap && debugTip) {
+  if (debugPanel && debugWrap && debugTip) {
     const TYPE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
     const showTip = (td, packName) => {
       const info = _lastMatchDetails[packName];
       if (!info || !info.perTypeScores) { debugTip.hidden = true; return; }
       const pts = info.perTypeScores;
       debugTip.innerHTML = `<table><tr>${TYPE_ORDER.map(t => `<th>${t}</th>`).join('')}</tr><tr>${TYPE_ORDER.map(t => `<td>${pts[t] !== undefined ? fmtPct(pts[t]) : '-'}</td>`).join('')}</tr></table>`;
-      const wrapRect = debugWrap.getBoundingClientRect();
+      const panelRect = debugPanel.getBoundingClientRect();
       const tdRect = td.getBoundingClientRect();
       debugTip.hidden = false;
       const tipW = debugTip.offsetWidth;
-      let left = tdRect.left - wrapRect.left + tdRect.width / 2 - tipW / 2;
-      left = Math.max(0, Math.min(left, wrapRect.width - tipW));
+      const tipH = debugTip.offsetHeight;
+      let left = tdRect.left - panelRect.left + tdRect.width / 2 - tipW / 2;
+      left = Math.max(0, Math.min(left, panelRect.width - tipW));
       debugTip.style.left = left + 'px';
-      debugTip.style.top = (tdRect.top - wrapRect.top - debugTip.offsetHeight - 4) + 'px';
+      debugTip.style.top = (tdRect.top - panelRect.top - tipH - 4) + 'px';
     };
     const hideTip = () => { debugTip.hidden = true; };
 
