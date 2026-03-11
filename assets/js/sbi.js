@@ -1928,20 +1928,22 @@ function init() {
     };
     const hideTip = () => { debugTip.hidden = true; };
 
+    const isSlotCol = td => td && td.cellIndex === 3;
+
     debugWrap.addEventListener('mouseover', e => {
       const td = e.target.closest('td');
-      if (!td) return;
+      if (!isSlotCol(td)) return;
       const tr = td.closest('tr[data-pack]');
       if (tr) showTip(td, tr.dataset.pack);
     });
     debugWrap.addEventListener('mouseout', e => {
       const td = e.target.closest('td');
-      if (td) hideTip();
+      if (isSlotCol(td)) hideTip();
     });
     let activePack = null;
     debugWrap.addEventListener('click', e => {
       const td = e.target.closest('td');
-      if (!td) return;
+      if (!isSlotCol(td)) return;
       const tr = td.closest('tr[data-pack]');
       if (!tr) return;
       if (activePack === tr.dataset.pack && !debugTip.hidden) { hideTip(); activePack = null; }
