@@ -86,7 +86,7 @@ const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
   type: { diamond_sword: 3.0, ender_pearl: 3.0, splash_potion: 1.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
   hud: { health: 4.0, hunger: 1.5, armor: 1.0 },
-  mix: { slot: 0.16, hud: 0.38, widget: 0.46, slotNoHud: 0.35, widgetNoHud: 0.65 },
+  mix: { slot: 0.22, hud: 0.42, widget: 0.36, slotNoHud: 0.42, widgetNoHud: 0.58 },
 };
 
 function clamp01(v) {
