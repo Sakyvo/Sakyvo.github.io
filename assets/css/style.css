@@ -953,9 +953,6 @@ footer {
 .sbi-preview-image,
 .sbi-preview canvas { max-width: 100%; border: 2px solid var(--border); display: block; }
 .sbi-preview canvas { display: none; }
-.sbi-preview-actions { margin-top: 8px; display: flex; gap: 10px; flex-wrap: wrap; }
-.sbi-preview-link { font-size: 12px; color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border); padding: 6px 10px; }
-.sbi-preview-link:hover { border-color: var(--accent); color: var(--text); }
 .sbi-progress { text-align: center; padding: 24px; }
 .sbi-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: transparent; animation: sbi-spin .8s linear infinite; margin: 0 auto 12px; }
 @keyframes sbi-spin { to { transform: rotate(360deg); } }

@@ -129,26 +129,17 @@ function revokePreviewImageUrl() {
 
 function clearPreviewCacheImage() {
   const previewImage = document.getElementById('sbi-preview-image');
-  const previewActions = document.getElementById('sbi-preview-actions');
-  const previewOpen = document.getElementById('sbi-preview-open');
-  const previewDownload = document.getElementById('sbi-preview-download');
   revokePreviewImageUrl();
   if (previewImage) {
     previewImage.hidden = true;
     previewImage.removeAttribute('src');
   }
-  if (previewActions) previewActions.hidden = true;
-  if (previewOpen) previewOpen.removeAttribute('href');
-  if (previewDownload) previewDownload.removeAttribute('href');
 }
 
 function updatePreviewCacheImage(filename) {
   const canvas = document.getElementById('sbi-canvas');
   const previewImage = document.getElementById('sbi-preview-image');
-  const previewActions = document.getElementById('sbi-preview-actions');
-  const previewOpen = document.getElementById('sbi-preview-open');
-  const previewDownload = document.getElementById('sbi-preview-download');
-  if (!canvas || !previewImage || !previewActions || !previewOpen || !previewDownload) return Promise.resolve();
+  if (!canvas || !previewImage) return Promise.resolve();
   return new Promise(resolve => {
     canvas.toBlob(blob => {
       if (!blob) {
@@ -163,10 +154,6 @@ function updatePreviewCacheImage(filename) {
       _previewImageUrl = URL.createObjectURL(file);
       previewImage.src = _previewImageUrl;
       previewImage.hidden = false;
-      previewOpen.href = _previewImageUrl;
-      previewDownload.href = _previewImageUrl;
-      previewDownload.download = filename;
-      previewActions.hidden = false;
       resolve();
     }, 'image/png');
   });
@@ -1766,7 +1753,7 @@ async function processImage(file) {
   const debugMeta = document.getElementById('sbi-debug-meta');
   resultsEl.hidden = true;
   progress.hidden = false;
-  preview.hidden = false;
+  preview.hidden = true;
   if (cropsEl) cropsEl.hidden = true;
   if (debugPanel) debugPanel.hidden = true;
   if (debugBody) debugBody.innerHTML = '';
@@ -1817,6 +1804,7 @@ async function processImage(file) {
     renderCrops(rawCtx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     await updatePreviewCacheImage('sbi.png');
+    preview.hidden = false;
     progress.hidden = true;
     renderResults(stage1Top10);
     renderDebugPanel(stage1Top10, 'hash');
