@@ -1,21 +1,41 @@
 const sharp = require('sharp');
 const path = require('path');
 
-const SCALE = 4;
-const W = 182 * SCALE;
-const H = 22 * SCALE;
+const W = 1280, H = 720;
+const unit = 2;
+const hotbarX = (W - 182 * unit) / 2;
+const hotbarY = H - 22 * unit;
 
-const rects = Array.from({ length: 9 }, (_, i) => {
-  const x = (1 + i * 20) * SCALE;
-  const y = SCALE;
-  const sz = 20 * SCALE;
-  return `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" fill="#1e1e1e" stroke="#000" stroke-width="3"/>`;
-}).join('\n');
+let rects = '';
 
-const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-<rect width="${W}" height="${H}" fill="#3a3a3a"/>
-${rects}
-</svg>`;
+// 9 hotbar slots (black borders)
+for (let i = 0; i < 9; i++) {
+  const x = hotbarX + (1 + i * 20) * unit;
+  const y = hotbarY + unit;
+  const sz = 20 * unit;
+  rects += `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" fill="none" stroke="#000" stroke-width="2.5"/>`;
+}
+
+const heartY = hotbarY - 17 * unit;
+const iconSz = 9 * unit;
+
+// Hearts (red)
+for (let i = 0; i < 10; i++) {
+  rects += `<rect x="${hotbarX + i * 8 * unit}" y="${heartY}" width="${iconSz}" height="${iconSz}" fill="none" stroke="#fca5a5" stroke-width="2"/>`;
+}
+
+// Hunger (yellow)
+for (let i = 0; i < 10; i++) {
+  rects += `<rect x="${hotbarX + (182 - 9 - i * 8) * unit}" y="${heartY}" width="${iconSz}" height="${iconSz}" fill="none" stroke="#fbbf24" stroke-width="2"/>`;
+}
+
+// Armor (gray)
+const armorY = heartY - 10 * unit;
+for (let i = 0; i < 10; i++) {
+  rects += `<rect x="${hotbarX + i * 8 * unit}" y="${armorY}" width="${iconSz}" height="${iconSz}" fill="none" stroke="#9ca3af" stroke-width="2"/>`;
+}
+
+const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
 
 const outPath = path.join(__dirname, '..', 'sbi', 'cropbox_large.png');
 sharp(Buffer.from(svg)).png().toFile(outPath)

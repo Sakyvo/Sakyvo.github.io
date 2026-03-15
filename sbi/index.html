@@ -22,6 +22,7 @@
     <div class="sbi-upload" id="sbi-upload">
       <p class="sbi-upload-text">Drag &amp; drop, click, or paste a screenshot</p>
       <input type="file" id="sbi-file" accept="image/*" hidden>
+      <canvas id="sbi-cropbox-canvas" class="sbi-cropbox-canvas"></canvas>
     </div>
 
     <div class="sbi-progress" id="sbi-progress" hidden>
@@ -113,16 +114,11 @@
       <div class="sbi-breakdown-body" id="sbi-breakdown-body"></div>
     </details>
 
-    <div class="sbi-search-wrap" id="sbi-search-wrap">
+    <div class="sbi-search-wrap" id="sbi-search-wrap" hidden>
       <div class="sbi-search-title">Search Scores</div>
       <input class="sbi-search-input" id="sbi-search-input" type="search" placeholder="Search pack name, e.g. Eum3 Blue Revamp" autocomplete="off" spellcheck="false">
       <div class="sbi-search-meta" id="sbi-search-meta">Upload a screenshot to search current scores.</div>
       <div class="sbi-search-results" id="sbi-search-results" hidden></div>
-    </div>
-
-    <div class="sbi-cropbox-preview" id="sbi-cropbox-preview">
-      <div class="sbi-cropbox-label">Detection Area</div>
-      <img src="/sbi/cropbox_large.png" alt="cropbox_large.png" class="sbi-cropbox-img">
     </div>
   </div>
 
@@ -130,6 +126,6 @@
     <p>VALE Project</p>
   </footer>
 
-  <script src="/assets/js/sbi.js?v=40"></script>
+  <script src="/assets/js/sbi.js?v=41"></script>
 </body>
 </html>

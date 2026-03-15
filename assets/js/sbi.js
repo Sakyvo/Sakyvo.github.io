@@ -1708,6 +1708,16 @@ function drawPendingOverlay(ctx, imgW, imgH) {
       Math.round(20 * unit)
     );
   }
+  const heartY = Math.round(widgetY - 17 * unit);
+  const iconSz = Math.round(9 * unit);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#fca5a5';
+  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), heartY, iconSz, iconSz);
+  ctx.strokeStyle = '#fbbf24';
+  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + (182 - 9 - i * 8) * unit), heartY, iconSz, iconSz);
+  ctx.strokeStyle = '#9ca3af';
+  const armorY = Math.round(heartY - 10 * unit);
+  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), armorY, iconSz, iconSz);
 }
 
 function scoreColor(pct) {
@@ -1770,6 +1780,8 @@ async function processImage(file) {
   const debugPanel = document.getElementById('sbi-debug');
   const debugBody = document.getElementById('sbi-debug-body');
   const debugMeta = document.getElementById('sbi-debug-meta');
+  const uploadEl = document.getElementById('sbi-upload');
+  const searchWrap = document.getElementById('sbi-search-wrap');
   resultsEl.hidden = true;
   progress.hidden = false;
   preview.hidden = true;
@@ -1777,6 +1789,8 @@ async function processImage(file) {
   if (debugPanel) debugPanel.hidden = true;
   if (debugBody) debugBody.innerHTML = '';
   if (debugMeta) debugMeta.textContent = '';
+  if (searchWrap) searchWrap.hidden = true;
+  if (uploadEl) uploadEl.classList.add('analyzing');
   clearPreviewCacheImage();
   _lastMatchDetails = {};
   _lastAllScores = {};
@@ -1802,8 +1816,6 @@ async function processImage(file) {
   drawPendingOverlay(ctx, img.width, img.height);
   await updatePreviewCacheImage('cropbox_large.png');
   preview.hidden = false;
-  const cropboxPreview = document.getElementById('sbi-cropbox-preview');
-  if (cropboxPreview) cropboxPreview.hidden = true;
 
   try {
     if (!fingerprints) {
@@ -1832,9 +1844,11 @@ async function processImage(file) {
     // Phase 2: Replace black overlay with colored detection overlay
     ctx.drawImage(rawCanvas, 0, 0);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
-    await updatePreviewCacheImage('sbi.png');
+    await updatePreviewCacheImage('cropbox_large_analysed.png');
     preview.hidden = false;
     progress.hidden = true;
+    if (uploadEl) uploadEl.classList.remove('analyzing');
+    if (searchWrap) searchWrap.hidden = false;
     renderResults(stage1Top10);
     renderDebugPanel(stage1Top10, 'hash');
     _lastVisibleScores = {};
@@ -1889,6 +1903,7 @@ async function processImage(file) {
     saveHistory(thumbCanvas.toDataURL('image/jpeg', 0.6), stage1Top10);
   } catch (e) {
     progress.hidden = true;
+    if (uploadEl) uploadEl.classList.remove('analyzing');
     const container = document.getElementById('sbi-results');
     container.innerHTML = '<p class="sbi-no-results">Error: ' + e.message + '</p>';
     container.hidden = false;
@@ -1901,6 +1916,18 @@ async function processImage(file) {
 function init() {
   const uploadEl = document.getElementById('sbi-upload');
   const fileInput = document.getElementById('sbi-file');
+
+  // Draw cropbox preview inside upload area
+  const cropCanvas = document.getElementById('sbi-cropbox-canvas');
+  if (cropCanvas) {
+    cropCanvas.width = 1280;
+    cropCanvas.height = 720;
+    drawPendingOverlay(cropCanvas.getContext('2d'), 1280, 720);
+  }
+
+  // Hide search wrap until analysis completes
+  const searchWrap = document.getElementById('sbi-search-wrap');
+  if (searchWrap) searchWrap.hidden = true;
 
   uploadEl.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', e => { if (e.target.files[0]) processImage(e.target.files[0]); });
