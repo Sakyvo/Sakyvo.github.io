@@ -153,6 +153,7 @@ function updatePreviewCacheImage(filename) {
         : blob;
       _previewImageUrl = URL.createObjectURL(file);
       previewImage.src = _previewImageUrl;
+      previewImage.alt = filename;
       previewImage.hidden = false;
       resolve();
     }, 'image/png');
@@ -1691,6 +1692,24 @@ function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
   for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
 }
 
+function drawPendingOverlay(ctx, imgW, imgH) {
+  const unit = getWide16By9Unit(imgW, imgH) || getMaxGuiScale(imgW, imgH);
+  if (unit < 1) return;
+  const widgetW = 182 * unit;
+  const widgetX = Math.round((imgW - widgetW) / 2);
+  const widgetY = Math.round(imgH - 22 * unit);
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#000';
+  for (let i = 0; i < 9; i++) {
+    ctx.strokeRect(
+      Math.round(widgetX + (1 + i * 20) * unit),
+      Math.round(widgetY + unit),
+      Math.round(20 * unit),
+      Math.round(20 * unit)
+    );
+  }
+}
+
 function scoreColor(pct) {
   if (pct >= 80) return '#22c55e';
   if (pct >= 65) return '#f59e0b';
@@ -1768,16 +1787,23 @@ async function processImage(file) {
   const url = URL.createObjectURL(file);
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
 
-  const canvas = document.getElementById('sbi-canvas');
-  canvas.width = img.width; canvas.height = img.height;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  ctx.drawImage(img, 0, 0);
-
   const rawCanvas = document.createElement('canvas');
   rawCanvas.width = img.width;
   rawCanvas.height = img.height;
   const rawCtx = rawCanvas.getContext('2d', { willReadFrequently: true });
   rawCtx.drawImage(img, 0, 0);
+
+  const canvas = document.getElementById('sbi-canvas');
+  canvas.width = img.width; canvas.height = img.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0);
+
+  // Phase 1: Show uploaded image with black cropbox overlay
+  drawPendingOverlay(ctx, img.width, img.height);
+  await updatePreviewCacheImage('cropbox_large.png');
+  preview.hidden = false;
+  const cropboxPreview = document.getElementById('sbi-cropbox-preview');
+  if (cropboxPreview) cropboxPreview.hidden = true;
 
   try {
     if (!fingerprints) {
@@ -1802,6 +1828,9 @@ async function processImage(file) {
       armorCount: hudFeatures && hudFeatures.armor ? hudFeatures.armor.length : 0,
     };
     renderCrops(rawCtx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes);
+
+    // Phase 2: Replace black overlay with colored detection overlay
+    ctx.drawImage(rawCanvas, 0, 0);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     await updatePreviewCacheImage('sbi.png');
     preview.hidden = false;
