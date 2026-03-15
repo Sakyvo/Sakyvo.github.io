@@ -946,7 +946,8 @@ footer {
 .sbi-container { max-width: 800px; margin: 40px auto; padding: 0 24px; }
 .sbi-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
 .sbi-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
-.sbi-upload { border: 2px dashed var(--border); text-align: center; cursor: pointer; transition: border-color .2s, opacity .3s; aspect-ratio: 16 / 9; position: relative; display: flex; align-items: center; justify-content: center; }
+.sbi-upload { border: 2px dashed var(--border); text-align: center; cursor: pointer; transition: border-color .2s, opacity .3s; aspect-ratio: 16 / 9; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 32px; }
+.sbi-upload::after { content: ''; position: absolute; bottom: -17px; left: 0; right: 0; height: 2px; background: var(--border); }
 .sbi-upload:hover, .sbi-upload.dragover { border-color: var(--accent); background: var(--bg-alt); }
 .sbi-upload.analyzing { opacity: 0.4; pointer-events: none; }
 .sbi-upload-text { font-size: 14px; color: var(--text-secondary); position: relative; z-index: 1; }

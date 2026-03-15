@@ -1816,6 +1816,7 @@ async function processImage(file) {
   drawPendingOverlay(ctx, img.width, img.height);
   await updatePreviewCacheImage('cropbox_large.png');
   preview.hidden = false;
+  preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
     if (!fingerprints) {
@@ -1849,6 +1850,7 @@ async function processImage(file) {
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');
     if (searchWrap) searchWrap.hidden = false;
+    preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
     renderResults(stage1Top10);
     renderDebugPanel(stage1Top10, 'hash');
     _lastVisibleScores = {};
