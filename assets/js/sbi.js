@@ -1397,7 +1397,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
       : (0.70 * widgetBoost + 0.30 * slotBoost);
     // Full screenshots use integer GUI scale; strongly prefer near-integer units
     // to prevent HUD-driven selection of fractional units that shift the crop.
-    const unitPrefW = isHudCrop ? 0.08 : 0.50;
+    const unitPrefW = isHudCrop ? 0.08 : (preset === 'small' ? 0.85 : 0.50);
     const combinedBoost = baseBoost
       * (0.78 + 0.22 * cand.gridScore)
       * (0.86 + 0.14 * cand.bottomPref)
