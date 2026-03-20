@@ -1132,10 +1132,10 @@ function renderItemCropCanvas(id, ctx, imgW, imgH, slot, outSize) {
 
 
 window._displayDebug = {};
-function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
+function findDisplayWidgetRect(ctx, imgW, imgH, hintRect, preset) {
   const maxScale = getMaxGuiScale(imgW, imgH);
   const detectedScale = hintRect && hintRect.w ? (hintRect.w / 182) : 0;
-  const preferredScale = getWide16By9Unit(imgW, imgH);
+  const preferredScale = getPresetUnit(imgW, imgH, preset);
   const u = preferredScale >= 1
     ? preferredScale
     : Math.max(1, Math.min(maxScale, Math.round(detectedScale || maxScale)));
@@ -1150,13 +1150,13 @@ function findDisplayWidgetRect(ctx, imgW, imgH, hintRect) {
   return { x, y, w, h };
 }
 
-function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes) {
+function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes, preset) {
   const wrap = document.getElementById('sbi-crops');
   if (!wrap) return;
   if (!widgetRect) { wrap.hidden = true; return; }
 
   const aspect = imgH / Math.max(1, imgW);
-  const dRect = aspect < 0.35 ? widgetRect : findDisplayWidgetRect(ctx, imgW, imgH, widgetRect);
+  const dRect = aspect < 0.35 ? widgetRect : findDisplayWidgetRect(ctx, imgW, imgH, widgetRect, preset);
   const unit = dRect.w / 182;
 
   // Temporary debug: show detection vs display rects
@@ -1442,7 +1442,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   // For full screenshots, snap the detected widget to the nearest valid GUI scale
   // for the current screenshot instead of forcing a 1080p-sized crop.
   if (!isHudCrop && bestWidgetRect) {
-    const fixedRect = findDisplayWidgetRect(ctx, imgW, imgH, bestWidgetRect);
+    const fixedRect = findDisplayWidgetRect(ctx, imgW, imgH, bestWidgetRect, preset);
     const bestGU = fixedRect && fixedRect.w ? (fixedRect.w / 182) : (bestWidgetRect.w / 182);
     if (fixedRect) {
       bestWidgetRect = fixedRect;
@@ -1848,7 +1848,7 @@ async function processImage(file) {
       hungerCount: hudFeatures && hudFeatures.hunger ? hudFeatures.hunger.length : 0,
       armorCount: hudFeatures && hudFeatures.armor ? hudFeatures.armor.length : 0,
     };
-    renderCrops(rawCtx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes);
+    renderCrops(rawCtx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes, _currentPreset);
 
     // Phase 2: Replace black overlay with colored detection overlay
     ctx.drawImage(rawCanvas, 0, 0);
