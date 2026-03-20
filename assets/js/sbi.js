@@ -67,6 +67,7 @@ let _lastClipScores = {};
 let _lastVisibleScores = {};
 let _lastDetectionMeta = null;
 let _previewImageUrl = '';
+let _currentPreset = 'large';
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -1265,11 +1266,12 @@ function buildClipCompositePixels(ctx, imgW, imgH, widgetRect, slots, slotTypes)
 
 // --- Hotbar extraction ---
 // Strict proportional crop only: centered hotbar + fixed bottom ratio candidates
-function extractHotbarSlots(ctx, imgW, imgH) {
+function extractHotbarSlots(ctx, imgW, imgH, preset) {
   const candidates = buildStrictCropCandidates(imgW, imgH);
   const aspect = imgH / Math.max(1, imgW);
   const isHudCrop = aspect < 0.35;
-  const targetUnit = isHudCrop ? 0 : getWide16By9Unit(imgW, imgH);
+  const baseUnit = getWide16By9Unit(imgW, imgH);
+  const targetUnit = isHudCrop ? 0 : (preset === 'small' ? Math.max(1, Math.round(baseUnit) - 1) : baseUnit);
   const PRE_K = 80;
   const PER_UNIT_K = 14;
   const preByUnit = new Map();
@@ -1692,8 +1694,14 @@ function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
   for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
 }
 
-function drawPendingOverlay(ctx, imgW, imgH) {
-  const unit = getWide16By9Unit(imgW, imgH) || getMaxGuiScale(imgW, imgH);
+function getPresetUnit(imgW, imgH, preset) {
+  const base = getWide16By9Unit(imgW, imgH) || getMaxGuiScale(imgW, imgH);
+  if (preset === 'small') return Math.max(1, Math.round(base) - 1);
+  return base;
+}
+
+function drawPendingOverlay(ctx, imgW, imgH, preset) {
+  const unit = getPresetUnit(imgW, imgH, preset);
   if (unit < 1) return;
   const widgetW = 182 * unit;
   const widgetX = Math.round((imgW - widgetW) / 2);
@@ -1813,7 +1821,7 @@ async function processImage(file) {
   ctx.drawImage(img, 0, 0);
 
   // Phase 1: Show uploaded image with black cropbox overlay
-  drawPendingOverlay(ctx, img.width, img.height);
+  drawPendingOverlay(ctx, img.width, img.height, _currentPreset);
   await updatePreviewCacheImage('cropbox_large.png');
   preview.hidden = false;
   preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1825,7 +1833,7 @@ async function processImage(file) {
       fingerprints = await resp.json();
     }
 
-    const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height);
+    const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height, _currentPreset);
 
     // Stage 1: Hash-based instant results
     const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
@@ -1915,17 +1923,36 @@ async function processImage(file) {
   URL.revokeObjectURL(url);
 }
 
+function drawCropboxPreview() {
+  const cropCanvas = document.getElementById('sbi-cropbox-canvas');
+  if (!cropCanvas) return;
+  cropCanvas.width = 1280;
+  cropCanvas.height = 720;
+  drawPendingOverlay(cropCanvas.getContext('2d'), 1280, 720, _currentPreset);
+}
+
+function setPreset(preset) {
+  _currentPreset = preset;
+  try { localStorage.setItem('sbi-preset', preset); } catch {}
+  document.querySelectorAll('.sbi-preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === preset);
+  });
+  drawCropboxPreview();
+}
+
 function init() {
   const uploadEl = document.getElementById('sbi-upload');
   const fileInput = document.getElementById('sbi-file');
 
+  // Restore preset from localStorage
+  try { _currentPreset = localStorage.getItem('sbi-preset') || 'large'; } catch {}
+  document.querySelectorAll('.sbi-preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === _currentPreset);
+    btn.addEventListener('click', () => setPreset(btn.dataset.preset));
+  });
+
   // Draw cropbox preview inside upload area
-  const cropCanvas = document.getElementById('sbi-cropbox-canvas');
-  if (cropCanvas) {
-    cropCanvas.width = 1280;
-    cropCanvas.height = 720;
-    drawPendingOverlay(cropCanvas.getContext('2d'), 1280, 720);
-  }
+  drawCropboxPreview();
 
   // Hide search wrap until analysis completes
   const searchWrap = document.getElementById('sbi-search-wrap');
