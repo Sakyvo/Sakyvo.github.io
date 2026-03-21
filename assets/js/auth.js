@@ -143,3 +143,17 @@ const AUTH = {
 window.AUTH = AUTH;
 window.addEventListener('auth-change', () => AUTH.updateNav());
 document.addEventListener('DOMContentLoaded', () => AUTH.updateNav());
+
+
+// Maintenance mode check
+(function() {
+  if (window.location.pathname.startsWith('/admin')) return;
+  fetch('/data/maintenance.json?t=' + Date.now())
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data || !data.enabled) return;
+      if (AUTH.isLoggedIn()) return;
+      document.documentElement.innerHTML = '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VALE - Maintenance</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;color:#ccc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}.maintenance{text-align:center;border:2px solid #444;padding:60px 48px;max-width:460px}.maintenance h1{font-size:28px;letter-spacing:6px;margin-bottom:16px;color:#fff}.maintenance p{font-size:14px;color:#888;line-height:1.6}.maintenance .line{width:40px;height:2px;background:#444;margin:20px auto}</style></head><body><div class="maintenance"><h1>VALE</h1><div class="line"></div><p>Service in Maintenance</p></div></body>';
+    })
+    .catch(function() {});
+})();

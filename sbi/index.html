@@ -18,15 +18,27 @@
   <div class="sbi-container">
     <h2 class="sbi-title">Search by Image</h2>
     <div class="sbi-preset">
-      <span class="sbi-preset-label">Preset:</span>
-      <button class="sbi-preset-btn active" data-preset="large">Large</button>
-      <button class="sbi-preset-btn" data-preset="small">Small</button>
+      <div class="sbi-preset-label">Scale Preset</div>
+      <div class="sbi-preset-btns">
+        <button class="sbi-preset-btn active" data-preset="large">Large</button>
+        <button class="sbi-preset-btn" data-preset="small">Small</button>
+      </div>
     </div>
 
     <div class="sbi-upload" id="sbi-upload">
       <p class="sbi-upload-text">Drag &amp; drop, click, or paste a screenshot</p>
       <input type="file" id="sbi-file" accept="image/*" hidden>
       <canvas id="sbi-cropbox-canvas" class="sbi-cropbox-canvas"></canvas>
+    </div>
+
+    <div class="sbi-controls">
+      <div class="sbi-actions">
+        <button class="sbi-action-btn" id="sbi-search-btn" disabled>Search</button>
+        <button class="sbi-action-btn" id="sbi-clear-btn" disabled>Clear</button>
+      </div>
+      <label class="sbi-auto-label">
+        <input type="checkbox" id="sbi-auto-search"> Auto-Search
+      </label>
     </div>
 
     <div class="sbi-progress" id="sbi-progress" hidden>
@@ -130,6 +142,7 @@
     <p>VALE Project</p>
   </footer>
 
-  <script src="/assets/js/sbi.js?v=45"></script>
+  <script src="/assets/js/auth.js?v=2"></script>
+  <script src="/assets/js/sbi.js?v=46"></script>
 </body>
 </html>

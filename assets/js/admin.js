@@ -22,6 +22,7 @@ class Admin {
     document.getElementById('list-search')?.addEventListener('input', (e) => this.renderLists(e.target.value));
     document.getElementById('list-sort-btn')?.addEventListener('click', () => this.toggleListSort());
     document.getElementById('manual-build-btn')?.addEventListener('click', () => this.manualBuild());
+    document.getElementById('maintenance-btn')?.addEventListener('click', () => this.toggleMaintenance());
 
     window.addEventListener('auth-change', () => this.checkAuth());
     this.checkAuth();
@@ -95,6 +96,7 @@ class Admin {
       this.adminSection.style.display = 'block';
       this.loadLists();
       this.loadPacks();
+      this.loadMaintenanceState();
     } else {
       this.loginRequired.style.display = 'block';
       this.adminSection.style.display = 'none';
@@ -766,6 +768,47 @@ class Admin {
     }
 
     await this.trackBuildProgress(token);
+  }
+
+  async loadMaintenanceState() {
+    const btn = document.getElementById('maintenance-btn');
+    if (!btn) return;
+    try {
+      const data = await fetch('/data/maintenance.json?t=' + Date.now()).then(r => r.json());
+      this.maintenanceEnabled = !!data.enabled;
+    } catch { this.maintenanceEnabled = false; }
+    btn.textContent = 'MAINTENANCE: ' + (this.maintenanceEnabled ? 'ON' : 'OFF');
+    btn.className = this.maintenanceEnabled ? 'btn btn-danger' : 'btn btn-secondary';
+  }
+
+  async toggleMaintenance() {
+    const token = AUTH.getToken();
+    if (!token) { this.showMessage('Please login first', 'error'); return; }
+    const next = !this.maintenanceEnabled;
+    const action = next ? 'Enable' : 'Disable';
+    if (!await this.confirm(`${action} maintenance mode?`)) return;
+
+    try {
+      const fileRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/maintenance.json`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      let sha;
+      if (fileRes.ok) sha = (await fileRes.json()).sha;
+      const content = btoa(JSON.stringify({ enabled: next }));
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/maintenance.json`, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `${action} maintenance mode`, content, sha })
+      });
+      if (!res.ok) throw new Error('Failed to update maintenance state');
+      this.maintenanceEnabled = next;
+      const btn = document.getElementById('maintenance-btn');
+      btn.textContent = 'MAINTENANCE: ' + (next ? 'ON' : 'OFF');
+      btn.className = next ? 'btn btn-danger' : 'btn btn-secondary';
+      this.showMessage(`Maintenance mode ${next ? 'enabled' : 'disabled'}`, 'success');
+    } catch (e) {
+      this.showMessage(`Error: ${e.message}`, 'error');
+    }
   }
 
   confirm(message) {

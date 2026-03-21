@@ -945,11 +945,18 @@ footer {
 /* SBI pages */
 .sbi-container { max-width: 800px; margin: 40px auto; padding: 0 24px; }
 .sbi-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
-.sbi-preset { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
-.sbi-preset-label { font-size: 14px; color: var(--text-secondary); }
+.sbi-preset { margin-bottom: 16px; }
+.sbi-preset-label { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
+.sbi-preset-btns { display: flex; gap: 8px; }
 .sbi-preset-btn { border: 2px solid var(--border); background: transparent; padding: 4px 16px; font-size: 14px; cursor: pointer; color: inherit; font-weight: bold; transition: border-color .2s, background .2s, color .2s; }
 .sbi-preset-btn:hover { border-color: var(--accent); }
 .sbi-preset-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.sbi-controls { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.sbi-actions { display: flex; gap: 8px; }
+.sbi-action-btn { border: 2px solid var(--border); background: transparent; padding: 6px 20px; font-size: 14px; cursor: pointer; color: inherit; font-weight: bold; transition: border-color .2s, background .2s; }
+.sbi-action-btn:hover:not(:disabled) { border-color: var(--accent); }
+.sbi-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.sbi-auto-label { font-size: 13px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; }
 .sbi-upload { border: 2px dashed var(--border); text-align: center; cursor: pointer; transition: border-color .2s, opacity .3s; aspect-ratio: 16 / 9; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 32px; }
 .sbi-upload::after { content: ''; position: absolute; bottom: -17px; left: 0; right: 0; height: 2px; background: var(--border); }
 .sbi-upload:hover, .sbi-upload.dragover { border-color: var(--accent); background: var(--bg-alt); }

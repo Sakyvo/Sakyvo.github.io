@@ -68,6 +68,9 @@ let _lastVisibleScores = {};
 let _lastDetectionMeta = null;
 let _previewImageUrl = '';
 let _currentPreset = 'large';
+let _pendingFile = null;
+let _pendingImage = null;
+let _autoSearch = false;
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -1931,13 +1934,57 @@ function drawCropboxPreview() {
   drawPendingOverlay(cropCanvas.getContext('2d'), 1280, 720, _currentPreset);
 }
 
+function redrawUploadPreview() {
+  if (!_pendingImage) { drawCropboxPreview(); return; }
+  const canvas = document.getElementById('sbi-cropbox-canvas');
+  if (!canvas) return;
+  canvas.width = _pendingImage.width;
+  canvas.height = _pendingImage.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(_pendingImage, 0, 0);
+  drawPendingOverlay(ctx, _pendingImage.width, _pendingImage.height, _currentPreset);
+}
+
+function loadImagePreview(file) {
+  _pendingFile = file;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    _pendingImage = img;
+    URL.revokeObjectURL(url);
+    redrawUploadPreview();
+    document.querySelector('.sbi-upload-text').hidden = true;
+    document.getElementById('sbi-search-btn').disabled = false;
+    document.getElementById('sbi-clear-btn').disabled = false;
+  };
+  img.src = url;
+}
+
+function clearImagePreview() {
+  _pendingFile = null;
+  _pendingImage = null;
+  drawCropboxPreview();
+  document.querySelector('.sbi-upload-text').hidden = false;
+  document.getElementById('sbi-search-btn').disabled = true;
+  document.getElementById('sbi-clear-btn').disabled = true;
+}
+
+function handleImageInput(file) {
+  if (_autoSearch) {
+    loadImagePreview(file);
+    processImage(file);
+  } else {
+    loadImagePreview(file);
+  }
+}
+
 function setPreset(preset) {
   _currentPreset = preset;
   try { localStorage.setItem('sbi-preset', preset); } catch {}
   document.querySelectorAll('.sbi-preset-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.preset === preset);
   });
-  drawCropboxPreview();
+  redrawUploadPreview();
 }
 
 function init() {
@@ -1958,21 +2005,38 @@ function init() {
   const searchWrap = document.getElementById('sbi-search-wrap');
   if (searchWrap) searchWrap.hidden = true;
 
+  // Restore auto-search from localStorage
+  const autoSearchCb = document.getElementById('sbi-auto-search');
+  try { _autoSearch = localStorage.getItem('sbi-auto-search') === 'true'; } catch {}
+  if (autoSearchCb) {
+    autoSearchCb.checked = _autoSearch;
+    autoSearchCb.addEventListener('change', () => {
+      _autoSearch = autoSearchCb.checked;
+      try { localStorage.setItem('sbi-auto-search', String(_autoSearch)); } catch {}
+    });
+  }
+
   uploadEl.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', e => { if (e.target.files[0]) processImage(e.target.files[0]); });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) handleImageInput(e.target.files[0]); });
   uploadEl.addEventListener('dragover', e => { e.preventDefault(); uploadEl.classList.add('dragover'); });
   uploadEl.addEventListener('dragleave', () => uploadEl.classList.remove('dragover'));
   uploadEl.addEventListener('drop', e => {
     e.preventDefault(); uploadEl.classList.remove('dragover');
-    if (e.dataTransfer.files[0]) processImage(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files[0]) handleImageInput(e.dataTransfer.files[0]);
   });
   document.addEventListener('paste', e => {
     const items = e.clipboardData && e.clipboardData.items;
     if (!items) return;
     for (const item of items) {
-      if (item.type.startsWith('image/')) { processImage(item.getAsFile()); break; }
+      if (item.type.startsWith('image/')) { handleImageInput(item.getAsFile()); break; }
     }
   });
+
+  // Search / Clear buttons
+  const searchBtn = document.getElementById('sbi-search-btn');
+  const clearBtn = document.getElementById('sbi-clear-btn');
+  if (searchBtn) searchBtn.addEventListener('click', () => { if (_pendingFile) processImage(_pendingFile); });
+  if (clearBtn) clearBtn.addEventListener('click', () => clearImagePreview());
 
   const searchInput = document.getElementById('sbi-search-input');
   if (searchInput) searchInput.addEventListener('input', () => renderPackScoreSearch());
