@@ -135,20 +135,37 @@ class Admin {
     listEl.innerHTML = filtered.map(p => `
       <div class="admin-pack-item" data-name="${p.name}">
         <div class="admin-pack-row1">
-          <img class="admin-pack-icon ${this.selected.has(p.name) ? 'selected' : ''}" src="${p.packPng}" data-name="${p.name}">
+          <img class="admin-pack-icon ${this.selected.has(p.name) ? 'selected' : ''}" data-src="${p.packPng}" data-name="${p.name}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
           <a href="/p/${p.name}/" class="admin-pack-name">${p.displayName}</a>
         </div>
         <div class="admin-pack-row2">
-          <img class="admin-texture" src="/thumbnails/${p.name}/diamond_sword.png" onerror="this.style.display='none'" style="visibility:hidden">
-          <img class="admin-texture" src="/thumbnails/${p.name}/ender_pearl.png" onerror="this.style.display='none'" style="visibility:hidden">
+          <img class="admin-texture" data-src="/thumbnails/${p.name}/diamond_sword.png" onerror="this.style.display='none'" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="visibility:hidden">
+          <img class="admin-texture" data-src="/thumbnails/${p.name}/ender_pearl.png" onerror="this.style.display='none'" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="visibility:hidden">
           <button class="admin-delete-btn ${this.multiSelectMode ? 'disabled' : ''}" data-name="${p.name}">DELETE</button>
         </div>
       </div>
     `).join('') || '<p>No packs found</p>';
 
+    // Lazy load images with IntersectionObserver
+    if (!this._packObserver) {
+      this._packObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const item = entry.target;
+          item.querySelectorAll('img[data-src]').forEach(img => {
+            img.src = img.dataset.src;
+            delete img.dataset.src;
+          });
+          this._packObserver.unobserve(item);
+        });
+      }, { root: document.getElementById('pack-list'), rootMargin: '100px' });
+    }
+    listEl.querySelectorAll('.admin-pack-item').forEach(item => this._packObserver.observe(item));
+
     // Animated texture handling for admin textures
     listEl.querySelectorAll('.admin-texture').forEach(img => {
       img.onload = function() {
+        if (this.src.endsWith('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')) return;
         if (this.naturalHeight > this.naturalWidth) {
           const frames = this.naturalHeight / this.naturalWidth;
           if (Number.isInteger(frames) && frames > 1) {

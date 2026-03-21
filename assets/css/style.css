@@ -832,16 +832,27 @@ footer {
 }
 
 /* Admin pack list */
+#pack-list {
+  max-height: 520px;
+  overflow-y: auto;
+  border: 2px solid var(--border);
+}
+
 .admin-pack-item {
-  border: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   padding: 12px;
-  margin-bottom: 8px;
+}
+
+.admin-pack-item:last-child {
+  border-bottom: none;
 }
 
 .admin-pack-row1 {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
   margin-bottom: 8px;
 }
 
