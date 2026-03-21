@@ -1823,11 +1823,8 @@ async function processImage(file) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0);
 
-  // Phase 1: Show uploaded image with black cropbox overlay
+  // Phase 1: Prepare canvas with cropbox overlay (hidden during analysis)
   drawPendingOverlay(ctx, img.width, img.height, _currentPreset);
-  await updatePreviewCacheImage('cropbox_large.png');
-  preview.hidden = false;
-  preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
     if (!fingerprints) {
