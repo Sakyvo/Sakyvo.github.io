@@ -147,38 +147,20 @@ document.addEventListener('DOMContentLoaded', () => AUTH.updateNav());
 
 // Maintenance mode check
 (function() {
-  var isAdmin = window.location.pathname.startsWith('/admin');
-  var token = AUTH.getToken();
   var loggedIn = AUTH.isLoggedIn();
 
-  // Use GitHub API when logged in (bypasses CDN cache), raw URL otherwise
-  var fetchMaintenance;
-  if (loggedIn && token) {
-    fetchMaintenance = fetch('https://api.github.com/repos/' + AUTH.REPO_OWNER + '/' + AUTH.REPO_NAME + '/contents/data/maintenance.json', {
-      headers: { Authorization: 'token ' + token }
-    }).then(function(r) {
-      if (!r.ok) return null;
-      return r.json().then(function(d) {
-        return JSON.parse(decodeURIComponent(escape(atob(d.content))));
-      });
-    });
-  } else {
-    fetchMaintenance = fetch('https://raw.githubusercontent.com/' + AUTH.REPO_OWNER + '/' + AUTH.REPO_NAME + '/main/data/maintenance.json?t=' + Date.now())
-      .then(function(r) { return r.ok ? r.json() : null; });
-  }
-
-  fetchMaintenance
+  fetch('https://raw.githubusercontent.com/' + AUTH.REPO_OWNER + '/' + AUTH.REPO_NAME + '/main/data/maintenance.json?t=' + Date.now())
+    .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(data) {
       if (!data || !data.enabled) return;
       if (loggedIn) {
-        // Admin badge on all pages
         var badge = document.createElement('div');
         badge.textContent = 'MAINTENANCE ON';
         badge.style.cssText = 'position:fixed;top:12px;right:12px;background:#c00;color:#fff;padding:6px 14px;font-size:12px;font-weight:bold;letter-spacing:1px;z-index:9999;';
         document.body.appendChild(badge);
         return;
       }
-      if (isAdmin) return;
+      if (window.location.pathname.startsWith('/admin')) return;
       document.documentElement.innerHTML = '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VALE - Maintenance</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;color:#ccc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}.maintenance{text-align:center;border:2px solid #444;padding:60px 48px;max-width:460px}.maintenance h1{font-size:28px;letter-spacing:6px;margin-bottom:16px;color:#fff}.maintenance p{font-size:14px;color:#888;line-height:1.6}.maintenance .line{width:40px;height:2px;background:#444;margin:20px auto}</style></head><body><div class="maintenance"><h1>VALE</h1><div class="line"></div><p>Service in Maintenance</p></div></body>';
     })
     .catch(function() {});
