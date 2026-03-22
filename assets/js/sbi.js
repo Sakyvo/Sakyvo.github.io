@@ -1274,7 +1274,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   const aspect = imgH / Math.max(1, imgW);
   const isHudCrop = aspect < 0.35;
   const baseUnit = getWide16By9Unit(imgW, imgH);
-  const targetUnit = isHudCrop ? 0 : (preset === 'small' ? Math.max(1, Math.round(baseUnit) - 1) : baseUnit);
+  const targetUnit = isHudCrop ? 0 : (preset === 'auto' ? 0 : (preset === 'small' ? Math.max(1, Math.round(baseUnit) - 1) : baseUnit));
   const PRE_K = 80;
   const PER_UNIT_K = 14;
   const preByUnit = new Map();
@@ -1400,7 +1400,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
       : (0.70 * widgetBoost + 0.30 * slotBoost);
     // Full screenshots use integer GUI scale; strongly prefer near-integer units
     // to prevent HUD-driven selection of fractional units that shift the crop.
-    const unitPrefW = isHudCrop ? 0.08 : (preset === 'small' ? 0.85 : 0.50);
+    const unitPrefW = isHudCrop || preset === 'auto' ? 0.08 : (preset === 'small' ? 0.85 : 0.50);
     const combinedBoost = baseBoost
       * (0.78 + 0.22 * cand.gridScore)
       * (0.86 + 0.14 * cand.bottomPref)
