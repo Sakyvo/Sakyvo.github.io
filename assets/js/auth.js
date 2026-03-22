@@ -154,10 +154,17 @@ document.addEventListener('DOMContentLoaded', () => AUTH.updateNav());
     .then(function(data) {
       if (!data || !data.enabled) return;
       if (loggedIn) {
-        var badge = document.createElement('div');
-        badge.textContent = 'MAINTENANCE ON';
-        badge.style.cssText = 'position:fixed;top:12px;right:12px;background:#c00;color:#fff;padding:6px 14px;font-size:12px;font-weight:bold;letter-spacing:1px;z-index:9999;';
-        document.body.appendChild(badge);
+        var badge = document.createElement('span');
+        badge.textContent = 'IN MAINTENANCE';
+        badge.style.cssText = 'background:#c00;color:#fff;padding:8px 14px;font-size:12px;font-weight:bold;letter-spacing:1px;white-space:nowrap;';
+        var nav = document.querySelector('nav');
+        if (nav) {
+          var authBtn = nav.querySelector('.auth-btn');
+          if (authBtn) nav.insertBefore(badge, authBtn);
+          else nav.appendChild(badge);
+        } else {
+          document.body.appendChild(badge);
+        }
         return;
       }
       if (window.location.pathname.startsWith('/admin')) return;
