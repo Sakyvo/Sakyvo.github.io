@@ -1698,6 +1698,7 @@ function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
 }
 
 function getPresetUnit(imgW, imgH, preset) {
+  if (preset === 'auto') return 0;
   const base = getWide16By9Unit(imgW, imgH) || getMaxGuiScale(imgW, imgH);
   if (preset === 'small') return Math.max(1, Math.round(base) - 1);
   return base;
