@@ -430,8 +430,8 @@ function renderPackScoreSearch() {
   }
   if (!query) {
     meta.textContent = 'Enter a pack name to inspect related score details.';
-    slotTypesEl.hidden = false;
-    slotTypesEl.textContent = `Slot Types: ${getCurrentSlotTypesSummary()}`;
+    slotTypesEl.hidden = true;
+    slotTypesEl.textContent = '';
     el.hidden = true;
     el.innerHTML = '';
     updateExportButtonState();
@@ -442,15 +442,17 @@ function renderPackScoreSearch() {
   meta.textContent = matches.length
     ? `Found ${matches.length} related pack${matches.length === 1 ? '' : 's'}.`
     : 'No related packs found.';
-  slotTypesEl.hidden = false;
-  slotTypesEl.textContent = `Slot Types: ${getCurrentSlotTypesSummary()}`;
   if (!matches.length) {
+    slotTypesEl.hidden = true;
+    slotTypesEl.textContent = '';
     el.hidden = true;
     el.innerHTML = '';
     updateExportButtonState();
     return;
   }
 
+  slotTypesEl.hidden = false;
+  slotTypesEl.textContent = `Slot Types: ${getCurrentSlotTypesSummary()}`;
   el.hidden = false;
   el.innerHTML = `
     <table class="sbi-search-table">
