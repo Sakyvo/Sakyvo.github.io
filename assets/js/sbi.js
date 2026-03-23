@@ -203,6 +203,10 @@ function summarizeSlotTypes(types) {
   return types.map(t => map[t] || '?').join(' ');
 }
 
+function summarizeSlotType(type) {
+  return summarizeSlotTypes([type || 'none']);
+}
+
 function renderDebugPanel(results, phase) {
   const panel = document.getElementById('sbi-debug');
   const meta = document.getElementById('sbi-debug-meta');
@@ -353,6 +357,25 @@ function buildTop10Markdown() {
     lines.push(
       `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(row.score)} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} | ${escapeMarkdownCell(summarizeSlotTypes(info.slotTypes))} |`
     );
+  });
+
+  rows.forEach((row, index) => {
+    const info = _lastMatchDetails[row.name] || {};
+    const packLabel = row.displayName && row.displayName !== row.name
+      ? `${row.displayName} (${row.name})`
+      : (row.displayName || row.name);
+    const slotBreakdown = Array.isArray(info.slotBreakdown) ? info.slotBreakdown : [];
+    lines.push('');
+    lines.push(`### ${index + 1}. ${escapeMarkdownCell(packLabel)}`);
+    lines.push('');
+    lines.push('| Slot | Type | Score | Alt | Cert | Activity | Quality | Variance |');
+    lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |');
+    for (let slotIndex = 0; slotIndex < 9; slotIndex++) {
+      const entry = slotBreakdown[slotIndex] || {};
+      lines.push(
+        `| ${slotIndex + 1} | ${escapeMarkdownCell(summarizeSlotType(entry.inferredType))} | ${fmtRaw(entry.score)} | ${fmtRaw(entry.altBest)} | ${fmtRaw(entry.certainty)} | ${fmtRaw(entry.activity)} | ${fmtRaw(entry.quality)} | ${fmtRaw(entry.variance)} |`
+      );
+    }
   });
   return lines.join('\n');
 }
@@ -1741,6 +1764,9 @@ function inferDisplaySlotTypes(slots) {
       continue;
     }
 
+    const blueStrong = (sig.meanB > sig.meanR + 35) && (sig.meanB > sig.meanG + 25);
+    const compactBlue = blueStrong && (sig.n < 70 || sig.coverage < 0.22);
+
     // Food (GC / gapple both render as GC in the UI summary).
     if (sig.yellowFrac >= 0.12) {
       out[slot.index] = 'golden_carrot';
@@ -1753,13 +1779,18 @@ function inferDisplaySlotTypes(slots) {
       continue;
     }
 
+    // Small blue silhouettes are swords far more often than pearls.
+    if (compactBlue) {
+      out[slot.index] = 'diamond_sword';
+      continue;
+    }
+
     // Ender pearl: typically dark + low warm colors.
-    if (sig.meanLum < 80 && sig.redFrac < 0.05 && sig.yellowFrac < 0.08) {
+    if (sig.meanLum < 80 && sig.redFrac < 0.05 && sig.yellowFrac < 0.08 && (sig.n >= 70 || sig.coverage >= 0.22)) {
       out[slot.index] = 'ender_pearl';
       continue;
     }
 
-    const blueStrong = (sig.meanB > sig.meanR + 35) && (sig.meanB > sig.meanG + 25);
     if (sig.n < 70) {
       out[slot.index] = blueStrong ? 'diamond_sword' : 'iron_sword';
       continue;
@@ -1788,12 +1819,24 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     let activeSlots = 0, strongSlots = 0;
     let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0;
     const perTypeScores = {};
+    const slotBreakdown = new Array(9).fill(null);
 
     for (const slot of slots) {
       const activity = clamp01(slot.activity || 0);
-      if (activity < 0.18) continue;
-
       const targetType = displaySlotTypes[slot.index] || 'none';
+      const baseEntry = {
+        index: slot.index,
+        inferredType: targetType,
+        activity,
+        quality: slot.quality || 0,
+        variance: slot.variance || 0,
+        score: null,
+        altBest: null,
+        certainty: null,
+      };
+      slotBreakdown[slot.index] = baseEntry;
+
+      if (activity < 0.18) continue;
       if (targetType === 'none') continue;
       const typeW = TYPE_WEIGHT[targetType] || 0;
       if (typeW <= 0) continue;
@@ -1815,6 +1858,16 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 
       activeSlots++;
       const certainty = Math.max(0, sim - altBest);
+      slotBreakdown[slot.index] = {
+        index: slot.index,
+        inferredType: targetType,
+        activity,
+        quality: slot.quality || 0,
+        variance: slot.variance || 0,
+        score: sim,
+        altBest,
+        certainty,
+      };
       const qualityNorm = clamp01((slot.quality || 0) / 13);
       const w = typeW * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
       slotWeighted += sim * w;
@@ -1869,6 +1922,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       slotCertainty,
       slotTypes: displaySlotTypes,
       perTypeScores,
+      slotBreakdown,
     };
     if (canRank && finalScore > 0.28) {
       results.push({ name: packName, score: finalScore });
