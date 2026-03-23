@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VALE - Search by Image</title>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=8">
+  <link rel="stylesheet" href="/assets/css/style.css?v=9">
 </head>
 <body class="sbi-page">
   <header class="sbi-header">
@@ -108,6 +108,7 @@
     <details class="sbi-debug" id="sbi-debug" hidden>
       <summary>Diagnostics</summary>
       <div class="sbi-debug-meta" id="sbi-debug-meta"></div>
+      <div class="sbi-slot-types-line" id="sbi-debug-slot-types"></div>
       <div id="sbi-debug-tip" class="sbi-debug-tip" hidden></div>
       <div class="sbi-debug-wrap">
         <table class="sbi-debug-table">
@@ -121,7 +122,6 @@
               <th>HP</th>
               <th>Hun</th>
               <th>Arm</th>
-              <th>Slot Types</th>
             </tr>
           </thead>
           <tbody id="sbi-debug-body"></tbody>
@@ -138,6 +138,7 @@
       <div class="sbi-search-title">Search Scores</div>
       <input class="sbi-search-input" id="sbi-search-input" type="search" placeholder="Search pack name, e.g. Eum3 Blue Revamp" autocomplete="off" spellcheck="false">
       <div class="sbi-search-meta" id="sbi-search-meta">Upload a screenshot to search current scores.</div>
+      <div class="sbi-slot-types-line" id="sbi-search-slot-types" hidden></div>
       <div class="sbi-search-results" id="sbi-search-results" hidden></div>
       <div class="sbi-search-actions">
         <button class="sbi-action-btn sbi-search-export-btn" id="sbi-export-md-btn" disabled>Export Top 10 Markdown</button>
@@ -150,6 +151,6 @@
   </footer>
 
   <script src="/assets/js/auth.js?v=3"></script>
-  <script src="/assets/js/sbi.js?v=48"></script>
+  <script src="/assets/js/sbi.js?v=49"></script>
 </body>
 </html>

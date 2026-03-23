@@ -207,11 +207,24 @@ function summarizeSlotType(type) {
   return summarizeSlotTypes([type || 'none']);
 }
 
+function getCurrentSlotTypesSummary() {
+  const firstRanked = _lastRankedResults && _lastRankedResults.length ? _lastRankedResults[0] : null;
+  if (firstRanked) {
+    const info = _lastMatchDetails[firstRanked.name];
+    if (info && info.slotTypes && info.slotTypes.length) return summarizeSlotTypes(info.slotTypes);
+  }
+  for (const info of Object.values(_lastMatchDetails || {})) {
+    if (info && info.slotTypes && info.slotTypes.length) return summarizeSlotTypes(info.slotTypes);
+  }
+  return '-';
+}
+
 function renderDebugPanel(results, phase) {
   const panel = document.getElementById('sbi-debug');
   const meta = document.getElementById('sbi-debug-meta');
+  const slotTypesEl = document.getElementById('sbi-debug-slot-types');
   const body = document.getElementById('sbi-debug-body');
-  if (!panel || !meta || !body) return;
+  if (!panel || !meta || !slotTypesEl || !body) return;
 
   panel.hidden = false;
   const d = _lastDetectionMeta || {};
@@ -221,6 +234,7 @@ function renderDebugPanel(results, phase) {
   meta.textContent =
     `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}` +
     (s && s.preTop ? `\npre=${s.preTop}` : '');
+  slotTypesEl.textContent = `Slot Types: ${getCurrentSlotTypesSummary()}`;
 
   body.innerHTML = (results || []).slice(0, 10).map((r, i) => {
     const info = _lastMatchDetails[r.name] || {};
@@ -233,7 +247,6 @@ function renderDebugPanel(results, phase) {
       <td>${fmtPct(info.healthScore)}</td>
       <td>${fmtPct(info.hungerScore)}</td>
       <td>${fmtPct(info.armorScore)}</td>
-      <td>${summarizeSlotTypes(info.slotTypes)}</td>
     </tr>`;
   }).join('');
 }
@@ -338,6 +351,7 @@ function buildTop10Markdown() {
     `- Widget: ${escapeMarkdownCell(formatWidgetRect(d.widgetRect))}`,
     `- Search: ${escapeMarkdownCell(formatSearchInfo(s))}`,
     `- Slots: ${d.slotCount || 0}`,
+    `- Slot Types: ${escapeMarkdownCell(getCurrentSlotTypesSummary())}`,
     `- HUD: ${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0}`,
     `- Type Weights: DS=${SBI_SCORE_WEIGHTS.type.diamond_sword.toFixed(2)}, EP=${SBI_SCORE_WEIGHTS.type.ender_pearl.toFixed(2)}, HL=${SBI_SCORE_WEIGHTS.type.splash_potion.toFixed(2)}, SK=${SBI_SCORE_WEIGHTS.type.steak.toFixed(2)}, GC=${SBI_SCORE_WEIGHTS.type.golden_carrot.toFixed(2)}`,
     `- HUD Weights: HP=${SBI_SCORE_WEIGHTS.hud.health.toFixed(2)}, Hun=${SBI_SCORE_WEIGHTS.hud.hunger.toFixed(2)}, Arm=${SBI_SCORE_WEIGHTS.hud.armor.toFixed(2)}`,
@@ -345,8 +359,8 @@ function buildTop10Markdown() {
     '',
     '## Top 10',
     '',
-    '| # | Pack | Total | DS | EP | HL | SK/GC | Slot | Widget | HP | Hun | Arm | Cover | Cert | Slot Types |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| # | Pack | Total | DS | EP | HL | SK/GC | Slot | Widget | HP | Hun | Arm | Cover | Cert |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
   ];
 
   rows.forEach((row, index) => {
@@ -355,7 +369,7 @@ function buildTop10Markdown() {
       ? `${row.displayName} (${row.name})`
       : (row.displayName || row.name);
     lines.push(
-      `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(row.score)} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} | ${escapeMarkdownCell(summarizeSlotTypes(info.slotTypes))} |`
+      `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(row.score)} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} |`
     );
   });
 
@@ -400,12 +414,15 @@ function exportCurrentAnalysis() {
 function renderPackScoreSearch() {
   const input = document.getElementById('sbi-search-input');
   const meta = document.getElementById('sbi-search-meta');
+  const slotTypesEl = document.getElementById('sbi-search-slot-types');
   const el = document.getElementById('sbi-search-results');
-  if (!input || !meta || !el) return;
+  if (!input || !meta || !slotTypesEl || !el) return;
 
   const query = input.value.trim();
   if (!Object.keys(_lastMatchDetails).length) {
     meta.textContent = 'Upload a screenshot to search current scores.';
+    slotTypesEl.hidden = true;
+    slotTypesEl.textContent = '';
     el.hidden = true;
     el.innerHTML = '';
     updateExportButtonState();
@@ -413,6 +430,8 @@ function renderPackScoreSearch() {
   }
   if (!query) {
     meta.textContent = 'Enter a pack name to inspect related score details.';
+    slotTypesEl.hidden = false;
+    slotTypesEl.textContent = `Slot Types: ${getCurrentSlotTypesSummary()}`;
     el.hidden = true;
     el.innerHTML = '';
     updateExportButtonState();
@@ -423,6 +442,8 @@ function renderPackScoreSearch() {
   meta.textContent = matches.length
     ? `Found ${matches.length} related pack${matches.length === 1 ? '' : 's'}.`
     : 'No related packs found.';
+  slotTypesEl.hidden = false;
+  slotTypesEl.textContent = `Slot Types: ${getCurrentSlotTypesSummary()}`;
   if (!matches.length) {
     el.hidden = true;
     el.innerHTML = '';
@@ -434,7 +455,7 @@ function renderPackScoreSearch() {
   el.innerHTML = `
     <table class="sbi-search-table">
       <thead>
-        <tr><th>Pack</th><th>Total</th><th>DS</th><th>EP</th><th>HL</th><th>SK/GC</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Cover</th><th>Cert</th><th>Slot Types</th></tr>
+        <tr><th>Pack</th><th>Total</th><th>DS</th><th>EP</th><th>HL</th><th>SK/GC</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Cover</th><th>Cert</th></tr>
       </thead>
       <tbody>${matches.map(row => `
         <tr>
@@ -451,7 +472,6 @@ function renderPackScoreSearch() {
           <td>${fmtPct(row.armorScore)}</td>
           <td>${fmtPct(row.slotCoverage)}</td>
           <td>${fmtPct(row.slotCertainty)}</td>
-          <td>${summarizeSlotTypes(row.slotTypes)}</td>
         </tr>
       `).join('')}</tbody>
     </table>
