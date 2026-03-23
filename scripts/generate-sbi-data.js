@@ -4,6 +4,7 @@ const sharp = require('sharp');
 
 const THUMB_DIR = path.join(__dirname, '..', 'thumbnails');
 const OUT_FILE = path.join(__dirname, '..', 'data', 'sbi-fingerprints.json');
+const SBI_FINGERPRINT_VERSION = 8;
 
 // Note: crosshair removed — MC renders it via XOR blending, making screenshot comparison meaningless
 const TEXTURES = [
@@ -121,6 +122,51 @@ function computeEdgeDensity(pixels, w, h) {
   return count ? +(sum / (count * 3 * 255)).toFixed(5) : 0;
 }
 
+function maskWidgetItems(pixels, w, h) {
+  const out = Buffer.from(pixels);
+  if (w < 40 || h < 12) return out;
+
+  const sx = w / 182;
+  const sy = h / 22;
+  const itemSize = Math.max(1, Math.round(16 * Math.min(sx, sy)));
+  const itemY = Math.round(3 * sy);
+  const maskSize = Math.max(6, Math.min(itemSize - 2, Math.round(itemSize * 0.5)));
+  const inset = Math.max(0, Math.floor((itemSize - maskSize) / 2));
+
+  for (let i = 0; i < 9; i++) {
+    const itemX = Math.round((3 + i * 20) * sx);
+    const x1 = Math.max(0, itemX + inset);
+    const x2 = Math.min(w, itemX + inset + maskSize);
+    const y1 = Math.max(0, itemY + inset);
+    const y2 = Math.min(h, itemY + inset + maskSize);
+    for (let y = y1; y < y2; y++) {
+      for (let x = x1; x < x2; x++) out[(y * w + x) * 4 + 3] = 0;
+    }
+  }
+
+  return out;
+}
+
+function suppressWidgetHighlights(pixels, w, h) {
+  const out = Buffer.from(pixels);
+  const lum = [];
+  for (let i = 0; i < w * h; i++) {
+    const a = out[i * 4 + 3];
+    if (a < 128) continue;
+    lum.push(0.299 * out[i * 4] + 0.587 * out[i * 4 + 1] + 0.114 * out[i * 4 + 2]);
+  }
+  if (lum.length < 32) return out;
+  lum.sort((a, b) => a - b);
+  const thr = lum[Math.min(lum.length - 1, Math.floor(lum.length * 0.985))];
+  for (let i = 0; i < w * h; i++) {
+    const p = i * 4;
+    if (out[p + 3] < 128) continue;
+    const L = 0.299 * out[p] + 0.587 * out[p + 1] + 0.114 * out[p + 2];
+    if (L > thr) out[p + 3] = 0;
+  }
+  return out;
+}
+
 async function processTexture(filePath) {
   return processSharpImage(sharp(filePath), 16, 16);
 }
@@ -150,9 +196,25 @@ async function processSharpImage(img, featureW, featureH) {
 async function processHotbarWidget(widgetsPath) {
   const meta = await sharp(widgetsPath).metadata();
   const crop = scaleRegion(meta, HOTBAR_REGION);
-  const cropped = sharp(widgetsPath).extract(crop);
-  const feat = await processSharpImage(cropped, 16, 16);
-  return { hist: feat.hist, moments: feat.moments, edge: feat.edge };
+  const normalized = await sharp(widgetsPath)
+    .extract(crop)
+    .resize(182, 22, { fit: 'fill', kernel: 'nearest' })
+    .raw()
+    .ensureAlpha()
+    .toBuffer();
+  const masked = maskWidgetItems(normalized, 182, 22);
+  const featBuf = await sharp(masked, { raw: { width: 182, height: 22, channels: 4 } })
+    .resize(16, 16, { fit: 'fill', kernel: 'nearest' })
+    .raw()
+    .ensureAlpha()
+    .toBuffer();
+  const clean = suppressWidgetHighlights(featBuf, 16, 16);
+  const count = 16 * 16;
+  return {
+    hist: computeHistogram(clean, count),
+    moments: computeColorMoments(clean, count),
+    edge: computeEdgeDensity(clean, 16, 16),
+  };
 }
 
 async function processHudIcons(iconsPath) {
@@ -207,7 +269,7 @@ async function main() {
     done++;
     if (done % 20 === 0) console.log(`  ${done}/${dirs.length}`);
   }
-  const result = { version: 7, packs };
+  const result = { version: SBI_FINGERPRINT_VERSION, packs };
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, JSON.stringify(result));
   console.log(`Done. ${Object.keys(packs).length} packs → ${OUT_FILE}`);

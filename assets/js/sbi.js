@@ -55,7 +55,7 @@ function initClipWorker() {
 }
 
 let _lastHashResults = [], _lastAllScores = {};
-const SBI_FINGERPRINT_VERSION = 7;
+const SBI_FINGERPRINT_VERSION = 8;
 // AI (CLIP) is used as a rerank signal. We normalize CLIP scores per-query and
 // apply it as a multiplicative factor on top of the hash score, so a weak CLIP
 // match won't incorrectly drag down a strong hash match when the crop is correct.
@@ -88,7 +88,7 @@ const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
 const SBI_SCORE_WEIGHTS = {
   // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
-  type: { diamond_sword: 3.0, ender_pearl: 3.0, splash_potion: 1.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
+  type: { diamond_sword: 5.0, ender_pearl: 5.0, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
   hud: { health: 4.0, hunger: 1.5, armor: 1.0 },
   mix: { slot: 0.22, hud: 0.42, widget: 0.36, slotNoHud: 0.42, widgetNoHud: 0.58 },
 };
@@ -531,8 +531,8 @@ function compareWidget(extracted, packWidget) {
   const chromaA = extracted && extracted.moments ? Math.max(extracted.moments[0], extracted.moments[1], extracted.moments[2]) - Math.min(extracted.moments[0], extracted.moments[1], extracted.moments[2]) : 0;
   const chromaB = packWidget && packWidget.moments ? Math.max(packWidget.moments[0], packWidget.moments[1], packWidget.moments[2]) - Math.min(packWidget.moments[0], packWidget.moments[1], packWidget.moments[2]) : 0;
   const chromaSim = clamp01(1 - Math.abs(chromaA - chromaB) / (Math.max(chromaA, chromaB) + 0.08));
-  const base = 0.34 * histSim + 0.24 * momentSim + 0.14 * edgeSim + 0.18 * dirSim + 0.10 * chromaSim;
-  const colorGate = 0.70 + 0.30 * Math.min(dirSim, chromaSim);
+  const base = 0.40 * histSim + 0.22 * momentSim + 0.18 * edgeSim + 0.14 * dirSim + 0.06 * chromaSim;
+  const colorGate = 0.72 + 0.18 * Math.min(histSim, dirSim) + 0.10 * histSim;
   return base * colorGate;
 }
 
@@ -936,8 +936,8 @@ function estimateSlotConfidence(slots, packNames) {
       wSum += 1.0;
     }
     if (potionSlot && (potionSlot.activity || 0) >= 0.28 && p.splash_potion) {
-      sum += compareSlotToType(potionSlot, p.splash_potion, 'splash_potion') * 0.6;
-      wSum += 0.6;
+      sum += compareSlotToType(potionSlot, p.splash_potion, 'splash_potion') * 0.4;
+      wSum += 0.4;
     }
     const score = wSum ? (sum / wSum) : 0;
     if (score > best) { best = score; bestName = name; }
