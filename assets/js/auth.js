@@ -155,12 +155,14 @@ document.addEventListener('DOMContentLoaded', () => AUTH.updateNav());
       if (!data || !data.enabled) return;
       if (loggedIn) {
         var badge = document.createElement('span');
+        badge.className = 'nav-status maintenance-badge';
         badge.textContent = 'IN MAINTENANCE';
-        badge.style.cssText = 'background:#c00;color:#fff;padding:8px 14px;font-size:12px;font-weight:bold;letter-spacing:1px;white-space:nowrap;';
         var nav = document.querySelector('nav');
         if (nav) {
+          var historyBtn = nav.querySelector('.history-btn');
           var authBtn = nav.querySelector('.auth-btn');
-          if (authBtn) nav.insertBefore(badge, authBtn);
+          if (historyBtn) nav.insertBefore(badge, historyBtn);
+          else if (authBtn) nav.insertBefore(badge, authBtn);
           else nav.appendChild(badge);
         } else {
           document.body.appendChild(badge);

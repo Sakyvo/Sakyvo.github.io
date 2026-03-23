@@ -40,7 +40,7 @@ header {
   color: #fff;
 }
 
-nav { display: flex; gap: 12px; }
+nav { display: flex; gap: 12px; align-items: center; }
 
 .nav-btn {
   padding: 8px 16px;
@@ -57,6 +57,22 @@ nav { display: flex; gap: 12px; }
 
 .nav-btn:active {
   background: rgba(255,255,255,0.2);
+}
+
+.nav-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.maintenance-badge {
+  background: var(--danger);
+  color: #fff;
 }
 
 .hero {
@@ -954,6 +970,10 @@ footer {
 }
 
 /* SBI pages */
+.sbi-page .sbi-nav { gap: 8px; }
+.sbi-page .nav-btn,
+.sbi-page .nav-status { padding-left: 12px; padding-right: 12px; }
+.sbi-page .history-btn { letter-spacing: 0.5px; }
 .sbi-container { max-width: 800px; margin: 40px auto; padding: 0 24px; }
 .sbi-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
 .sbi-preset { margin-bottom: 16px; }
@@ -1063,3 +1083,19 @@ footer {
 .sbi-history-count { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 .sbi-detail-img { max-width: 100%; border: 2px solid var(--border); display: block; margin: 16px 0; }
 .sbi-back-btn { margin-bottom: 16px; }
+
+@media (max-width: 600px) {
+  .sbi-page .sbi-header {
+    padding: 14px 12px 14px 10px;
+    gap: 10px;
+  }
+
+  .sbi-page .logo { font-size: 22px; }
+  .sbi-page .sbi-nav { gap: 6px; }
+
+  .sbi-page .nav-btn,
+  .sbi-page .nav-status {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
