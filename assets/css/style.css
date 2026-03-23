@@ -1059,17 +1059,25 @@ footer {
 .sbi-search-input:focus { border-color: var(--accent); }
 .sbi-search-meta { margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
 .sbi-search-results { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; overflow-x: auto; }
-.sbi-search-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+.sbi-search-actions { margin-top: 10px; display: flex; justify-content: flex-start; }
+.sbi-search-export-btn { min-width: 220px; }
+.sbi-search-table { width: 100%; min-width: 1180px; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
 .sbi-search-table th, .sbi-search-table td { border-bottom: 1px solid var(--border); padding: 6px 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbi-search-table th { background: rgba(0,0,0,0.06); font-weight: 700; }
-.sbi-search-table th:nth-child(1), .sbi-search-table td:nth-child(1) { width: 24%; }
+.sbi-search-table th:nth-child(1), .sbi-search-table td:nth-child(1) { width: 22%; }
 .sbi-search-table th:nth-child(2), .sbi-search-table td:nth-child(2),
 .sbi-search-table th:nth-child(3), .sbi-search-table td:nth-child(3),
 .sbi-search-table th:nth-child(4), .sbi-search-table td:nth-child(4),
 .sbi-search-table th:nth-child(5), .sbi-search-table td:nth-child(5),
 .sbi-search-table th:nth-child(6), .sbi-search-table td:nth-child(6),
-.sbi-search-table th:nth-child(7), .sbi-search-table td:nth-child(7) { width: 8%; }
-.sbi-search-table th:nth-child(8), .sbi-search-table td:nth-child(8) { width: 28%; white-space: normal; line-height: 1.15; }
+.sbi-search-table th:nth-child(7), .sbi-search-table td:nth-child(7),
+.sbi-search-table th:nth-child(8), .sbi-search-table td:nth-child(8),
+.sbi-search-table th:nth-child(9), .sbi-search-table td:nth-child(9),
+.sbi-search-table th:nth-child(10), .sbi-search-table td:nth-child(10),
+.sbi-search-table th:nth-child(11), .sbi-search-table td:nth-child(11),
+.sbi-search-table th:nth-child(12), .sbi-search-table td:nth-child(12),
+.sbi-search-table th:nth-child(13), .sbi-search-table td:nth-child(13) { width: 6.5%; }
+.sbi-search-table th:nth-child(14), .sbi-search-table td:nth-child(14) { width: 20%; white-space: normal; line-height: 1.15; }
 .sbi-ai-badge { padding: 3px 9px; font-size: 12px; font-weight: bold; border: 2px solid; cursor: pointer; background: transparent; letter-spacing: .04em; }
 .sbi-ai-badge[data-state="loading"] { color: #f59e0b; border-color: #f59e0b; }
 .sbi-ai-badge[data-state="ready"]   { color: #22c55e; border-color: #22c55e; }

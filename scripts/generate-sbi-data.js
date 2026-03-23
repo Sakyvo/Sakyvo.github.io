@@ -4,7 +4,7 @@ const sharp = require('sharp');
 
 const THUMB_DIR = path.join(__dirname, '..', 'thumbnails');
 const OUT_FILE = path.join(__dirname, '..', 'data', 'sbi-fingerprints.json');
-const SBI_FINGERPRINT_VERSION = 8;
+const SBI_FINGERPRINT_VERSION = 9;
 
 // Note: crosshair removed — MC renders it via XOR blending, making screenshot comparison meaningless
 const TEXTURES = [
@@ -122,6 +122,81 @@ function computeEdgeDensity(pixels, w, h) {
   return count ? +(sum / (count * 3 * 255)).toFixed(5) : 0;
 }
 
+function computeItemSignature(pixels, w, h) {
+  const centerX1 = Math.floor(w * 0.25);
+  const centerX2 = Math.ceil(w * 0.75);
+  const centerY1 = Math.floor(h * 0.25);
+  const centerY2 = Math.ceil(h * 0.75);
+  const edgeInsetX = Math.max(1, Math.floor(w * 0.1875));
+  const edgeInsetY = Math.max(1, Math.floor(h * 0.1875));
+  let n = 0, lumSum = 0, rSum = 0, gSum = 0, bSum = 0;
+  let red = 0, yellow = 0, dark = 0, blue = 0;
+  let centerN = 0, centerDark = 0, edgeN = 0, edgeDark = 0;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (pixels[i + 3] < 128) continue;
+      const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      const isDark = lum < 72;
+      n++;
+      lumSum += lum;
+      rSum += r;
+      gSum += g;
+      bSum += b;
+      if (r > g + 30 && r > b + 30) red++;
+      if (r > 160 && g > 140 && b < 140) yellow++;
+      if (isDark) dark++;
+      if (b > r + 12 && b > g + 8) blue++;
+
+      const inCenter = x >= centerX1 && x < centerX2 && y >= centerY1 && y < centerY2;
+      if (inCenter) {
+        centerN++;
+        if (isDark) centerDark++;
+      }
+      const inEdge = x < edgeInsetX || x >= w - edgeInsetX || y < edgeInsetY || y >= h - edgeInsetY;
+      if (inEdge) {
+        edgeN++;
+        if (isDark) edgeDark++;
+      }
+    }
+  }
+
+  if (!n) {
+    return {
+      n: 0,
+      coverage: 0,
+      meanLum: 0,
+      meanR: 0,
+      meanG: 0,
+      meanB: 0,
+      redFrac: 0,
+      yellowFrac: 0,
+      darkFrac: 0,
+      blueFrac: 0,
+      centerDarkFrac: 0,
+      edgeDarkFrac: 0,
+    };
+  }
+
+  const round = value => +value.toFixed(4);
+  return {
+    n,
+    coverage: round(n / (w * h)),
+    meanLum: round(lumSum / n),
+    meanR: round(rSum / n),
+    meanG: round(gSum / n),
+    meanB: round(bSum / n),
+    redFrac: round(red / n),
+    yellowFrac: round(yellow / n),
+    darkFrac: round(dark / n),
+    blueFrac: round(blue / n),
+    centerDarkFrac: round(centerN ? (centerDark / centerN) : 0),
+    edgeDarkFrac: round(edgeN ? (edgeDark / edgeN) : 0),
+  };
+}
+
 function maskWidgetItems(pixels, w, h) {
   const out = Buffer.from(pixels);
   if (w < 40 || h < 12) return out;
@@ -190,7 +265,8 @@ async function processSharpImage(img, featureW, featureH) {
   const hist = computeHistogram(featBuf, count);
   const moments = computeColorMoments(featBuf, count);
   const edge = computeEdgeDensity(featBuf, featureW, featureH);
-  return { dhash, hist, moments, edge };
+  const sig = computeItemSignature(featBuf, featureW, featureH);
+  return { dhash, hist, moments, edge, sig };
 }
 
 async function processHotbarWidget(widgetsPath) {

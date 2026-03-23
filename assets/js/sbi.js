@@ -55,7 +55,7 @@ function initClipWorker() {
 }
 
 let _lastHashResults = [], _lastAllScores = {};
-const SBI_FINGERPRINT_VERSION = 8;
+const SBI_FINGERPRINT_VERSION = 9;
 // AI (CLIP) is used as a rerank signal. We normalize CLIP scores per-query and
 // apply it as a multiplicative factor on top of the hash score, so a weak CLIP
 // match won't incorrectly drag down a strong hash match when the crop is correct.
@@ -65,6 +65,8 @@ const CLIP_ONLY_SCALE = 0.72;
 let _lastMatchDetails = {};
 let _lastClipScores = {};
 let _lastVisibleScores = {};
+let _lastRankedResults = [];
+let _lastSearchPhase = 'hash';
 let _lastDetectionMeta = null;
 let _previewImageUrl = '';
 let _currentPreset = 'large';
@@ -117,12 +119,34 @@ function fmtPct(v) {
   return (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + '%';
 }
 
+function fmtRaw(v, digits) {
+  if (!isFinite(v)) return '-';
+  return Number(v).toFixed(digits || 4);
+}
+
 function getPackDisplayName(name) {
   return String(name || '').replace(/_/g, ' ');
 }
 
 function normalizePackSearchTerm(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function normalizePackSearchPhrase(value) {
+  return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function formatWidgetRect(rect) {
+  return rect ? `x=${rect.x}, y=${rect.y}, w=${rect.w}, h=${rect.h}` : 'none';
+}
+
+function formatSearchInfo(info) {
+  if (!info) return 'none';
+  return `unit=${info.unit.toFixed(3)}${info.snappedUnit === undefined ? '' : `→${info.snappedUnit.toFixed(3)}`}, target=${info.targetUnit === undefined ? '-' : info.targetUnit.toFixed(3)}, off=${info.bottomOffset === undefined ? '-' : info.bottomOffset}, mode=${info.mode || 'strict'}, by=${info.bottomRatio === undefined ? '-' : info.bottomRatio.toFixed(3)}, g=${info.gridScore === undefined ? '-' : info.gridScore.toFixed(2)}, bp=${info.bottomPref === undefined ? '-' : info.bottomPref.toFixed(2)}, up=${info.unitPref === undefined ? '-' : info.unitPref.toFixed(2)}, wb=${info.widgetBoost === undefined ? '-' : info.widgetBoost.toFixed(3)}, hb=${info.hudBoost === undefined ? '-' : info.hudBoost.toFixed(3)}, sb=${info.slotBoost === undefined ? '-' : info.slotBoost.toFixed(3)}, conf=${Math.round(info.confidence)}`;
+}
+
+function getPerTypeScore(info, key) {
+  return info && info.perTypeScores ? info.perTypeScores[key] : undefined;
 }
 
 function revokePreviewImageUrl() {
@@ -187,11 +211,9 @@ function renderDebugPanel(results, phase) {
 
   panel.hidden = false;
   const d = _lastDetectionMeta || {};
-  const rect = d.widgetRect ? `x=${d.widgetRect.x}, y=${d.widgetRect.y}, w=${d.widgetRect.w}, h=${d.widgetRect.h}` : 'none';
+  const rect = formatWidgetRect(d.widgetRect);
   const s = d.searchInfo || null;
-  const search = s
-    ? `unit=${s.unit.toFixed(3)}${s.snappedUnit === undefined ? '' : `→${s.snappedUnit.toFixed(3)}`}, target=${s.targetUnit === undefined ? '-' : s.targetUnit.toFixed(3)}, off=${s.bottomOffset === undefined ? '-' : s.bottomOffset}, mode=${s.mode || 'strict'}, by=${s.bottomRatio === undefined ? '-' : s.bottomRatio.toFixed(3)}, g=${s.gridScore === undefined ? '-' : s.gridScore.toFixed(2)}, bp=${s.bottomPref === undefined ? '-' : s.bottomPref.toFixed(2)}, up=${s.unitPref === undefined ? '-' : s.unitPref.toFixed(2)}, wb=${s.widgetBoost === undefined ? '-' : s.widgetBoost.toFixed(3)}, hb=${s.hudBoost === undefined ? '-' : s.hudBoost.toFixed(3)}, sb=${s.slotBoost === undefined ? '-' : s.slotBoost.toFixed(3)}, conf=${Math.round(s.confidence)}`
-    : 'none';
+  const search = formatSearchInfo(s);
   meta.textContent =
     `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}` +
     (s && s.preTop ? `\npre=${s.preTop}` : '');
@@ -241,17 +263,24 @@ function renderScoreBreakdown() {
 
 function findPackScoreMatches(query) {
   if (!fingerprints || !fingerprints.packs) return [];
+  const rawQuery = String(query || '').trim();
+  const loweredQuery = rawQuery.toLowerCase();
+  const phraseQuery = normalizePackSearchPhrase(rawQuery);
   const normalizedQuery = normalizePackSearchTerm(query);
-  const tokens = String(query || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
-  if (!normalizedQuery && !tokens.length) return [];
+  const tokens = phraseQuery ? phraseQuery.split(' ') : [];
+  if (!rawQuery && !normalizedQuery && !tokens.length) return [];
 
   return Object.keys(fingerprints.packs).map(name => {
     const loweredName = name.toLowerCase();
     const displayName = getPackDisplayName(name);
+    const exactDisplay = normalizePackSearchPhrase(displayName);
+    const exactSpacedName = normalizePackSearchPhrase(name.replace(/_/g, ' '));
     const normalizedName = normalizePackSearchTerm(name);
     const normalizedDisplay = normalizePackSearchTerm(displayName);
     let rank = 0;
-    if (normalizedQuery && (normalizedName === normalizedQuery || normalizedDisplay === normalizedQuery)) rank = 3;
+    if ((loweredQuery && loweredName === loweredQuery) || (phraseQuery && (exactDisplay === phraseQuery || exactSpacedName === phraseQuery))) rank = 5;
+    else if (normalizedQuery && (normalizedName === normalizedQuery || normalizedDisplay === normalizedQuery)) rank = 4;
+    else if ((loweredQuery && loweredName.includes(loweredQuery)) || (phraseQuery && (exactDisplay.includes(phraseQuery) || exactSpacedName.includes(phraseQuery)))) rank = 3;
     else if (normalizedQuery && (normalizedName.includes(normalizedQuery) || normalizedDisplay.includes(normalizedQuery))) rank = 2;
     else if (tokens.length && tokens.every(token => loweredName.includes(token) || displayName.toLowerCase().includes(token))) rank = 1;
     if (!rank) return null;
@@ -267,6 +296,9 @@ function findPackScoreMatches(query) {
       healthScore: info.healthScore,
       hungerScore: info.hungerScore,
       armorScore: info.armorScore,
+      slotCoverage: info.slotCoverage,
+      slotCertainty: info.slotCertainty,
+      perTypeScores: info.perTypeScores || {},
       slotTypes: info.slotTypes,
     };
   }).filter(Boolean).sort((a, b) =>
@@ -274,6 +306,72 @@ function findPackScoreMatches(query) {
     b.totalScore - a.totalScore ||
     a.displayName.localeCompare(b.displayName)
   );
+}
+
+function escapeMarkdownCell(value) {
+  return String(value == null ? '' : value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ').trim();
+}
+
+function updateExportButtonState() {
+  const btn = document.getElementById('sbi-export-md-btn');
+  if (!btn) return;
+  btn.disabled = !_lastRankedResults.length;
+}
+
+function buildTop10Markdown() {
+  const rows = (_lastRankedResults || []).slice(0, 10);
+  if (!rows.length) return '';
+  const d = _lastDetectionMeta || {};
+  const s = d.searchInfo || null;
+  const searchInput = document.getElementById('sbi-search-input');
+  const query = searchInput ? searchInput.value.trim() : '';
+  const lines = [
+    '# Search by Image Analysis',
+    '',
+    `- Generated: ${new Date().toISOString()}`,
+    `- Phase: ${_lastSearchPhase === 'ai' ? 'AI Enhanced' : 'Hash'}`,
+    `- Search Query: ${escapeMarkdownCell(query || '-')}`,
+    `- Widget: ${escapeMarkdownCell(formatWidgetRect(d.widgetRect))}`,
+    `- Search: ${escapeMarkdownCell(formatSearchInfo(s))}`,
+    `- Slots: ${d.slotCount || 0}`,
+    `- HUD: ${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0}`,
+    `- Type Weights: DS=${SBI_SCORE_WEIGHTS.type.diamond_sword.toFixed(2)}, EP=${SBI_SCORE_WEIGHTS.type.ender_pearl.toFixed(2)}, HL=${SBI_SCORE_WEIGHTS.type.splash_potion.toFixed(2)}, SK=${SBI_SCORE_WEIGHTS.type.steak.toFixed(2)}, GC=${SBI_SCORE_WEIGHTS.type.golden_carrot.toFixed(2)}`,
+    `- HUD Weights: HP=${SBI_SCORE_WEIGHTS.hud.health.toFixed(2)}, Hun=${SBI_SCORE_WEIGHTS.hud.hunger.toFixed(2)}, Arm=${SBI_SCORE_WEIGHTS.hud.armor.toFixed(2)}`,
+    `- Mix Weights: withHUD=${SBI_SCORE_WEIGHTS.mix.slot.toFixed(2)}/${SBI_SCORE_WEIGHTS.mix.hud.toFixed(2)}/${SBI_SCORE_WEIGHTS.mix.widget.toFixed(2)}, noHUD=${SBI_SCORE_WEIGHTS.mix.slotNoHud.toFixed(2)}/${SBI_SCORE_WEIGHTS.mix.widgetNoHud.toFixed(2)}`,
+    '',
+    '## Top 10',
+    '',
+    '| # | Pack | Total | DS | EP | HL | SK/GC | Slot | Widget | HP | Hun | Arm | Cover | Cert | Slot Types |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+  ];
+
+  rows.forEach((row, index) => {
+    const info = _lastMatchDetails[row.name] || {};
+    const packLabel = row.displayName && row.displayName !== row.name
+      ? `${row.displayName} (${row.name})`
+      : (row.displayName || row.name);
+    lines.push(
+      `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(row.score)} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} | ${escapeMarkdownCell(summarizeSlotTypes(info.slotTypes))} |`
+    );
+  });
+  return lines.join('\n');
+}
+
+function exportCurrentAnalysis() {
+  const markdown = buildTop10Markdown();
+  if (!markdown) return;
+  const now = new Date();
+  const pad = v => String(v).padStart(2, '0');
+  const filename = `sbi-top10-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.md`;
+  const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function renderPackScoreSearch() {
@@ -287,12 +385,14 @@ function renderPackScoreSearch() {
     meta.textContent = 'Upload a screenshot to search current scores.';
     el.hidden = true;
     el.innerHTML = '';
+    updateExportButtonState();
     return;
   }
   if (!query) {
     meta.textContent = 'Enter a pack name to inspect related score details.';
     el.hidden = true;
     el.innerHTML = '';
+    updateExportButtonState();
     return;
   }
 
@@ -303,6 +403,7 @@ function renderPackScoreSearch() {
   if (!matches.length) {
     el.hidden = true;
     el.innerHTML = '';
+    updateExportButtonState();
     return;
   }
 
@@ -310,22 +411,29 @@ function renderPackScoreSearch() {
   el.innerHTML = `
     <table class="sbi-search-table">
       <thead>
-        <tr><th>Pack</th><th>Total</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Slot Types</th></tr>
+        <tr><th>Pack</th><th>Total</th><th>DS</th><th>EP</th><th>HL</th><th>SK/GC</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Cover</th><th>Cert</th><th>Slot Types</th></tr>
       </thead>
       <tbody>${matches.map(row => `
         <tr>
           <td title="${row.name}"><a href="/p/${encodeURIComponent(row.name)}/" target="_blank" rel="noopener noreferrer">${row.displayName}</a></td>
           <td>${fmtPct(row.totalScore)}</td>
+          <td>${fmtPct(row.perTypeScores.DS)}</td>
+          <td>${fmtPct(row.perTypeScores.EP)}</td>
+          <td>${fmtPct(row.perTypeScores.HL)}</td>
+          <td>${fmtPct(row.perTypeScores['SK/GC'])}</td>
           <td>${fmtPct(row.slotScore)}</td>
           <td>${fmtPct(row.widgetScore)}</td>
           <td>${fmtPct(row.healthScore)}</td>
           <td>${fmtPct(row.hungerScore)}</td>
           <td>${fmtPct(row.armorScore)}</td>
+          <td>${fmtPct(row.slotCoverage)}</td>
+          <td>${fmtPct(row.slotCertainty)}</td>
           <td>${summarizeSlotTypes(row.slotTypes)}</td>
         </tr>
       `).join('')}</tbody>
     </table>
   `;
+  updateExportButtonState();
 }
 
 function handleClipResults(clipScores) {
@@ -364,10 +472,13 @@ function handleClipResults(clipScores) {
   _lastVisibleScores = {};
   for (const row of combined) _lastVisibleScores[row.name] = row.score;
   combined.sort((a, b) => b.score - a.score);
+  _lastRankedResults = combined.slice();
+  _lastSearchPhase = 'ai';
   const top10 = combined.slice(0, 10);
   renderResults(top10, 'AI Enhanced');
   renderDebugPanel(top10, 'ai');
   renderPackScoreSearch();
+  updateExportButtonState();
   if (statusEl) { statusEl.hidden = true; statusEl.textContent = ''; statusEl.dataset.state = 'ready'; }
 
   const thumbCanvas = document.createElement('canvas');
@@ -763,6 +874,81 @@ function buildSlotVariants(ctx, x, y, sz, imgW, imgH) {
   return variants;
 }
 
+function computeItemSignature(imageData, w, h) {
+  const centerX1 = Math.floor(w * 0.25);
+  const centerX2 = Math.ceil(w * 0.75);
+  const centerY1 = Math.floor(h * 0.25);
+  const centerY2 = Math.ceil(h * 0.75);
+  const edgeInsetX = Math.max(1, Math.floor(w * 0.1875));
+  const edgeInsetY = Math.max(1, Math.floor(h * 0.1875));
+  let n = 0, lumSum = 0, rSum = 0, gSum = 0, bSum = 0;
+  let red = 0, yellow = 0, dark = 0, blue = 0;
+  let centerN = 0, centerDark = 0, edgeN = 0, edgeDark = 0;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const p = (y * w + x) * 4;
+      const a = imageData[p + 3];
+      if (a < 128) continue;
+      const r = imageData[p], g = imageData[p + 1], b = imageData[p + 2];
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      const isDark = lum < 72;
+      n++;
+      lumSum += lum;
+      rSum += r;
+      gSum += g;
+      bSum += b;
+      if (r > g + 30 && r > b + 30) red++;
+      if (r > 160 && g > 140 && b < 140) yellow++;
+      if (isDark) dark++;
+      if (b > r + 12 && b > g + 8) blue++;
+
+      const inCenter = x >= centerX1 && x < centerX2 && y >= centerY1 && y < centerY2;
+      if (inCenter) {
+        centerN++;
+        if (isDark) centerDark++;
+      }
+      const inEdge = x < edgeInsetX || x >= w - edgeInsetX || y < edgeInsetY || y >= h - edgeInsetY;
+      if (inEdge) {
+        edgeN++;
+        if (isDark) edgeDark++;
+      }
+    }
+  }
+
+  if (!n) {
+    return {
+      n: 0,
+      coverage: 0,
+      meanLum: 0,
+      meanR: 0,
+      meanG: 0,
+      meanB: 0,
+      redFrac: 0,
+      yellowFrac: 0,
+      darkFrac: 0,
+      blueFrac: 0,
+      centerDarkFrac: 0,
+      edgeDarkFrac: 0,
+    };
+  }
+
+  return {
+    n,
+    coverage: n / (w * h),
+    meanLum: lumSum / n,
+    meanR: rSum / n,
+    meanG: gSum / n,
+    meanB: bSum / n,
+    redFrac: red / n,
+    yellowFrac: yellow / n,
+    darkFrac: dark / n,
+    blueFrac: blue / n,
+    centerDarkFrac: centerN ? (centerDark / centerN) : 0,
+    edgeDarkFrac: edgeN ? (edgeDark / edgeN) : 0,
+  };
+}
+
 function computeFeatures(imageData, w, h, isScreenshot, mode) {
   const BG_THRESHOLD = isScreenshot ? 50 : 0;
   let effectiveData = (isScreenshot && mode === 'slot')
@@ -776,20 +962,7 @@ function computeFeatures(imageData, w, h, isScreenshot, mode) {
   // Lightweight slot signature for robust item-type inference (computed on alpha-only pixels; no BG_THRESHOLD).
   let sig = null;
   if (mode === 'slot') {
-    let n = 0, lumSum = 0, rSum = 0, gSum = 0, bSum = 0, red = 0, yellow = 0;
-    for (let p = 0; p < w * h; p++) {
-      const a = effectiveData[p * 4 + 3];
-      if (a < 128) continue;
-      const r = effectiveData[p * 4], g = effectiveData[p * 4 + 1], b = effectiveData[p * 4 + 2];
-      n++;
-      rSum += r; gSum += g; bSum += b;
-      lumSum += 0.299 * r + 0.587 * g + 0.114 * b;
-      if (r > g + 30 && r > b + 30) red++;
-      if (r > 160 && g > 140 && b < 140) yellow++;
-    }
-    sig = n
-      ? { n, meanLum: lumSum / n, meanR: rSum / n, meanG: gSum / n, meanB: bSum / n, redFrac: red / n, yellowFrac: yellow / n }
-      : { n: 0, meanLum: 0, meanR: 0, meanG: 0, meanB: 0, redFrac: 0, yellowFrac: 0 };
+    sig = computeItemSignature(effectiveData, w, h);
   }
   const effectiveImage = (effectiveData === imageData.data)
     ? imageData
@@ -1492,11 +1665,41 @@ function compareHudCells(cells, variants) {
   return take ? sum / take : 0;
 }
 
+function metricSimilarity(a, b, spread) {
+  if (!isFinite(a) || !isFinite(b) || !isFinite(spread) || spread <= 0) return 0;
+  return clamp01(1 - Math.abs(a - b) / spread);
+}
+
+function signatureSimilarity(extractedSig, packSig, targetType) {
+  if (!extractedSig || !packSig) return 0;
+  if (targetType === 'diamond_sword') {
+    return clamp01(
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.75) * 0.45 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.75) * 0.25 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.80) * 0.30
+    );
+  }
+  if (targetType === 'ender_pearl') {
+    return clamp01(
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.30) * 0.45 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.30) * 0.35 +
+      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.30) * 0.15 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.35) * 0.05
+    );
+  }
+  return 0;
+}
+
 function compareSlotVariant(extracted, packTex, targetType) {
   let sim = compare(extracted, packTex);
   if (targetType === 'diamond_sword') {
     const dir = meanRgbDirSim(extracted.moments, packTex.moments);
     sim *= (0.30 + 0.70 * clamp01(dir));
+  }
+  if ((targetType === 'diamond_sword' || targetType === 'ender_pearl') && extracted.sig && packTex.sig) {
+    const sigSim = signatureSimilarity(extracted.sig, packTex.sig, targetType);
+    if (targetType === 'diamond_sword') sim = sim * 0.65 + sigSim * 0.35;
+    else sim = sim * 0.55 + sigSim * 0.45;
   }
   return sim;
 }
@@ -1807,7 +2010,10 @@ async function processImage(file) {
   _lastMatchDetails = {};
   _lastAllScores = {};
   _lastVisibleScores = {};
+  _lastRankedResults = [];
+  _lastSearchPhase = 'hash';
   renderPackScoreSearch();
+  updateExportButtonState();
 
   const img = new Image();
   const url = URL.createObjectURL(file);
@@ -1864,7 +2070,10 @@ async function processImage(file) {
     renderDebugPanel(stage1Top10, 'hash');
     _lastVisibleScores = {};
     for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = isFinite(info.finalScore) ? info.finalScore : 0;
+    _lastRankedResults = results.slice();
+    _lastSearchPhase = 'hash';
     renderPackScoreSearch();
+    updateExportButtonState();
 
     // Cache hash scores for later CLIP combination
     _lastHashResults = results.slice(0, 40);
@@ -2033,13 +2242,16 @@ function init() {
   // Search / Clear buttons
   const searchBtn = document.getElementById('sbi-search-btn');
   const clearBtn = document.getElementById('sbi-clear-btn');
+  const exportBtn = document.getElementById('sbi-export-md-btn');
   if (searchBtn) searchBtn.addEventListener('click', () => { if (_pendingFile) processImage(_pendingFile); });
   if (clearBtn) clearBtn.addEventListener('click', () => clearImagePreview());
+  if (exportBtn) exportBtn.addEventListener('click', () => exportCurrentAnalysis());
 
   const searchInput = document.getElementById('sbi-search-input');
   if (searchInput) searchInput.addEventListener('input', () => renderPackScoreSearch());
   renderScoreBreakdown();
   renderPackScoreSearch();
+  updateExportButtonState();
   if (ENABLE_CLIP) initClipWorker();
 
   // Debug table tooltip: hover (desktop) / tap (mobile)
