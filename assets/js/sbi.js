@@ -1735,10 +1735,34 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     const fixedRect = findDisplayWidgetRect(ctx, imgW, imgH, bestWidgetRect, preset);
     const bestGU = fixedRect && fixedRect.w ? (fixedRect.w / 182) : (bestWidgetRect.w / 182);
     if (fixedRect) {
+      const snappedSlots = [];
+      for (let i = 0; i < 9; i++) {
+        const slot = extractSlotFeatures(
+          ctx,
+          fixedRect.x + (3 + i * 20) * bestGU,
+          fixedRect.y + 3 * bestGU,
+          16 * bestGU,
+          imgW,
+          imgH,
+          i
+        );
+        if (!slot) {
+          snappedSlots.length = 0;
+          break;
+        }
+        slot.displayRect = {
+          x: fixedRect.x + (1 + i * 20) * bestGU,
+          y: fixedRect.y + bestGU,
+          sz: 20 * bestGU,
+        };
+        snappedSlots.push(slot);
+      }
+
       bestWidgetRect = fixedRect;
       bestWidgetFeatures = extractWidgetFeatures(ctx, bestWidgetRect);
       bestHudFeatures = extractHudFeatures(ctx, bestWidgetRect, imgW, imgH);
-      for (let i = 0; i < bestSlots.length; i++) {
+      if (snappedSlots.length === 9) bestSlots = snappedSlots;
+      else for (let i = 0; i < bestSlots.length; i++) {
         bestSlots[i].displayRect = {
           x: bestWidgetRect.x + (1 + i * 20) * bestGU,
           y: bestWidgetRect.y + bestGU,
