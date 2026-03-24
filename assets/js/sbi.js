@@ -1505,6 +1505,50 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   let bestWidgetRect = null;
   let bestHudFeatures = null;
   let bestSearchInfo = null;
+  const bestByRoundedUnit = new Map();
+  const isBetterCandidate = (nextScore, nextConfidence, prevScore, prevConfidence) => {
+    const scoreDelta = nextScore - prevScore;
+    return scoreDelta > 0.001 || (Math.abs(scoreDelta) <= 0.001 && nextConfidence > prevConfidence);
+  };
+  const applyCandidate = (candidate, rankScore, mode, extraInfo) => {
+    bestConfidence = candidate.confidence;
+    bestBoost = rankScore;
+    bestSlots = candidate.slots;
+    bestWidgetFeatures = candidate.widgetFeatures;
+    bestWidgetRect = candidate.widgetRect;
+    bestHudFeatures = candidate.hudFeatures;
+    bestSearchInfo = {
+      mode,
+      unit: candidate.unit,
+      bottomRatio: candidate.bottomRatio,
+      bottomOffset: candidate.bottomOffset,
+      confidence: candidate.confidence,
+      targetUnit: candidate.unitPrefTarget,
+      combinedBoost: candidate.boostedCombined,
+      rankScore,
+      widgetBoost: candidate.widgetBoost,
+      hudBoost: candidate.hudBoost,
+      slotBoost: candidate.slotBoost,
+      gridScore: candidate.gridScore,
+      bottomPref: candidate.bottomPref,
+      unitPref: candidate.unitPref,
+      preTop: candidate.preTop,
+      widgetBest: candidate.widgetBest,
+      hudBest: candidate.hudBest,
+      slotBest: candidate.slotBest,
+      ...(extraInfo || {}),
+    };
+  };
+  const getAutoUnitOptions = () => {
+    const rounded = Math.max(1, Math.round(baseUnit || 0));
+    if (!rounded) return [];
+    return rounded > 1 ? [rounded - 1, rounded] : [rounded];
+  };
+  const scoreAutoScaleCandidate = (candidate, maxConfidence) => {
+    const confidenceNorm = clamp01(candidate.confidence / Math.max(1, maxConfidence));
+    const integerFit = clamp01(1 - Math.abs(candidate.unit - candidate.roundedUnit) / 0.35);
+    return candidate.boostedCombined * (0.70 + 0.20 * confidenceNorm + 0.10 * integerFit);
+  };
 
   for (const c of candidates) {
     const wx = Math.round(c.widgetX);
@@ -1629,34 +1673,59 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     const geomBoost = hudFeatures ? (0.82 + 0.18 * clamp01(hudCoverage)) : 1;
     const boostedCombined = combinedBoost * geomBoost;
     const confidence = activeCount * 220 + totalActivity * 160 + totalQuality * 6 + hudCoverage * 700;
+    const result = {
+      unit: c.unit,
+      roundedUnit: unitRounded,
+      bottomRatio: c.bottomRatio,
+      bottomOffset: c.bottomOffset || 0,
+      confidence,
+      unitPrefTarget: cand.unitPrefTarget,
+      boostedCombined,
+      widgetBoost,
+      hudBoost,
+      slotBoost,
+      gridScore: cand.gridScore,
+      bottomPref: cand.bottomPref,
+      unitPref: cand.unitPref,
+      preTop,
+      widgetBest: widgetCand.bestName,
+      hudBest: hudCand.bestName,
+      slotBest: slotCand.bestName,
+      slots,
+      widgetFeatures,
+      widgetRect,
+      hudFeatures,
+    };
 
-    const boostDelta = boostedCombined - bestBoost;
-    if (boostDelta > 0.001 || (Math.abs(boostDelta) <= 0.001 && confidence > bestConfidence)) {
-      bestConfidence = confidence;
-      bestBoost = boostedCombined;
-      bestSlots = slots;
-      bestWidgetFeatures = widgetFeatures;
-      bestWidgetRect = widgetRect;
-      bestHudFeatures = hudFeatures;
-      bestSearchInfo = {
-        mode: 'strict-ratio',
-        unit: c.unit,
-        bottomRatio: c.bottomRatio,
-        bottomOffset: c.bottomOffset || 0,
-        confidence,
-        targetUnit: cand.unitPrefTarget,
-        combinedBoost: boostedCombined,
-        widgetBoost,
-        hudBoost,
-        slotBoost,
-        gridScore: cand.gridScore,
-        bottomPref: cand.bottomPref,
-        unitPref: cand.unitPref,
-        preTop,
-        widgetBest: widgetCand.bestName,
-        hudBest: hudCand.bestName,
-        slotBest: slotCand.bestName,
-      };
+    const prevByUnit = bestByRoundedUnit.get(unitRounded);
+    if (!prevByUnit || isBetterCandidate(boostedCombined, confidence, prevByUnit.boostedCombined, prevByUnit.confidence)) {
+      bestByRoundedUnit.set(unitRounded, result);
+    }
+    if (isBetterCandidate(boostedCombined, confidence, bestBoost, bestConfidence)) {
+      applyCandidate(result, boostedCombined, 'strict-ratio');
+    }
+  }
+
+  if (preset === 'auto' && !isHudCrop && baseUnit >= 1) {
+    const autoUnits = getAutoUnitOptions();
+    const autoCandidates = autoUnits.map(unit => bestByRoundedUnit.get(unit)).filter(Boolean);
+    if (autoCandidates.length >= 2) {
+      const maxConfidence = Math.max(1, ...autoCandidates.map(candidate => candidate.confidence));
+      let autoBest = null;
+      let autoBestScore = -Infinity;
+      for (const candidate of autoCandidates) {
+        const autoScore = scoreAutoScaleCandidate(candidate, maxConfidence);
+        if (!autoBest || isBetterCandidate(autoScore, candidate.confidence, autoBestScore, autoBest.confidence)) {
+          autoBest = candidate;
+          autoBestScore = autoScore;
+        }
+      }
+      if (autoBest) {
+        applyCandidate(autoBest, autoBestScore, 'strict-auto-scale', {
+          autoUnits: autoUnits.join('/'),
+          autoScaleScore: autoBestScore,
+        });
+      }
     }
   }
 
