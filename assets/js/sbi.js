@@ -1675,7 +1675,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     const confidence = activeCount * 220 + totalActivity * 160 + totalQuality * 6 + hudCoverage * 700;
     const result = {
       unit: c.unit,
-      roundedUnit: unitRounded,
+      roundedUnit: cand.unitRounded,
       bottomRatio: c.bottomRatio,
       bottomOffset: c.bottomOffset || 0,
       confidence,
@@ -1697,9 +1697,9 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
       hudFeatures,
     };
 
-    const prevByUnit = bestByRoundedUnit.get(unitRounded);
+    const prevByUnit = bestByRoundedUnit.get(cand.unitRounded);
     if (!prevByUnit || isBetterCandidate(boostedCombined, confidence, prevByUnit.boostedCombined, prevByUnit.confidence)) {
-      bestByRoundedUnit.set(unitRounded, result);
+      bestByRoundedUnit.set(cand.unitRounded, result);
     }
     if (isBetterCandidate(boostedCombined, confidence, bestBoost, bestConfidence)) {
       applyCandidate(result, boostedCombined, 'strict-ratio');
