@@ -1549,6 +1549,14 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     const integerFit = clamp01(1 - Math.abs(candidate.unit - candidate.roundedUnit) / 0.35);
     return candidate.boostedCombined * (0.70 + 0.20 * confidenceNorm + 0.10 * integerFit);
   };
+  const shouldPreferLargerAutoUnit = (smaller, larger, smallerScore, largerScore) => {
+    if (!smaller || !larger) return false;
+    if (larger.roundedUnit <= smaller.roundedUnit) return false;
+    const scoreRatio = largerScore / Math.max(smallerScore, 1e-6);
+    const boostRatio = larger.boostedCombined / Math.max(smaller.boostedCombined, 1e-6);
+    const confidenceRatio = larger.confidence / Math.max(smaller.confidence, 1);
+    return scoreRatio >= 0.985 && boostRatio >= 0.965 && confidenceRatio >= 0.90;
+  };
 
   for (const c of candidates) {
     const wx = Math.round(c.widgetX);
@@ -1711,19 +1719,32 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     const autoCandidates = autoUnits.map(unit => bestByRoundedUnit.get(unit)).filter(Boolean);
     if (autoCandidates.length >= 2) {
       const maxConfidence = Math.max(1, ...autoCandidates.map(candidate => candidate.confidence));
+      const scoredCandidates = autoCandidates.map(candidate => ({
+        candidate,
+        autoScore: scoreAutoScaleCandidate(candidate, maxConfidence),
+      }));
       let autoBest = null;
       let autoBestScore = -Infinity;
-      for (const candidate of autoCandidates) {
-        const autoScore = scoreAutoScaleCandidate(candidate, maxConfidence);
+      for (const { candidate, autoScore } of scoredCandidates) {
         if (!autoBest || isBetterCandidate(autoScore, candidate.confidence, autoBestScore, autoBest.confidence)) {
           autoBest = candidate;
           autoBestScore = autoScore;
         }
       }
+      const smallerAuto = scoredCandidates.find(row => row.candidate.roundedUnit === autoUnits[0]);
+      const largerAuto = scoredCandidates.find(row => row.candidate.roundedUnit === autoUnits[autoUnits.length - 1]);
+      const preferLargerAuto = smallerAuto && largerAuto
+        && autoBest === smallerAuto.candidate
+        && shouldPreferLargerAutoUnit(smallerAuto.candidate, largerAuto.candidate, smallerAuto.autoScore, largerAuto.autoScore);
+      if (preferLargerAuto) {
+        autoBest = largerAuto.candidate;
+        autoBestScore = largerAuto.autoScore;
+      }
       if (autoBest) {
         applyCandidate(autoBest, autoBestScore, 'strict-auto-scale', {
           autoUnits: autoUnits.join('/'),
           autoScaleScore: autoBestScore,
+          autoScaleDecision: preferLargerAuto ? 'prefer-larger-if-close' : 'top-score',
         });
       }
     }
@@ -1735,34 +1756,10 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     const fixedRect = findDisplayWidgetRect(ctx, imgW, imgH, bestWidgetRect, preset);
     const bestGU = fixedRect && fixedRect.w ? (fixedRect.w / 182) : (bestWidgetRect.w / 182);
     if (fixedRect) {
-      const snappedSlots = [];
-      for (let i = 0; i < 9; i++) {
-        const slot = extractSlotFeatures(
-          ctx,
-          fixedRect.x + (3 + i * 20) * bestGU,
-          fixedRect.y + 3 * bestGU,
-          16 * bestGU,
-          imgW,
-          imgH,
-          i
-        );
-        if (!slot) {
-          snappedSlots.length = 0;
-          break;
-        }
-        slot.displayRect = {
-          x: fixedRect.x + (1 + i * 20) * bestGU,
-          y: fixedRect.y + bestGU,
-          sz: 20 * bestGU,
-        };
-        snappedSlots.push(slot);
-      }
-
       bestWidgetRect = fixedRect;
       bestWidgetFeatures = extractWidgetFeatures(ctx, bestWidgetRect);
       bestHudFeatures = extractHudFeatures(ctx, bestWidgetRect, imgW, imgH);
-      if (snappedSlots.length === 9) bestSlots = snappedSlots;
-      else for (let i = 0; i < bestSlots.length; i++) {
+      for (let i = 0; i < bestSlots.length; i++) {
         bestSlots[i].displayRect = {
           x: bestWidgetRect.x + (1 + i * 20) * bestGU,
           y: bestWidgetRect.y + bestGU,
