@@ -233,7 +233,8 @@ function renderDebugPanel(results, phase) {
   const search = formatSearchInfo(s);
   meta.textContent =
     `phase=${phase} | slots=${d.slotCount || 0} | hud(heart/hunger/armor)=${d.heartCount || 0}/${d.hungerCount || 0}/${d.armorCount || 0} | widget=${rect} | search=${search}` +
-    (s && s.preTop ? `\npre=${s.preTop}` : '');
+    (s && s.preTop ? `\npre=${s.preTop}` : '') +
+    (s && s.autoCandidates ? `\nauto=${s.autoCandidates}` : '');
   slotTypesEl.textContent = `Slot Types: ${getCurrentSlotTypesSummary()}`;
 
   body.innerHTML = (results || []).slice(0, 10).map((r, i) => {
@@ -1505,7 +1506,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   let bestWidgetRect = null;
   let bestHudFeatures = null;
   let bestSearchInfo = null;
-  const bestByRoundedUnit = new Map();
+  const bestAutoByRoundedUnit = new Map();
   const isBetterCandidate = (nextScore, nextConfidence, prevScore, prevConfidence) => {
     const scoreDelta = nextScore - prevScore;
     return scoreDelta > 0.001 || (Math.abs(scoreDelta) <= 0.001 && nextConfidence > prevConfidence);
@@ -1547,7 +1548,8 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   const scoreAutoScaleCandidate = (candidate, maxConfidence) => {
     const confidenceNorm = clamp01(candidate.confidence / Math.max(1, maxConfidence));
     const integerFit = clamp01(1 - Math.abs(candidate.unit - candidate.roundedUnit) / 0.35);
-    return candidate.boostedCombined * (0.70 + 0.20 * confidenceNorm + 0.10 * integerFit);
+    const geomScore = 0.62 * confidenceNorm + 0.18 * candidate.gridScore + 0.12 * candidate.bottomPref + 0.08 * integerFit;
+    return geomScore * (0.88 + 0.12 * candidate.boostedCombined);
   };
   const shouldPreferLargerAutoUnit = (smaller, larger, smallerScore, largerScore) => {
     if (!smaller || !larger) return false;
@@ -1705,9 +1707,9 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
       hudFeatures,
     };
 
-    const prevByUnit = bestByRoundedUnit.get(cand.unitRounded);
-    if (!prevByUnit || isBetterCandidate(boostedCombined, confidence, prevByUnit.boostedCombined, prevByUnit.confidence)) {
-      bestByRoundedUnit.set(cand.unitRounded, result);
+    const prevAutoByUnit = bestAutoByRoundedUnit.get(cand.unitRounded);
+    if (!prevAutoByUnit || isBetterCandidate(confidence, boostedCombined, prevAutoByUnit.confidence, prevAutoByUnit.boostedCombined)) {
+      bestAutoByRoundedUnit.set(cand.unitRounded, result);
     }
     if (isBetterCandidate(boostedCombined, confidence, bestBoost, bestConfidence)) {
       applyCandidate(result, boostedCombined, 'strict-ratio');
@@ -1716,7 +1718,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
 
   if (preset === 'auto' && !isHudCrop && baseUnit >= 1) {
     const autoUnits = getAutoUnitOptions();
-    const autoCandidates = autoUnits.map(unit => bestByRoundedUnit.get(unit)).filter(Boolean);
+    const autoCandidates = autoUnits.map(unit => bestAutoByRoundedUnit.get(unit)).filter(Boolean);
     if (autoCandidates.length >= 2) {
       const maxConfidence = Math.max(1, ...autoCandidates.map(candidate => candidate.confidence));
       const scoredCandidates = autoCandidates.map(candidate => ({
@@ -1745,6 +1747,9 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
           autoUnits: autoUnits.join('/'),
           autoScaleScore: autoBestScore,
           autoScaleDecision: preferLargerAuto ? 'prefer-larger-if-close' : 'top-score',
+          autoCandidates: scoredCandidates
+            .map(row => `u${row.candidate.roundedUnit}:${row.autoScore.toFixed(3)}/c${Math.round(row.candidate.confidence)}/b${row.candidate.boostedCombined.toFixed(3)}`)
+            .join(' | '),
         });
       }
     }
