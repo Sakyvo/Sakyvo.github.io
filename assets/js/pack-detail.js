@@ -1,3 +1,16 @@
+const ITEM_PREVIEW_ROWS = [
+  ['diamond_sword.png', 'ender_pearl.png', '__potion__', 'steak.png'],
+  ['iron_sword.png', 'fishing_rod_uncast.png', 'apple_golden.png', 'golden_carrot.png'],
+];
+const BLOCK_PREVIEW_ROWS = [
+  ['grass_side.png', 'stone.png', 'cobblestone.png', 'wool_colored_white.png'],
+  ['dirt.png', 'planks_oak.png', 'log_oak.png', 'diamond_ore.png'],
+];
+
+function buildPreviewRows(rows, renderCell) {
+  return rows.map(row => `<div class="grid-row">${row.map(renderCell).join('')}</div>`).join('');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const pathParts = window.location.pathname.split('/').filter(Boolean);
   const packName = pathParts[0] === 'p' ? pathParts[1] : pathParts[0];
@@ -10,6 +23,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const pack = await fetch(`/data/packs/${packName}.json`).then(r => r.json());
     document.title = `${pack.displayName} - VALE`;
+
+    const base = `/thumbnails/${encodeURIComponent(pack.name)}/`;
+    const packPng = `${base}pack.png`;
+    const img = (name) => `<img src="${base}${encodeURIComponent(name)}" alt="${name}" data-texture="${name}">`;
+    const renderPreviewCell = (name) => name === '__potion__'
+      ? '<canvas id="potion-canvas" class="potion-canvas"></canvas>'
+      : img(name);
+    const itemPreviewHtml = buildPreviewRows(ITEM_PREVIEW_ROWS, renderPreviewCell);
+    const blockPreviewHtml = buildPreviewRows(BLOCK_PREVIEW_ROWS, img);
 
     // Set pack.png as favicon (center-crop to 1:1 if needed)
     const favicon = document.getElementById('favicon');
@@ -29,13 +51,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         img.src = src;
       };
       const testImg = new Image();
-      testImg.onload = () => setFavicon(pack.packPng);
+      testImg.onload = () => setFavicon(packPng);
       testImg.onerror = () => setFavicon('/Default_Texture/pack.png');
-      testImg.src = pack.packPng;
+      testImg.src = packPng;
     }
-
-    const base = `/thumbnails/${pack.name}/`;
-    const img = (name) => `<img src="${base}${name}" alt="${name}" data-texture="${name}">`;
 
     const lists = JSON.parse(localStorage.getItem('vale_lists') || '[]');
     const inLists = lists.filter(l => l.packs.includes(packName)).map(l => l.name);
@@ -43,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('pack-content').innerHTML = `
       <div class="pack-cards">
         <div class="main-card">
-          <img class="main-card-icon" src="${pack.packPng}" alt="Pack">
+          <img class="main-card-icon" src="${packPng}" alt="Pack">
           <div class="main-card-info">
             <h1>${pack.coloredName || pack.displayName}</h1>
             <p class="description">${pack.description || ''}</p>
@@ -67,10 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         <h2>Preview</h2>
         <div class="preview-grid">
           <div class="preview-card texture-grid">
-            <div class="grid-row">${img('diamond_sword.png')}${img('ender_pearl.png')}<canvas id="potion-canvas" class="potion-canvas"></canvas>${img('steak.png')}</div>
-            <div class="grid-row">${img('iron_sword.png')}${img('fishing_rod_uncast.png')}${img('apple_golden.png')}${img('golden_carrot.png')}</div>
-            <div class="grid-row">${img('grass_side.png')}${img('stone.png')}${img('cobblestone.png')}${img('wool_colored_white.png')}</div>
-            <div class="grid-row">${img('dirt.png')}${img('planks_oak.png')}${img('log_oak.png')}${img('diamond_ore.png')}</div>
+            ${itemPreviewHtml}
+            ${blockPreviewHtml}
           </div>
           <div class="preview-card armor-card">
             <div class="armor-wrapper">

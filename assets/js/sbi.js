@@ -89,10 +89,10 @@ const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
 const SBI_SCORE_WEIGHTS = {
-  // Emphasize HUD + hotbar widget for higher discriminative power; items are still used but less dominant.
+  // Keep widget signal, but downweight it because crop noise can outweigh its benefit.
   type: { diamond_sword: 5.0, ender_pearl: 5.0, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
   hud: { health: 4.0, hunger: 1.5, armor: 1.0 },
-  mix: { slot: 0.22, hud: 0.42, widget: 0.36, slotNoHud: 0.42, widgetNoHud: 0.58 },
+  mix: { slot: 0.22, hud: 0.42, widget: 0.18, slotNoHud: 0.42, widgetNoHud: 0.29 },
 };
 
 function clamp01(v) {
@@ -117,6 +117,11 @@ function getHudHorizontalShift(unit, imgW, imgH) {
 function fmtPct(v) {
   if (!isFinite(v)) return '-';
   return (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + '%';
+}
+
+function getDisplayedPctOrderValue(v) {
+  if (!isFinite(v)) return -1;
+  return Math.round(Math.max(0, Math.min(1, v)) * 1000);
 }
 
 function fmtRaw(v, digits) {
@@ -261,7 +266,7 @@ function renderScoreBreakdown() {
     return `<tr><td>${label}</td><td>${k}</td><td>${v.toFixed(2)}</td></tr>`;
   }).join('');
   el.innerHTML = `
-    <div>XP is ignored. Final score mixes Slot/HUD/Widget.</div>
+    <div>Final score mixes Slot/HUD/Widget.</div>
     <table class="sbi-weight-table">
       <thead><tr><th>Item</th><th>Key</th><th>Weight</th></tr></thead>
       <tbody>${typeRows}</tbody>
@@ -309,6 +314,7 @@ function findPackScoreMatches(query) {
       displayName,
       rank,
       totalScore,
+      displayedPctOrder: getDisplayedPctOrderValue(totalScore),
       slotScore: info.slotScore,
       widgetScore: info.widgetScore,
       healthScore: info.healthScore,
@@ -320,8 +326,9 @@ function findPackScoreMatches(query) {
       slotTypes: info.slotTypes,
     };
   }).filter(Boolean).sort((a, b) =>
-    b.rank - a.rank ||
+    b.displayedPctOrder - a.displayedPctOrder ||
     b.totalScore - a.totalScore ||
+    b.rank - a.rank ||
     a.displayName.localeCompare(b.displayName)
   );
 }
