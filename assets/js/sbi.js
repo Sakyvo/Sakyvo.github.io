@@ -91,8 +91,8 @@ const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak
 const SBI_SCORE_WEIGHTS = {
   // Keep widget signal low, then redistribute the removed weight to Slot + HP/Hun/Arm.
   type: { diamond_sword: 5.0, ender_pearl: 5.0, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
-  hud: { health: 4.0, hunger: 1.5, armor: 1.0 },
-  mix: { slot: 0.281875, hud: 0.538125, widget: 0.18, slotNoHud: 0.71, widgetNoHud: 0.29 },
+  hud: { health: 4.5, hunger: 1.35, armor: 0.95 },
+  mix: { slot: 0.30, hud: 0.56, widget: 0.18, slotNoHud: 0.75, widgetNoHud: 0.29 },
 };
 
 function clamp01(v) {
@@ -2336,21 +2336,30 @@ async function processImage(file) {
 
 function drawCropboxPreview() {
   const cropCanvas = document.getElementById('sbi-cropbox-canvas');
-  if (!cropCanvas) return;
-  cropCanvas.width = 1280;
-  cropCanvas.height = 720;
-  drawPendingOverlay(cropCanvas.getContext('2d'), 1280, 720, _currentPreset);
+  if (cropCanvas) {
+    cropCanvas.width = 1280;
+    cropCanvas.height = 720;
+  }
+  const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
+  if (!overlayCanvas) return;
+  overlayCanvas.width = 1280;
+  overlayCanvas.height = 720;
+  drawPendingOverlay(overlayCanvas.getContext('2d'), 1280, 720, _currentPreset);
 }
 
 function redrawUploadPreview() {
   if (!_pendingImage) { drawCropboxPreview(); return; }
-  const canvas = document.getElementById('sbi-cropbox-canvas');
-  if (!canvas) return;
-  canvas.width = _pendingImage.width;
-  canvas.height = _pendingImage.height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(_pendingImage, 0, 0);
-  drawPendingOverlay(ctx, _pendingImage.width, _pendingImage.height, _currentPreset);
+  const imageCanvas = document.getElementById('sbi-cropbox-canvas');
+  if (imageCanvas) {
+    imageCanvas.width = _pendingImage.width;
+    imageCanvas.height = _pendingImage.height;
+    imageCanvas.getContext('2d').drawImage(_pendingImage, 0, 0);
+  }
+  const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
+  if (!overlayCanvas) return;
+  overlayCanvas.width = _pendingImage.width;
+  overlayCanvas.height = _pendingImage.height;
+  drawPendingOverlay(overlayCanvas.getContext('2d'), _pendingImage.width, _pendingImage.height, _currentPreset);
 }
 
 function loadImagePreview(file) {
