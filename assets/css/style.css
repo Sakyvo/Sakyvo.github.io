@@ -992,11 +992,19 @@ footer {
 .sbi-action-btn:hover:not(:disabled) { border-color: var(--accent); }
 .sbi-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .sbi-auto-label { font-size: 13px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.sbi-upload { border: 2px dashed var(--border); text-align: center; cursor: pointer; transition: border-color .2s, opacity .3s; aspect-ratio: 16 / 9; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.sbi-upload { border: 2px dashed var(--border); text-align: center; cursor: pointer; transition: border-color .2s, opacity .3s, background .2s; aspect-ratio: 16 / 9; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; overflow: hidden; background: var(--bg, #fff); }
+.sbi-upload::after { content: ''; position: absolute; inset: 0; background: rgba(240, 246, 252, 0); pointer-events: none; transition: background .2s, opacity .2s; z-index: 1; }
 .sbi-upload:hover, .sbi-upload.dragover { border-color: var(--accent); background: var(--bg-alt); }
 .sbi-upload.analyzing { opacity: 0.4; pointer-events: none; }
-.sbi-upload-text { font-size: 14px; color: var(--text-secondary); position: relative; z-index: 1; }
-.sbi-cropbox-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.sbi-upload.has-image .sbi-upload-text { opacity: 0; }
+.sbi-upload.replace-hover::after,
+.sbi-upload.dragover::after { background: rgba(240, 246, 252, 0.52); }
+.sbi-upload-text { font-size: 14px; color: var(--text-secondary); position: relative; z-index: 2; pointer-events: none; transition: opacity .2s, color .2s; }
+.sbi-upload.replace-hover .sbi-upload-text,
+.sbi-upload.dragover .sbi-upload-text { opacity: 0.86; color: #5f6f84; }
+.sbi-cropbox-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; transition: filter .2s, opacity .2s, transform .2s; }
+.sbi-upload.replace-hover .sbi-cropbox-canvas,
+.sbi-upload.dragover .sbi-cropbox-canvas { filter: blur(4px) saturate(0.75); opacity: 0.30; transform: scale(1.015); }
 .sbi-preview { margin: 24px 0; }
 .sbi-preview-image,
 .sbi-preview canvas { max-width: 100%; border: 2px solid var(--border); display: block; }
@@ -1061,11 +1069,11 @@ footer {
 .sbi-search-results { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; overflow-x: auto; }
 .sbi-search-actions { margin-top: 10px; display: flex; justify-content: flex-start; }
 .sbi-search-export-btn { min-width: 220px; }
-.sbi-search-table { width: 100%; min-width: 1180px; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+.sbi-search-table { width: 100%; min-width: 1220px; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
 .sbi-search-table th, .sbi-search-table td { border-bottom: 1px solid var(--border); padding: 6px 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbi-search-table th { background: rgba(0,0,0,0.06); font-weight: 700; }
-.sbi-search-table th:nth-child(1), .sbi-search-table td:nth-child(1) { width: 24%; }
-.sbi-search-table th:nth-child(2), .sbi-search-table td:nth-child(2),
+.sbi-search-table th:nth-child(1), .sbi-search-table td:nth-child(1) { width: 4%; text-align: center; }
+.sbi-search-table th:nth-child(2), .sbi-search-table td:nth-child(2) { width: 20%; }
 .sbi-search-table th:nth-child(3), .sbi-search-table td:nth-child(3),
 .sbi-search-table th:nth-child(4), .sbi-search-table td:nth-child(4),
 .sbi-search-table th:nth-child(5), .sbi-search-table td:nth-child(5),
@@ -1076,7 +1084,8 @@ footer {
 .sbi-search-table th:nth-child(10), .sbi-search-table td:nth-child(10),
 .sbi-search-table th:nth-child(11), .sbi-search-table td:nth-child(11),
 .sbi-search-table th:nth-child(12), .sbi-search-table td:nth-child(12),
-.sbi-search-table th:nth-child(13), .sbi-search-table td:nth-child(13) { width: 6.33%; }
+.sbi-search-table th:nth-child(13), .sbi-search-table td:nth-child(13),
+.sbi-search-table th:nth-child(14), .sbi-search-table td:nth-child(14) { width: 6.33%; }
 .sbi-ai-badge { padding: 3px 9px; font-size: 12px; font-weight: bold; border: 2px solid; cursor: pointer; background: transparent; letter-spacing: .04em; }
 .sbi-ai-badge[data-state="loading"] { color: #f59e0b; border-color: #f59e0b; }
 .sbi-ai-badge[data-state="ready"]   { color: #22c55e; border-color: #22c55e; }

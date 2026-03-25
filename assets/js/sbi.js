@@ -89,10 +89,10 @@ const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
 const SBI_SCORE_WEIGHTS = {
-  // Keep widget signal, but downweight it because crop noise can outweigh its benefit.
+  // Keep widget signal low, then redistribute the removed weight to Slot + HP/Hun/Arm.
   type: { diamond_sword: 5.0, ender_pearl: 5.0, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
   hud: { health: 4.0, hunger: 1.5, armor: 1.0 },
-  mix: { slot: 0.22, hud: 0.42, widget: 0.18, slotNoHud: 0.42, widgetNoHud: 0.29 },
+  mix: { slot: 0.281875, hud: 0.538125, widget: 0.18, slotNoHud: 0.71, widgetNoHud: 0.29 },
 };
 
 function clamp01(v) {
@@ -206,6 +206,24 @@ function summarizeSlotTypes(types) {
     none: 'NN',
   };
   return types.map(t => map[t] || '?').join(' ');
+}
+
+function hasCompletedSearchResults() {
+  const preview = document.getElementById('sbi-preview');
+  return !!_pendingImage && !!_lastRankedResults.length && !!preview && !preview.hidden;
+}
+
+function setUploadReplaceHover(active) {
+  const uploadEl = document.getElementById('sbi-upload');
+  if (!uploadEl) return;
+  uploadEl.classList.toggle('replace-hover', !!active && hasCompletedSearchResults() && !uploadEl.classList.contains('analyzing'));
+}
+
+function syncUploadPreviewState() {
+  const uploadEl = document.getElementById('sbi-upload');
+  if (!uploadEl) return;
+  uploadEl.classList.toggle('has-image', !!_pendingImage);
+  if (!hasCompletedSearchResults()) uploadEl.classList.remove('replace-hover');
 }
 
 function summarizeSlotType(type) {
@@ -465,10 +483,11 @@ function renderPackScoreSearch() {
   el.innerHTML = `
     <table class="sbi-search-table">
       <thead>
-        <tr><th>Pack</th><th>Total</th><th>DS</th><th>EP</th><th>HL</th><th>SK/GC</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Cover</th><th>Cert</th></tr>
+        <tr><th>#</th><th>Pack</th><th>Total</th><th>DS</th><th>EP</th><th>HL</th><th>SK/GC</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Cover</th><th>Cert</th></tr>
       </thead>
-      <tbody>${matches.map(row => `
+      <tbody>${matches.map((row, index) => `
         <tr>
+          <td>${index + 1}</td>
           <td title="${row.name}"><a href="/p/${encodeURIComponent(row.name)}/" target="_blank" rel="noopener noreferrer">${row.displayName}</a></td>
           <td>${fmtPct(row.totalScore)}</td>
           <td>${fmtPct(row.perTypeScores.DS)}</td>
@@ -2184,6 +2203,7 @@ async function processImage(file) {
   if (debugMeta) debugMeta.textContent = '';
   if (searchWrap) searchWrap.hidden = true;
   if (uploadEl) uploadEl.classList.add('analyzing');
+  setUploadReplaceHover(false);
   clearPreviewCacheImage();
   _lastMatchDetails = {};
   _lastAllScores = {};
@@ -2242,6 +2262,8 @@ async function processImage(file) {
     preview.hidden = false;
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');
+    syncUploadPreviewState();
+    if (uploadEl && uploadEl.matches(':hover')) setUploadReplaceHover(true);
     if (searchWrap) searchWrap.hidden = false;
     preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
     renderResults(stage1Top10);
@@ -2302,6 +2324,7 @@ async function processImage(file) {
   } catch (e) {
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');
+    syncUploadPreviewState();
     const container = document.getElementById('sbi-results');
     container.innerHTML = '<p class="sbi-no-results">Error: ' + e.message + '</p>';
     container.hidden = false;
@@ -2338,7 +2361,7 @@ function loadImagePreview(file) {
     _pendingImage = img;
     URL.revokeObjectURL(url);
     redrawUploadPreview();
-    document.querySelector('.sbi-upload-text').hidden = true;
+    syncUploadPreviewState();
     document.getElementById('sbi-search-btn').disabled = false;
     document.getElementById('sbi-clear-btn').disabled = false;
   };
@@ -2349,7 +2372,8 @@ function clearImagePreview() {
   _pendingFile = null;
   _pendingImage = null;
   drawCropboxPreview();
-  document.querySelector('.sbi-upload-text').hidden = false;
+  syncUploadPreviewState();
+  setUploadReplaceHover(false);
   document.getElementById('sbi-search-btn').disabled = true;
   document.getElementById('sbi-clear-btn').disabled = true;
 }
@@ -2403,10 +2427,20 @@ function init() {
 
   uploadEl.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', e => { if (e.target.files[0]) handleImageInput(e.target.files[0]); });
-  uploadEl.addEventListener('dragover', e => { e.preventDefault(); uploadEl.classList.add('dragover'); });
-  uploadEl.addEventListener('dragleave', () => uploadEl.classList.remove('dragover'));
+  uploadEl.addEventListener('mouseenter', () => setUploadReplaceHover(true));
+  uploadEl.addEventListener('mouseleave', () => setUploadReplaceHover(false));
+  uploadEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadEl.classList.add('dragover');
+    setUploadReplaceHover(true);
+  });
+  uploadEl.addEventListener('dragleave', () => {
+    uploadEl.classList.remove('dragover');
+    setUploadReplaceHover(false);
+  });
   uploadEl.addEventListener('drop', e => {
     e.preventDefault(); uploadEl.classList.remove('dragover');
+    setUploadReplaceHover(false);
     if (e.dataTransfer.files[0]) handleImageInput(e.dataTransfer.files[0]);
   });
   document.addEventListener('paste', e => {
