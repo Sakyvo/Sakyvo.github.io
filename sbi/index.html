@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VALE - Search by Image</title>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=11">
+  <link rel="stylesheet" href="/assets/css/style.css?v=12">
 </head>
 <body class="sbi-page">
   <header class="sbi-header">
@@ -32,7 +32,7 @@
     <div class="sbi-upload" id="sbi-upload">
       <p class="sbi-upload-text">Drag &amp; drop, click, or paste a screenshot</p>
       <input type="file" id="sbi-file" accept="image/*" hidden>
-      <canvas id="sbi-cropbox-canvas" class="sbi-cropbox-canvas"></canvas>
+      <img id="sbi-cropbox-image" class="sbi-cropbox-image" alt="Upload preview" hidden>
       <canvas id="sbi-cropbox-overlay" class="sbi-cropbox-overlay"></canvas>
     </div>
 
@@ -152,6 +152,6 @@
   </footer>
 
   <script src="/assets/js/auth.js?v=3"></script>
-  <script src="/assets/js/sbi.js?v=53"></script>
+  <script src="/assets/js/sbi.js?v=54"></script>
 </body>
 </html>

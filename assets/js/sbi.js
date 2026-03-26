@@ -72,6 +72,7 @@ let _previewImageUrl = '';
 let _currentPreset = 'large';
 let _pendingFile = null;
 let _pendingImage = null;
+let _pendingImageUrl = '';
 let _autoSearch = false;
 let _uploadPreviewResizeObserver = null;
 const SLOT_COLOR_MAP = {
@@ -159,6 +160,12 @@ function revokePreviewImageUrl() {
   if (!_previewImageUrl) return;
   URL.revokeObjectURL(_previewImageUrl);
   _previewImageUrl = '';
+}
+
+function revokePendingImageUrl() {
+  if (!_pendingImageUrl) return;
+  URL.revokeObjectURL(_pendingImageUrl);
+  _pendingImageUrl = '';
 }
 
 function clearPreviewCacheImage() {
@@ -2450,14 +2457,10 @@ function drawCropboxPreview() {
   const dpr = window.devicePixelRatio || 1;
   const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : 1280;
   const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : 720;
-  const cropCanvas = document.getElementById('sbi-cropbox-canvas');
-  if (cropCanvas) {
-    cropCanvas.width = previewW;
-    cropCanvas.height = previewH;
-    const cropCtx = cropCanvas.getContext('2d');
-    cropCtx.imageSmoothingEnabled = true;
-    cropCtx.imageSmoothingQuality = 'high';
-    cropCtx.clearRect(0, 0, previewW, previewH);
+  const cropImage = document.getElementById('sbi-cropbox-image');
+  if (cropImage) {
+    cropImage.hidden = true;
+    cropImage.removeAttribute('src');
   }
   const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
   if (!overlayCanvas) return;
@@ -2476,15 +2479,10 @@ function redrawUploadPreview() {
   const dpr = window.devicePixelRatio || 1;
   const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : _pendingImage.width;
   const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : _pendingImage.height;
-  const imageCanvas = document.getElementById('sbi-cropbox-canvas');
-  if (imageCanvas) {
-    imageCanvas.width = previewW;
-    imageCanvas.height = previewH;
-    const imageCtx = imageCanvas.getContext('2d');
-    imageCtx.imageSmoothingEnabled = true;
-    imageCtx.imageSmoothingQuality = 'high';
-    imageCtx.clearRect(0, 0, previewW, previewH);
-    imageCtx.drawImage(_pendingImage, 0, 0, previewW, previewH);
+  const cropImage = document.getElementById('sbi-cropbox-image');
+  if (cropImage) {
+    if (_pendingImageUrl && cropImage.getAttribute('src') !== _pendingImageUrl) cropImage.src = _pendingImageUrl;
+    cropImage.hidden = false;
   }
   const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
   if (!overlayCanvas) return;
@@ -2498,22 +2496,23 @@ function redrawUploadPreview() {
 
 function loadImagePreview(file) {
   _pendingFile = file;
+  revokePendingImageUrl();
+  _pendingImageUrl = URL.createObjectURL(file);
   const img = new Image();
-  const url = URL.createObjectURL(file);
   img.onload = () => {
     _pendingImage = img;
-    URL.revokeObjectURL(url);
     redrawUploadPreview();
     syncUploadPreviewState();
     document.getElementById('sbi-search-btn').disabled = false;
     document.getElementById('sbi-clear-btn').disabled = false;
   };
-  img.src = url;
+  img.src = _pendingImageUrl;
 }
 
 function clearImagePreview() {
   _pendingFile = null;
   _pendingImage = null;
+  revokePendingImageUrl();
   drawCropboxPreview();
   syncUploadPreviewState();
   setUploadReplaceHover(false);
