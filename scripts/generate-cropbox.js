@@ -8,12 +8,15 @@ const hotbarY = H - 22 * unit;
 
 let rects = '';
 
-// 9 hotbar slots (black borders)
-for (let i = 0; i < 9; i++) {
-  const x = hotbarX + (1 + i * 20) * unit;
-  const y = hotbarY + unit;
-  const sz = 20 * unit;
-  rects += `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" fill="none" stroke="#000" stroke-width="2.5"/>`;
+const slotX = hotbarX + unit;
+const slotY = hotbarY + unit;
+const slotW = 181 * unit;
+const slotH = 20 * unit;
+
+rects += `<rect x="${slotX}" y="${slotY}" width="${slotW}" height="${unit}" fill="#000"/>`;
+rects += `<rect x="${slotX}" y="${slotY + slotH - unit}" width="${slotW}" height="${unit}" fill="#000"/>`;
+for (let i = 0; i <= 9; i++) {
+  rects += `<rect x="${hotbarX + (1 + i * 20) * unit}" y="${slotY}" width="${unit}" height="${slotH}" fill="#000"/>`;
 }
 
 const heartY = hotbarY - 17 * unit;

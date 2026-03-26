@@ -132,6 +132,11 @@ function computeItemSignature(pixels, w, h) {
   let n = 0, lumSum = 0, rSum = 0, gSum = 0, bSum = 0;
   let red = 0, yellow = 0, dark = 0, blue = 0;
   let centerN = 0, centerDark = 0, edgeN = 0, edgeDark = 0;
+  let xSum = 0, ySum = 0;
+  let leftN = 0, rightN = 0, topN = 0, bottomN = 0;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  const rowXSum = new Float64Array(h);
+  const rowCount = new Uint16Array(h);
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -145,10 +150,22 @@ function computeItemSignature(pixels, w, h) {
       rSum += r;
       gSum += g;
       bSum += b;
+      xSum += x;
+      ySum += y;
       if (r > g + 30 && r > b + 30) red++;
       if (r > 160 && g > 140 && b < 140) yellow++;
       if (isDark) dark++;
       if (b > r + 12 && b > g + 8) blue++;
+      if (x < w * 0.5) leftN++;
+      else rightN++;
+      if (y < h * 0.5) topN++;
+      else bottomN++;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+      rowXSum[y] += x;
+      rowCount[y]++;
 
       const inCenter = x >= centerX1 && x < centerX2 && y >= centerY1 && y < centerY2;
       if (inCenter) {
@@ -177,10 +194,55 @@ function computeItemSignature(pixels, w, h) {
       blueFrac: 0,
       centerDarkFrac: 0,
       edgeDarkFrac: 0,
+      centerX: 0,
+      centerY: 0,
+      lrBias: 0,
+      tbBias: 0,
+      mirrorFrac: 1,
+      rowSlope: 0,
+      bboxTop: 1,
+      bboxBottom: 0,
+      bboxLeft: 1,
+      bboxRight: 0,
     };
   }
 
+  let mirrorAgree = 0, mirrorPairs = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < Math.floor(w / 2); x++) {
+      const li = (y * w + x) * 4 + 3;
+      const ri = (y * w + (w - 1 - x)) * 4 + 3;
+      const leftOn = pixels[li] >= 128;
+      const rightOn = pixels[ri] >= 128;
+      if (!leftOn && !rightOn) continue;
+      mirrorPairs++;
+      if (leftOn === rightOn) mirrorAgree++;
+    }
+  }
+
+  let rowMeanY = 0, rowMeanX = 0, rowsUsed = 0;
+  for (let y = 0; y < h; y++) {
+    if (!rowCount[y]) continue;
+    rowMeanY += y;
+    rowMeanX += rowXSum[y] / rowCount[y];
+    rowsUsed++;
+  }
+  if (rowsUsed) {
+    rowMeanY /= rowsUsed;
+    rowMeanX /= rowsUsed;
+  }
+  let rowCov = 0, rowVar = 0;
+  for (let y = 0; y < h; y++) {
+    if (!rowCount[y]) continue;
+    const rowCenterX = rowXSum[y] / rowCount[y];
+    rowCov += (y - rowMeanY) * (rowCenterX - rowMeanX);
+    rowVar += (y - rowMeanY) ** 2;
+  }
+
   const round = value => +value.toFixed(4);
+  const widthDen = Math.max(1, w - 1);
+  const heightDen = Math.max(1, h - 1);
+  const rowSlope = rowVar ? (rowCov / rowVar) / Math.max(1, w / 2) : 0;
   return {
     n,
     coverage: round(n / (w * h)),
@@ -194,6 +256,16 @@ function computeItemSignature(pixels, w, h) {
     blueFrac: round(blue / n),
     centerDarkFrac: round(centerN ? (centerDark / centerN) : 0),
     edgeDarkFrac: round(edgeN ? (edgeDark / edgeN) : 0),
+    centerX: round((xSum / n) / widthDen),
+    centerY: round((ySum / n) / heightDen),
+    lrBias: round((rightN - leftN) / n),
+    tbBias: round((bottomN - topN) / n),
+    mirrorFrac: round(mirrorPairs ? (mirrorAgree / mirrorPairs) : 1),
+    rowSlope: round(rowSlope),
+    bboxTop: round(minY < h ? (minY / heightDen) : 1),
+    bboxBottom: round(maxY >= 0 ? (maxY / heightDen) : 0),
+    bboxLeft: round(minX < w ? (minX / widthDen) : 1),
+    bboxRight: round(maxX >= 0 ? (maxX / widthDen) : 0),
   };
 }
 

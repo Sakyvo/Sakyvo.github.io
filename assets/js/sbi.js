@@ -55,7 +55,7 @@ function initClipWorker() {
 }
 
 let _lastHashResults = [], _lastAllScores = {};
-const SBI_FINGERPRINT_VERSION = 9;
+const SBI_FINGERPRINT_VERSION = 10;
 // AI (CLIP) is used as a rerank signal. We normalize CLIP scores per-query and
 // apply it as a multiplicative factor on top of the hash score, so a weak CLIP
 // match won't incorrectly drag down a strong hash match when the crop is correct.
@@ -956,6 +956,11 @@ function computeItemSignature(imageData, w, h) {
   let n = 0, lumSum = 0, rSum = 0, gSum = 0, bSum = 0;
   let red = 0, yellow = 0, dark = 0, blue = 0;
   let centerN = 0, centerDark = 0, edgeN = 0, edgeDark = 0;
+  let xSum = 0, ySum = 0;
+  let leftN = 0, rightN = 0, topN = 0, bottomN = 0;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  const rowXSum = new Float64Array(h);
+  const rowCount = new Uint16Array(h);
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -970,10 +975,22 @@ function computeItemSignature(imageData, w, h) {
       rSum += r;
       gSum += g;
       bSum += b;
+      xSum += x;
+      ySum += y;
       if (r > g + 30 && r > b + 30) red++;
       if (r > 160 && g > 140 && b < 140) yellow++;
       if (isDark) dark++;
       if (b > r + 12 && b > g + 8) blue++;
+      if (x < w * 0.5) leftN++;
+      else rightN++;
+      if (y < h * 0.5) topN++;
+      else bottomN++;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+      rowXSum[y] += x;
+      rowCount[y]++;
 
       const inCenter = x >= centerX1 && x < centerX2 && y >= centerY1 && y < centerY2;
       if (inCenter) {
@@ -1002,8 +1019,53 @@ function computeItemSignature(imageData, w, h) {
       blueFrac: 0,
       centerDarkFrac: 0,
       edgeDarkFrac: 0,
+      centerX: 0,
+      centerY: 0,
+      lrBias: 0,
+      tbBias: 0,
+      mirrorFrac: 1,
+      rowSlope: 0,
+      bboxTop: 1,
+      bboxBottom: 0,
+      bboxLeft: 1,
+      bboxRight: 0,
     };
   }
+
+  let mirrorAgree = 0, mirrorPairs = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < Math.floor(w / 2); x++) {
+      const li = (y * w + x) * 4 + 3;
+      const ri = (y * w + (w - 1 - x)) * 4 + 3;
+      const leftOn = imageData[li] >= 128;
+      const rightOn = imageData[ri] >= 128;
+      if (!leftOn && !rightOn) continue;
+      mirrorPairs++;
+      if (leftOn === rightOn) mirrorAgree++;
+    }
+  }
+
+  let rowMeanY = 0, rowMeanX = 0, rowsUsed = 0;
+  for (let y = 0; y < h; y++) {
+    if (!rowCount[y]) continue;
+    rowMeanY += y;
+    rowMeanX += rowXSum[y] / rowCount[y];
+    rowsUsed++;
+  }
+  if (rowsUsed) {
+    rowMeanY /= rowsUsed;
+    rowMeanX /= rowsUsed;
+  }
+  let rowCov = 0, rowVar = 0;
+  for (let y = 0; y < h; y++) {
+    if (!rowCount[y]) continue;
+    const rowCenterX = rowXSum[y] / rowCount[y];
+    rowCov += (y - rowMeanY) * (rowCenterX - rowMeanX);
+    rowVar += (y - rowMeanY) ** 2;
+  }
+  const widthDen = Math.max(1, w - 1);
+  const heightDen = Math.max(1, h - 1);
+  const rowSlope = rowVar ? (rowCov / rowVar) / Math.max(1, w / 2) : 0;
 
   return {
     n,
@@ -1018,6 +1080,16 @@ function computeItemSignature(imageData, w, h) {
     blueFrac: blue / n,
     centerDarkFrac: centerN ? (centerDark / centerN) : 0,
     edgeDarkFrac: edgeN ? (edgeDark / edgeN) : 0,
+    centerX: (xSum / n) / widthDen,
+    centerY: (ySum / n) / heightDen,
+    lrBias: (rightN - leftN) / n,
+    tbBias: (bottomN - topN) / n,
+    mirrorFrac: mirrorPairs ? (mirrorAgree / mirrorPairs) : 1,
+    rowSlope,
+    bboxTop: minY < h ? (minY / heightDen) : 1,
+    bboxBottom: maxY >= 0 ? (maxY / heightDen) : 0,
+    bboxLeft: minX < w ? (minX / widthDen) : 1,
+    bboxRight: maxX >= 0 ? (maxX / widthDen) : 0,
   };
 }
 
@@ -1839,11 +1911,26 @@ function metricSimilarity(a, b, spread) {
 function signatureSimilarity(extractedSig, packSig, targetType) {
   if (!extractedSig || !packSig) return 0;
   if (targetType === 'diamond_sword') {
-    return clamp01(
+    const shapeReady = typeof extractedSig.centerX === 'number' && typeof packSig.centerX === 'number';
+    const shapeSim = shapeReady ? clamp01(
+      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.12) * 0.16 +
+      metricSimilarity(extractedSig.centerX, packSig.centerX, 0.12) * 0.16 +
+      metricSimilarity(extractedSig.centerY, packSig.centerY, 0.10) * 0.10 +
+      metricSimilarity(extractedSig.lrBias, packSig.lrBias, 0.18) * 0.08 +
+      metricSimilarity(extractedSig.tbBias, packSig.tbBias, 0.20) * 0.06 +
+      metricSimilarity(extractedSig.rowSlope, packSig.rowSlope, 0.10) * 0.18 +
+      metricSimilarity(extractedSig.bboxTop, packSig.bboxTop, 0.10) * 0.12 +
+      metricSimilarity(extractedSig.bboxBottom, packSig.bboxBottom, 0.20) * 0.08 +
+      metricSimilarity(extractedSig.bboxLeft, packSig.bboxLeft, 0.14) * 0.08 +
+      metricSimilarity(extractedSig.bboxRight, packSig.bboxRight, 0.12) * 0.04 +
+      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.20) * 0.04
+    ) : 0;
+    const colorSim = clamp01(
       metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.75) * 0.45 +
       metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.75) * 0.25 +
       metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.80) * 0.30
     );
+    return shapeReady ? clamp01(shapeSim * 0.75 + colorSim * 0.25) : colorSim;
   }
   if (targetType === 'ender_pearl') {
     return clamp01(
@@ -2110,14 +2197,20 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   const widgetW = 182 * unit;
   const widgetX = Math.round((imgW - widgetW) / 2);
   const widgetY = Math.round(imgH - 22 * unit);
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = '#000';
-  for (let i = 0; i < 9; i++) {
-    ctx.strokeRect(
+  const border = Math.max(1, Math.round(unit));
+  const slotX = widgetX + unit;
+  const slotY = widgetY + unit;
+  const slotH = 20 * unit;
+  const slotW = 181 * unit;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(Math.round(slotX), Math.round(slotY), Math.round(slotW), border);
+  ctx.fillRect(Math.round(slotX), Math.round(slotY + slotH - unit), Math.round(slotW), border);
+  for (let i = 0; i <= 9; i++) {
+    ctx.fillRect(
       Math.round(widgetX + (1 + i * 20) * unit),
-      Math.round(widgetY + unit),
-      Math.round(20 * unit),
-      Math.round(20 * unit)
+      Math.round(slotY),
+      border,
+      Math.round(slotH)
     );
   }
   const heartY = Math.round(widgetY - 17 * unit);
