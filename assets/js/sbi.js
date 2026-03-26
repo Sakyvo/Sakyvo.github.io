@@ -2455,7 +2455,8 @@ function drawCropboxPreview() {
     cropCanvas.width = previewW;
     cropCanvas.height = previewH;
     const cropCtx = cropCanvas.getContext('2d');
-    cropCtx.imageSmoothingEnabled = false;
+    cropCtx.imageSmoothingEnabled = true;
+    cropCtx.imageSmoothingQuality = 'high';
     cropCtx.clearRect(0, 0, previewW, previewH);
   }
   const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
@@ -2480,7 +2481,8 @@ function redrawUploadPreview() {
     imageCanvas.width = previewW;
     imageCanvas.height = previewH;
     const imageCtx = imageCanvas.getContext('2d');
-    imageCtx.imageSmoothingEnabled = false;
+    imageCtx.imageSmoothingEnabled = true;
+    imageCtx.imageSmoothingQuality = 'high';
     imageCtx.clearRect(0, 0, previewW, previewH);
     imageCtx.drawImage(_pendingImage, 0, 0, previewW, previewH);
   }
