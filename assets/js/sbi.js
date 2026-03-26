@@ -73,6 +73,7 @@ let _currentPreset = 'large';
 let _pendingFile = null;
 let _pendingImage = null;
 let _autoSearch = false;
+let _uploadPreviewResizeObserver = null;
 const SLOT_COLOR_MAP = {
   diamond_sword: '#3b82f6',
   iron_sword: '#3b82f6',
@@ -2428,31 +2429,53 @@ async function processImage(file) {
 }
 
 function drawCropboxPreview() {
+  const uploadEl = document.getElementById('sbi-upload');
+  const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
+  const dpr = window.devicePixelRatio || 1;
+  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : 1280;
+  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : 720;
   const cropCanvas = document.getElementById('sbi-cropbox-canvas');
   if (cropCanvas) {
-    cropCanvas.width = 1280;
-    cropCanvas.height = 720;
+    cropCanvas.width = previewW;
+    cropCanvas.height = previewH;
+    const cropCtx = cropCanvas.getContext('2d');
+    cropCtx.imageSmoothingEnabled = false;
+    cropCtx.clearRect(0, 0, previewW, previewH);
   }
   const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
   if (!overlayCanvas) return;
-  overlayCanvas.width = 1280;
-  overlayCanvas.height = 720;
-  drawPendingOverlay(overlayCanvas.getContext('2d'), 1280, 720, _currentPreset);
+  overlayCanvas.width = previewW;
+  overlayCanvas.height = previewH;
+  const overlayCtx = overlayCanvas.getContext('2d');
+  overlayCtx.imageSmoothingEnabled = false;
+  overlayCtx.clearRect(0, 0, previewW, previewH);
+  drawPendingOverlay(overlayCtx, previewW, previewH, _currentPreset);
 }
 
 function redrawUploadPreview() {
   if (!_pendingImage) { drawCropboxPreview(); return; }
+  const uploadEl = document.getElementById('sbi-upload');
+  const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
+  const dpr = window.devicePixelRatio || 1;
+  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : _pendingImage.width;
+  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : _pendingImage.height;
   const imageCanvas = document.getElementById('sbi-cropbox-canvas');
   if (imageCanvas) {
-    imageCanvas.width = _pendingImage.width;
-    imageCanvas.height = _pendingImage.height;
-    imageCanvas.getContext('2d').drawImage(_pendingImage, 0, 0);
+    imageCanvas.width = previewW;
+    imageCanvas.height = previewH;
+    const imageCtx = imageCanvas.getContext('2d');
+    imageCtx.imageSmoothingEnabled = false;
+    imageCtx.clearRect(0, 0, previewW, previewH);
+    imageCtx.drawImage(_pendingImage, 0, 0, previewW, previewH);
   }
   const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
   if (!overlayCanvas) return;
-  overlayCanvas.width = _pendingImage.width;
-  overlayCanvas.height = _pendingImage.height;
-  drawPendingOverlay(overlayCanvas.getContext('2d'), _pendingImage.width, _pendingImage.height, _currentPreset);
+  overlayCanvas.width = previewW;
+  overlayCanvas.height = previewH;
+  const overlayCtx = overlayCanvas.getContext('2d');
+  overlayCtx.imageSmoothingEnabled = false;
+  overlayCtx.clearRect(0, 0, previewW, previewH);
+  drawPendingOverlay(overlayCtx, previewW, previewH, _currentPreset);
 }
 
 function loadImagePreview(file) {
@@ -2511,6 +2534,13 @@ function init() {
 
   // Draw cropbox preview inside upload area
   drawCropboxPreview();
+  if (_uploadPreviewResizeObserver) _uploadPreviewResizeObserver.disconnect();
+  if (window.ResizeObserver) {
+    _uploadPreviewResizeObserver = new ResizeObserver(() => redrawUploadPreview());
+    _uploadPreviewResizeObserver.observe(uploadEl);
+  } else {
+    window.addEventListener('resize', redrawUploadPreview);
+  }
 
   // Hide search wrap until analysis completes
   const searchWrap = document.getElementById('sbi-search-wrap');
