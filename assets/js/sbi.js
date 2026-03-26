@@ -2192,6 +2192,22 @@ function getPresetUnit(imgW, imgH, preset) {
   return base;
 }
 
+function drawOverlayBox(ctx, x, y, w, h, thickness, color) {
+  const left = Math.round(x);
+  const top = Math.round(y);
+  const right = Math.round(x + w);
+  const bottom = Math.round(y + h);
+  const border = Math.max(1, Math.round(thickness));
+  const width = Math.max(border, right - left);
+  const height = Math.max(border, bottom - top);
+  const innerHeight = Math.max(0, height - border * 2);
+  ctx.fillStyle = color;
+  ctx.fillRect(left, top, width, border);
+  ctx.fillRect(left, Math.max(top, bottom - border), width, border);
+  ctx.fillRect(left, top + border, border, innerHeight);
+  ctx.fillRect(Math.max(left, right - border), top + border, border, innerHeight);
+}
+
 function drawPendingOverlay(ctx, imgW, imgH, preset) {
   const unit = getPresetUnit(imgW, imgH, preset);
   if (unit < 1) return;
@@ -2203,27 +2219,27 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   const slotY = widgetY + unit;
   const slotH = 20 * unit;
   const slotW = 181 * unit;
+  const slotLeft = Math.round(slotX);
+  const slotTop = Math.round(slotY);
+  const slotRight = Math.round(slotX + slotW);
+  const slotBottom = Math.round(slotY + slotH);
   ctx.fillStyle = '#000';
-  ctx.fillRect(Math.round(slotX), Math.round(slotY), Math.round(slotW), border);
-  ctx.fillRect(Math.round(slotX), Math.round(slotY + slotH - unit), Math.round(slotW), border);
+  ctx.fillRect(slotLeft, slotTop, Math.max(border, slotRight - slotLeft), border);
+  ctx.fillRect(slotLeft, Math.max(slotTop, slotBottom - border), Math.max(border, slotRight - slotLeft), border);
   for (let i = 0; i <= 9; i++) {
+    const lineX = Math.round(widgetX + (1 + i * 20) * unit);
     ctx.fillRect(
-      Math.round(widgetX + (1 + i * 20) * unit),
-      Math.round(slotY),
+      lineX,
+      slotTop,
       border,
-      Math.round(slotH)
+      Math.max(border, slotBottom - slotTop)
     );
   }
   const heartY = Math.round(widgetY - 17 * unit);
-  const iconSz = Math.round(9 * unit);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#fca5a5';
-  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), heartY, iconSz, iconSz);
-  ctx.strokeStyle = '#fbbf24';
-  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + (182 - 9 - i * 8) * unit), heartY, iconSz, iconSz);
-  ctx.strokeStyle = '#9ca3af';
   const armorY = Math.round(heartY - 10 * unit);
-  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), armorY, iconSz, iconSz);
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, '#fca5a5');
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + (182 - 9 - i * 8) * unit, heartY, 9 * unit, 9 * unit, 1, '#fbbf24');
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, armorY, 9 * unit, 9 * unit, 1, '#9ca3af');
 }
 
 function scoreColor(pct) {
