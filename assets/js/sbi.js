@@ -85,6 +85,11 @@ const SLOT_COLOR_MAP = {
   apple_golden: '#fde68a',
   none: '#94a3b8',
 };
+const HUD_OVERLAY_COLORS = {
+  health: '#ef4444',
+  hunger: '#fbbf24',
+  armor: '#9ca3af',
+};
 const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
@@ -2173,23 +2178,24 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 }
 
 function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
-  ctx.lineWidth = 2.5;
+  let border = 1;
+  for (const slot of slots || []) {
+    const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
+    if (!rect) continue;
+    border = Math.max(1, Math.round(rect.sz / 20));
+    break;
+  }
   for (let i = 0; i < slots.length; i++) {
     const slot = slots[i];
     const slotType = slotTypes && slotTypes[i] ? slotTypes[i] : '';
-    ctx.strokeStyle = SLOT_COLOR_MAP[slotType] || '#ff0';
     const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
     if (!rect) continue;
-    ctx.strokeRect(rect.x, rect.y, rect.sz, rect.sz);
+    drawOverlayBox(ctx, rect.x, rect.y, rect.sz, rect.sz, border, SLOT_COLOR_MAP[slotType] || '#ff0');
   }
   if (!hudFeatures) return;
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#fca5a5';
-  for (const b of hudFeatures.heartBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-  ctx.strokeStyle = '#fbbf24';
-  for (const b of hudFeatures.hungerBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-  ctx.strokeStyle = '#9ca3af';
-  for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  for (const b of hudFeatures.heartBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, 1, HUD_OVERLAY_COLORS.health);
+  for (const b of hudFeatures.hungerBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, 1, HUD_OVERLAY_COLORS.hunger);
+  for (const b of hudFeatures.armorBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, 1, HUD_OVERLAY_COLORS.armor);
 }
 
 function getPresetUnit(imgW, imgH, preset) {
@@ -2244,9 +2250,9 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   }
   const heartY = Math.round(widgetY - 17 * unit);
   const armorY = Math.round(heartY - 10 * unit);
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, '#fca5a5');
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + (182 - 9 - i * 8) * unit, heartY, 9 * unit, 9 * unit, 1, '#fbbf24');
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, armorY, 9 * unit, 9 * unit, 1, '#9ca3af');
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, HUD_OVERLAY_COLORS.health);
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + (182 - 9 - i * 8) * unit, heartY, 9 * unit, 9 * unit, 1, HUD_OVERLAY_COLORS.hunger);
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, armorY, 9 * unit, 9 * unit, 1, HUD_OVERLAY_COLORS.armor);
 }
 
 function scoreColor(pct) {

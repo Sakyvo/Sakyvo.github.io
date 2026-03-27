@@ -30,7 +30,7 @@ const heartY = hotbarY - 17 * unit;
 
 // Hearts (red)
 for (let i = 0; i < 10; i++) {
-  addBox(hotbarX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, '#fca5a5');
+  addBox(hotbarX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, '#ef4444');
 }
 
 // Hunger (yellow)
