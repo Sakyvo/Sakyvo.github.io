@@ -175,10 +175,18 @@ function revokePendingImageUrl() {
 
 function clearPreviewCacheImage() {
   const previewImage = document.getElementById('sbi-preview-image');
+  const previewOverlay = document.getElementById('sbi-preview-overlay');
   revokePreviewImageUrl();
   if (previewImage) {
     previewImage.hidden = true;
     previewImage.removeAttribute('src');
+  }
+  if (previewOverlay) {
+    const overlayCtx = previewOverlay.getContext('2d');
+    if (overlayCtx) overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
+    previewOverlay.width = 0;
+    previewOverlay.height = 0;
+    previewOverlay.hidden = true;
   }
 }
 
@@ -204,6 +212,24 @@ function updatePreviewCacheImage(filename) {
       resolve();
     }, 'image/png');
   });
+}
+
+function renderCompletedPreview(img, slots, hudFeatures, slotTypes) {
+  const previewImage = document.getElementById('sbi-preview-image');
+  const previewOverlay = document.getElementById('sbi-preview-overlay');
+  if (previewImage) {
+    if (_pendingImageUrl && previewImage.getAttribute('src') !== _pendingImageUrl) previewImage.src = _pendingImageUrl;
+    previewImage.alt = _pendingFile && _pendingFile.name ? _pendingFile.name : 'sbi.png';
+    previewImage.hidden = false;
+  }
+  if (!previewOverlay || !img) return;
+  previewOverlay.width = img.width;
+  previewOverlay.height = img.height;
+  const overlayCtx = previewOverlay.getContext('2d');
+  overlayCtx.imageSmoothingEnabled = false;
+  overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
+  drawDetectionOverlay(overlayCtx, slots, hudFeatures, slotTypes);
+  previewOverlay.hidden = false;
 }
 
 function summarizeSlotTypes(types) {
@@ -2381,7 +2407,7 @@ async function processImage(file) {
     // Phase 2: Replace black overlay with colored detection overlay
     ctx.drawImage(rawCanvas, 0, 0);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
-    await updatePreviewCacheImage('cropbox_large_analysed.png');
+    renderCompletedPreview(img, slots, hudFeatures, slotTypes);
     preview.hidden = false;
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');
