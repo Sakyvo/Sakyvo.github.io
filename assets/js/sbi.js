@@ -2034,6 +2034,26 @@ function inferTrailingConsumableSlotType(slot, sig, cache) {
   return '';
 }
 
+function inferCanonicalPvPWeaponSlotType(slot, sig, inferredTypes, cache) {
+  if (!slot || slot.index !== 0 || !sig) return '';
+  const hasPearl = inferredTypes[1] === 'ender_pearl';
+  const middlePotionCount = inferredTypes.slice(2, 8).filter(type => type === 'splash_potion').length;
+  const hasFoodTail = inferredTypes[8] === 'steak' || inferredTypes[8] === 'golden_carrot';
+  const activity = clamp01(slot.activity || 0);
+  const variance = slot.variance || 0;
+  if (!hasPearl || middlePotionCount < 5 || !hasFoodTail) return '';
+  if (activity < 0.45 || variance < 500 || sig.n <= 0) return '';
+  if (sig.yellowFrac >= 0.12 || sig.redFrac >= 0.20) return '';
+  const dsBest = getBestFingerprintSlotSimilarity(slot, 'diamond_sword', cache);
+  const epBest = getBestFingerprintSlotSimilarity(slot, 'ender_pearl', cache);
+  const swordLike = sig.coverage <= 0.68
+    && Math.abs(sig.rowSlope) >= 0.012
+    && sig.bboxTop <= 0.46
+    && sig.bboxBottom >= 0.42;
+  if (dsBest >= 0.24 || dsBest >= epBest - 0.10 || swordLike) return 'diamond_sword';
+  return '';
+}
+
 function sharpenSimilarityScore(v) {
   const x = clamp01(v);
   return clamp01(1 / (1 + Math.exp(-12 * (x - 0.58))));
@@ -2114,6 +2134,11 @@ function inferDisplaySlotTypes(slots) {
     // Fallback: for larger silhouettes, prefer pearls over swords.
     out[slot.index] = blueStrong ? 'ender_pearl' : 'none';
   }
+
+  const slot0 = ordered.find(slot => slot && slot.index === 0);
+  const slot0Sig = slot0 && slot0.features ? slot0.features.sig : null;
+  const canonicalWeaponType = inferCanonicalPvPWeaponSlotType(slot0, slot0Sig, out, fingerprintScoreCache);
+  if (canonicalWeaponType) out[0] = canonicalWeaponType;
 
   return out;
 }
