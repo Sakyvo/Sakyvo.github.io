@@ -85,11 +85,6 @@ const SLOT_COLOR_MAP = {
   apple_golden: '#fde68a',
   none: '#94a3b8',
 };
-const HUD_OVERLAY_COLORS = {
-  health: '#ef4444',
-  hunger: '#fbbf24',
-  armor: '#9ca3af',
-};
 const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
@@ -175,18 +170,10 @@ function revokePendingImageUrl() {
 
 function clearPreviewCacheImage() {
   const previewImage = document.getElementById('sbi-preview-image');
-  const previewOverlay = document.getElementById('sbi-preview-overlay');
   revokePreviewImageUrl();
   if (previewImage) {
     previewImage.hidden = true;
     previewImage.removeAttribute('src');
-  }
-  if (previewOverlay) {
-    const overlayCtx = previewOverlay.getContext('2d');
-    if (overlayCtx) overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
-    previewOverlay.width = 0;
-    previewOverlay.height = 0;
-    previewOverlay.hidden = true;
   }
 }
 
@@ -212,24 +199,6 @@ function updatePreviewCacheImage(filename) {
       resolve();
     }, 'image/png');
   });
-}
-
-function renderCompletedPreview(img, slots, hudFeatures, slotTypes) {
-  const previewImage = document.getElementById('sbi-preview-image');
-  const previewOverlay = document.getElementById('sbi-preview-overlay');
-  if (previewImage) {
-    if (_pendingImageUrl && previewImage.getAttribute('src') !== _pendingImageUrl) previewImage.src = _pendingImageUrl;
-    previewImage.alt = _pendingFile && _pendingFile.name ? _pendingFile.name : 'sbi.png';
-    previewImage.hidden = false;
-  }
-  if (!previewOverlay || !img) return;
-  previewOverlay.width = img.width;
-  previewOverlay.height = img.height;
-  const overlayCtx = previewOverlay.getContext('2d');
-  overlayCtx.imageSmoothingEnabled = false;
-  overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
-  drawDetectionOverlay(overlayCtx, slots, hudFeatures, slotTypes);
-  previewOverlay.hidden = false;
 }
 
 function summarizeSlotTypes(types) {
@@ -2204,24 +2173,23 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 }
 
 function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
-  let border = 1;
-  for (const slot of slots || []) {
-    const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
-    if (!rect) continue;
-    border = Math.max(1, Math.round(rect.sz / 20));
-    break;
-  }
+  ctx.lineWidth = 2.5;
   for (let i = 0; i < slots.length; i++) {
     const slot = slots[i];
     const slotType = slotTypes && slotTypes[i] ? slotTypes[i] : '';
+    ctx.strokeStyle = SLOT_COLOR_MAP[slotType] || '#ff0';
     const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
     if (!rect) continue;
-    drawOverlayBox(ctx, rect.x, rect.y, rect.sz, rect.sz, border, SLOT_COLOR_MAP[slotType] || '#ff0');
+    ctx.strokeRect(rect.x, rect.y, rect.sz, rect.sz);
   }
   if (!hudFeatures) return;
-  for (const b of hudFeatures.heartBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, 1, HUD_OVERLAY_COLORS.health);
-  for (const b of hudFeatures.hungerBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, 1, HUD_OVERLAY_COLORS.hunger);
-  for (const b of hudFeatures.armorBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, 1, HUD_OVERLAY_COLORS.armor);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#fca5a5';
+  for (const b of hudFeatures.heartBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = '#fbbf24';
+  for (const b of hudFeatures.hungerBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = '#9ca3af';
+  for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
 }
 
 function getPresetUnit(imgW, imgH, preset) {
@@ -2276,9 +2244,9 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   }
   const heartY = Math.round(widgetY - 17 * unit);
   const armorY = Math.round(heartY - 10 * unit);
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, HUD_OVERLAY_COLORS.health);
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + (182 - 9 - i * 8) * unit, heartY, 9 * unit, 9 * unit, 1, HUD_OVERLAY_COLORS.hunger);
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, armorY, 9 * unit, 9 * unit, 1, HUD_OVERLAY_COLORS.armor);
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, '#fca5a5');
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + (182 - 9 - i * 8) * unit, heartY, 9 * unit, 9 * unit, 1, '#fbbf24');
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, armorY, 9 * unit, 9 * unit, 1, '#9ca3af');
 }
 
 function scoreColor(pct) {
@@ -2407,7 +2375,7 @@ async function processImage(file) {
     // Phase 2: Replace black overlay with colored detection overlay
     ctx.drawImage(rawCanvas, 0, 0);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
-    renderCompletedPreview(img, slots, hudFeatures, slotTypes);
+    await updatePreviewCacheImage('cropbox_large_analysed.png');
     preview.hidden = false;
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');
