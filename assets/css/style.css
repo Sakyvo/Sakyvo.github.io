@@ -1011,7 +1011,13 @@ footer {
 .sbi-upload.dragover .sbi-cropbox-image { filter: blur(4px) saturate(0.75); opacity: 0.30; transform: scale(1.015); }
 .sbi-preview { margin: 24px 0; }
 .sbi-preview-image,
-.sbi-preview canvas { max-width: 100%; border: 2px solid var(--border); display: block; }
+.sbi-preview canvas {
+  max-width: 100%;
+  border: 2px solid var(--border);
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 .sbi-preview canvas { display: none; }
 .sbi-progress { text-align: center; padding: 24px; }
 .sbi-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: transparent; animation: sbi-spin .8s linear infinite; margin: 0 auto 12px; }
