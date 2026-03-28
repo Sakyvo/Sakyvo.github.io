@@ -2172,24 +2172,33 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   return { results: results.slice(0, 80), slotTypes: displaySlotTypes, details };
 }
 
+function getDetectionOverlayBorder(slots, hudFeatures, imgW, imgH) {
+  const presetUnit = getPresetUnit(imgW, imgH, _currentPreset);
+  if (presetUnit >= 1) return Math.max(1, Math.round(presetUnit));
+  const slotRect = (slots || []).map(slot => getSlotDisplayRect(slot, imgW, imgH)).find(Boolean);
+  if (slotRect) return Math.max(1, Math.round(slotRect.sz / 20));
+  const hudBox = [
+    ...(hudFeatures?.heartBoxes || []),
+    ...(hudFeatures?.hungerBoxes || []),
+    ...(hudFeatures?.armorBoxes || []),
+  ].find(box => box && box.w > 0 && box.h > 0);
+  if (hudBox) return Math.max(1, Math.round(Math.min(hudBox.w, hudBox.h) / 9));
+  return 1;
+}
+
 function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
-  ctx.lineWidth = 2.5;
+  const border = getDetectionOverlayBorder(slots, hudFeatures, ctx.canvas.width, ctx.canvas.height);
   for (let i = 0; i < slots.length; i++) {
     const slot = slots[i];
     const slotType = slotTypes && slotTypes[i] ? slotTypes[i] : '';
-    ctx.strokeStyle = SLOT_COLOR_MAP[slotType] || '#ff0';
     const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
     if (!rect) continue;
-    ctx.strokeRect(rect.x, rect.y, rect.sz, rect.sz);
+    drawOverlayBox(ctx, rect.x, rect.y, rect.sz, rect.sz, border, SLOT_COLOR_MAP[slotType] || '#ff0');
   }
   if (!hudFeatures) return;
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#fca5a5';
-  for (const b of hudFeatures.heartBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-  ctx.strokeStyle = '#fbbf24';
-  for (const b of hudFeatures.hungerBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-  ctx.strokeStyle = '#9ca3af';
-  for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  for (const b of hudFeatures.heartBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, border, '#fca5a5');
+  for (const b of hudFeatures.hungerBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, border, '#fbbf24');
+  for (const b of hudFeatures.armorBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, border, '#9ca3af');
 }
 
 function getPresetUnit(imgW, imgH, preset) {
