@@ -170,35 +170,37 @@ function revokePendingImageUrl() {
 
 function clearPreviewCacheImage() {
   const previewImage = document.getElementById('sbi-preview-image');
+  const previewOverlay = document.getElementById('sbi-preview-overlay');
   revokePreviewImageUrl();
   if (previewImage) {
     previewImage.hidden = true;
     previewImage.removeAttribute('src');
   }
+  if (previewOverlay) {
+    const overlayCtx = previewOverlay.getContext('2d');
+    if (overlayCtx) overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
+    previewOverlay.width = 0;
+    previewOverlay.height = 0;
+  }
 }
 
-function updatePreviewCacheImage(filename) {
+function updatePreviewCacheImage(filename, slots, hudFeatures, slotTypes) {
   const canvas = document.getElementById('sbi-canvas');
   const previewImage = document.getElementById('sbi-preview-image');
-  if (!canvas || !previewImage) return Promise.resolve();
-  return new Promise(resolve => {
-    canvas.toBlob(blob => {
-      if (!blob) {
-        clearPreviewCacheImage();
-        resolve();
-        return;
-      }
-      revokePreviewImageUrl();
-      const file = typeof File === 'function'
-        ? new File([blob], filename, { type: 'image/png' })
-        : blob;
-      _previewImageUrl = URL.createObjectURL(file);
-      previewImage.src = _previewImageUrl;
-      previewImage.alt = filename;
-      previewImage.hidden = false;
-      resolve();
-    }, 'image/png');
-  });
+  const previewOverlay = document.getElementById('sbi-preview-overlay');
+  if (previewImage) {
+    previewImage.src = _pendingImageUrl || canvas?.toDataURL('image/png') || '';
+    previewImage.alt = filename;
+    previewImage.hidden = false;
+  }
+  if (!canvas || !previewOverlay) return Promise.resolve();
+  previewOverlay.width = canvas.width;
+  previewOverlay.height = canvas.height;
+  const overlayCtx = previewOverlay.getContext('2d');
+  overlayCtx.imageSmoothingEnabled = false;
+  overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
+  drawDetectionOverlay(overlayCtx, slots || [], hudFeatures, slotTypes);
+  return Promise.resolve();
 }
 
 function summarizeSlotTypes(types) {
@@ -2384,7 +2386,7 @@ async function processImage(file) {
     // Phase 2: Replace black overlay with colored detection overlay
     ctx.drawImage(rawCanvas, 0, 0);
     drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
-    await updatePreviewCacheImage('cropbox_large_analysed.png');
+    await updatePreviewCacheImage('cropbox_large_analysed.png', slots, hudFeatures, slotTypes);
     preview.hidden = false;
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');

@@ -1009,16 +1009,10 @@ footer {
 .sbi-cropbox-overlay { z-index: 2; }
 .sbi-upload.replace-hover .sbi-cropbox-image,
 .sbi-upload.dragover .sbi-cropbox-image { filter: blur(4px) saturate(0.75); opacity: 0.30; transform: scale(1.015); }
-.sbi-preview { margin: 24px 0; }
-.sbi-preview-image,
-.sbi-preview canvas {
-  max-width: 100%;
-  border: 2px solid var(--border);
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-.sbi-preview canvas { display: none; }
+.sbi-preview { margin: 24px 0; position: relative; border: 2px solid var(--border); overflow: hidden; }
+.sbi-preview-image { width: 100%; height: auto; display: block; image-rendering: auto; }
+.sbi-preview-overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+#sbi-canvas { display: none; }
 .sbi-progress { text-align: center; padding: 24px; }
 .sbi-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: transparent; animation: sbi-spin .8s linear infinite; margin: 0 auto 12px; }
 @keyframes sbi-spin { to { transform: rotate(360deg); } }
