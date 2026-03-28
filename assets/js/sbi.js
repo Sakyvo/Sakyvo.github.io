@@ -1979,6 +1979,37 @@ function compareSlotToType(slot, packTex, targetType) {
   return best;
 }
 
+function getBestFingerprintSlotSimilarity(slot, targetType, cache) {
+  if (!slot || !targetType || !fingerprints || !fingerprints.packs) return 0;
+  const key = `${slot.index}:${targetType}`;
+  if (cache && Object.prototype.hasOwnProperty.call(cache, key)) return cache[key];
+  let best = 0;
+  for (const packData of Object.values(fingerprints.packs)) {
+    if (!packData || !packData[targetType]) continue;
+    const sim = compareSlotToType(slot, packData[targetType], targetType);
+    if (sim > best) best = sim;
+  }
+  if (cache) cache[key] = best;
+  return best;
+}
+
+function inferPrimaryWeaponSlotType(slot, sig, cache) {
+  if (!slot || slot.index !== 0 || !sig) return '';
+  if (!fingerprints || !fingerprints.packs) return '';
+  const dsBest = getBestFingerprintSlotSimilarity(slot, 'diamond_sword', cache);
+  const isBest = getBestFingerprintSlotSimilarity(slot, 'iron_sword', cache);
+  const epBest = getBestFingerprintSlotSimilarity(slot, 'ender_pearl', cache);
+  const weaponBlue = sig.blueFrac >= 0.04 || sig.meanB > sig.meanR + 8 || sig.meanB > sig.meanG + 6;
+  const swordLike = sig.coverage <= 0.46 && Math.abs(sig.rowSlope) >= 0.06 && sig.bboxTop <= 0.35 && sig.bboxBottom >= 0.55;
+
+  if ((weaponBlue || swordLike) && dsBest >= 0.48 && dsBest >= epBest - 0.03 && dsBest >= isBest - 0.02) {
+    return 'diamond_sword';
+  }
+  if (swordLike && isBest >= 0.50 && isBest > dsBest + 0.03) return 'iron_sword';
+  if (epBest >= 0.56 && epBest > dsBest + 0.04 && sig.meanLum < 92) return 'ender_pearl';
+  return '';
+}
+
 function sharpenSimilarityScore(v) {
   const x = clamp01(v);
   return clamp01(1 / (1 + Math.exp(-12 * (x - 0.58))));
@@ -1989,6 +2020,7 @@ function inferDisplaySlotTypes(slots) {
   if (!slots || !slots.length) return out;
 
   const ordered = [...slots].sort((a, b) => a.index - b.index);
+  const fingerprintScoreCache = {};
   for (const slot of ordered) {
     if (!slot || slot.index < 0 || slot.index > 8) continue;
 
@@ -2017,6 +2049,12 @@ function inferDisplaySlotTypes(slots) {
     // Health potions: red-heavy.
     if (sig.redFrac >= 0.075) {
       out[slot.index] = 'splash_potion';
+      continue;
+    }
+
+    const primaryWeaponType = inferPrimaryWeaponSlotType(slot, sig, fingerprintScoreCache);
+    if (primaryWeaponType) {
+      out[slot.index] = primaryWeaponType;
       continue;
     }
 
