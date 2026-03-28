@@ -92,10 +92,10 @@ const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
 const SBI_SCORE_WEIGHTS = {
-  // Keep widget signal low, then redistribute the removed weight to Slot + HP/Hun/Arm.
-  type: { diamond_sword: 5.0, ender_pearl: 5.0, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
-  hud: { health: 4.5, hunger: 1.35, armor: 0.95 },
-  mix: { slot: 0.30, hud: 0.56, widget: 0.18, slotNoHud: 0.75, widgetNoHud: 0.29 },
+  // Temporarily ignore widget and lean harder on DS/EP/HP to offset missed sword detections.
+  type: { diamond_sword: 7.5, ender_pearl: 6.5, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
+  hud: { health: 6.0, hunger: 1.35, armor: 0.95 },
+  mix: { slot: 0.38, hud: 0.66, widget: 0.00, slotNoHud: 1.04, widgetNoHud: 0.00 },
 };
 
 function clamp01(v) {
