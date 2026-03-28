@@ -85,6 +85,7 @@ const SLOT_COLOR_MAP = {
   apple_golden: '#fde68a',
   none: '#94a3b8',
 };
+const HEALTH_BOX_COLOR = '#ef4444';
 const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
@@ -2198,7 +2199,7 @@ function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
     drawOverlayBox(ctx, rect.x, rect.y, rect.sz, rect.sz, border, SLOT_COLOR_MAP[slotType] || '#ff0');
   }
   if (!hudFeatures) return;
-  for (const b of hudFeatures.heartBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, border, '#fca5a5');
+  for (const b of hudFeatures.heartBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, border, HEALTH_BOX_COLOR);
   for (const b of hudFeatures.hungerBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, border, '#fbbf24');
   for (const b of hudFeatures.armorBoxes || []) drawOverlayBox(ctx, b.x, b.y, b.w, b.h, border, '#9ca3af');
 }
@@ -2255,7 +2256,7 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   }
   const heartY = Math.round(widgetY - 17 * unit);
   const armorY = Math.round(heartY - 10 * unit);
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, '#fca5a5');
+  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, HEALTH_BOX_COLOR);
   for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + (182 - 9 - i * 8) * unit, heartY, 9 * unit, 9 * unit, 1, '#fbbf24');
   for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * 8 * unit, armorY, 9 * unit, 9 * unit, 1, '#9ca3af');
 }
