@@ -90,12 +90,12 @@ const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
-const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden', 'iron_sword'];
+const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden'];
 const SBI_SCORE_WEIGHTS = {
   // Ignore widget for now and make slot matching dominate HUD when rankings disagree.
-  type: { diamond_sword: 7.5, ender_pearl: 6.5, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0, iron_sword: 0.0 },
+  type: { diamond_sword: 7.5, ender_pearl: 6.5, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0 },
   hud: { health: 6.0, hunger: 1.35, armor: 0.95 },
-  mix: { slot: 0.62, hud: 0.42, widget: 0.00, slotNoHud: 1.04, widgetNoHud: 0.00 },
+  mix: { slot: 0.72, hud: 0.28, widget: 0.00, slotNoHud: 1.00, widgetNoHud: 0.00 },
 };
 
 function clamp01(v) {
@@ -1997,13 +1997,25 @@ function inferPrimaryWeaponSlotType(slot, sig, cache) {
   if (!slot || slot.index !== 0 || !sig) return '';
   if (!fingerprints || !fingerprints.packs) return '';
   const dsBest = getBestFingerprintSlotSimilarity(slot, 'diamond_sword', cache);
-  const isBest = getBestFingerprintSlotSimilarity(slot, 'iron_sword', cache);
   const epBest = getBestFingerprintSlotSimilarity(slot, 'ender_pearl', cache);
   const swordLike = sig.coverage <= 0.52 && Math.abs(sig.rowSlope) >= 0.045 && sig.bboxTop <= 0.38 && sig.bboxBottom >= 0.50;
 
-  if (dsBest >= 0.42 && dsBest >= epBest - 0.02 && dsBest >= isBest - 0.02) return 'diamond_sword';
-  if (swordLike && isBest >= 0.44 && isBest > dsBest + 0.02) return 'iron_sword';
+  if ((swordLike || sig.blueFrac >= 0.03) && dsBest >= 0.40 && dsBest >= epBest - 0.02) return 'diamond_sword';
   if (epBest >= 0.56 && epBest > dsBest + 0.04 && sig.meanLum < 92) return 'ender_pearl';
+  return '';
+}
+
+function inferMiddleConsumableSlotType(slot, sig, cache) {
+  if (!slot || slot.index < 2 || slot.index > 7 || !sig) return '';
+  if (!fingerprints || !fingerprints.packs) return '';
+  const potionBest = getBestFingerprintSlotSimilarity(slot, 'splash_potion', cache);
+  const steakBest = getBestFingerprintSlotSimilarity(slot, 'steak', cache);
+  const carrotBest = getBestFingerprintSlotSimilarity(slot, 'golden_carrot', cache);
+  const foodBest = Math.max(steakBest, carrotBest);
+  const potionLike = sig.redFrac >= 0.055 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+
+  if (potionBest >= 0.42 && (potionBest >= foodBest - 0.02 || potionLike)) return 'splash_potion';
+  if (foodBest >= 0.46 && foodBest > potionBest + 0.05) return steakBest >= carrotBest ? 'steak' : 'golden_carrot';
   return '';
 }
 
@@ -2070,6 +2082,12 @@ function inferDisplaySlotTypes(slots) {
       continue;
     }
 
+    const middleConsumableType = inferMiddleConsumableSlotType(slot, sig, fingerprintScoreCache);
+    if (middleConsumableType) {
+      out[slot.index] = middleConsumableType;
+      continue;
+    }
+
     // Health potions: red-heavy.
     if (sig.redFrac >= 0.09 && sig.yellowFrac < 0.10) {
       out[slot.index] = 'splash_potion';
@@ -2089,7 +2107,7 @@ function inferDisplaySlotTypes(slots) {
     }
 
     if (sig.n < 70) {
-      out[slot.index] = blueStrong ? 'diamond_sword' : 'iron_sword';
+      out[slot.index] = blueStrong ? 'diamond_sword' : 'none';
       continue;
     }
 
