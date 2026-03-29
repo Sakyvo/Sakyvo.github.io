@@ -94,9 +94,17 @@ const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak
 const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
   // Ignore widget for now and make slot matching dominate HUD when rankings disagree.
-  type: { diamond_sword: 7.5, ender_pearl: 6.5, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0 },
+  type: { diamond_sword: 7.5, ender_pearl: 7.5, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0 },
   hud: { health: 6.0, hunger: 1.35, armor: 0.95 },
   mix: { slot: 0.72, hud: 0.28, widget: 0.00, slotNoHud: 1.00, widgetNoHud: 0.00 },
+};
+const SLOT_STRONG_MATCH_THRESHOLDS = {
+  diamond_sword: 0.56,
+  ender_pearl: 0.60,
+  splash_potion: 0.50,
+  steak: 0.58,
+  golden_carrot: 0.58,
+  apple_golden: 0.58,
 };
 
 function clamp01(v) {
@@ -156,6 +164,10 @@ function formatSearchInfo(info) {
 
 function getPerTypeScore(info, key) {
   return info && info.perTypeScores ? info.perTypeScores[key] : undefined;
+}
+
+function getStrongMatchThreshold(type) {
+  return SLOT_STRONG_MATCH_THRESHOLDS[type] || 0.54;
 }
 
 function renderPerTypeScoreTip(info) {
@@ -2021,7 +2033,7 @@ function compareSlotVariant(extracted, packTex, targetType) {
   }
   if ((targetType === 'diamond_sword' || targetType === 'ender_pearl') && extracted.sig && packTex.sig) {
     const sigSim = signatureSimilarity(extracted.sig, packTex.sig, targetType);
-    if (targetType === 'diamond_sword') sim = sim * 0.65 + sigSim * 0.35;
+    if (targetType === 'diamond_sword') sim = sim * 0.58 + sigSim * 0.42;
     else sim = sim * 0.55 + sigSim * 0.45;
   }
   return sim;
@@ -2272,8 +2284,9 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       slotWeighted += sim * w;
       slotWeights += w;
       certaintySum += certainty;
-      if (sim >= 0.54) strongSlots++;
-      else slotPenalty += (0.54 - sim) * (0.8 + activity * 0.7);
+      const strongThreshold = getStrongMatchThreshold(targetType);
+      if (sim >= strongThreshold) strongSlots++;
+      else slotPenalty += (strongThreshold - sim) * (0.8 + activity * 0.7);
     }
     const canRank = !!slotWeights && activeSlots >= 3;
 
