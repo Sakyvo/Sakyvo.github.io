@@ -20,39 +20,29 @@ function addBox(x, y, w, h, border, color) {
 }
 
 function addGridRow(x, y, count, side, color) {
-  const step = Math.max(1, side - border);
-  const totalWidth = step * Math.max(0, count - 1) + side;
-  rects += `<rect x="${x}" y="${y}" width="${totalWidth}" height="${border}" fill="${color}"/>`;
-  rects += `<rect x="${x}" y="${y + side - border}" width="${totalWidth}" height="${border}" fill="${color}"/>`;
-  for (let i = 0; i <= count; i++) {
-    rects += `<rect x="${x + i * step}" y="${y}" width="${border}" height="${side}" fill="${color}"/>`;
+  const step = Math.max(1, Math.round(side));
+  const cellSide = step + 1;
+  for (let i = 0; i < count; i++) {
+    addBox(x + i * step - 1, y, cellSide, cellSide, border, color);
   }
 }
 
 const slotX = hotbarX + inset;
 const slotY = hotbarY + inset;
-const slotW = Math.round(181 * unit);
-const slotH = Math.round(20 * unit);
-
-rects += `<rect x="${slotX}" y="${slotY}" width="${slotW}" height="${border}" fill="#000"/>`;
-rects += `<rect x="${slotX}" y="${slotY + slotH - border}" width="${slotW}" height="${border}" fill="#000"/>`;
-for (let i = 0; i <= 9; i++) {
-  rects += `<rect x="${hotbarX + Math.round((1 + i * 20) * unit)}" y="${slotY}" width="${border}" height="${slotH}" fill="#000"/>`;
-}
+addGridRow(slotX, slotY, 9, Math.round(20 * unit), '#000');
 
 const heartY = hotbarY - Math.round(17 * unit);
-const hudSpan = Math.max(1, Math.round(81 * unit));
-const hudSize = Math.max(1, Math.floor((hudSpan + 9) / 10));
+const hudStep = Math.max(1, Math.round(8 * unit));
 
 // Hearts (red)
-addGridRow(hotbarX, heartY, 10, hudSize, '#ef4444');
+addGridRow(hotbarX, heartY, 10, hudStep, '#ef4444');
 
 // Hunger (yellow)
-addGridRow(hotbarX + Math.round(101 * unit), heartY, 10, hudSize, '#fbbf24');
+addGridRow(hotbarX + Math.round(101 * unit), heartY, 10, hudStep, '#fbbf24');
 
 // Armor (gray)
 const armorY = heartY - Math.round(10 * unit);
-addGridRow(hotbarX, armorY, 10, hudSize, '#9ca3af');
+addGridRow(hotbarX, armorY, 10, hudStep, '#9ca3af');
 
 const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
 
