@@ -91,6 +91,7 @@ const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden'];
+const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
   // Ignore widget for now and make slot matching dominate HUD when rankings disagree.
   type: { diamond_sword: 7.5, ender_pearl: 6.5, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0 },
@@ -155,6 +156,68 @@ function formatSearchInfo(info) {
 
 function getPerTypeScore(info, key) {
   return info && info.perTypeScores ? info.perTypeScores[key] : undefined;
+}
+
+function renderPerTypeScoreTip(info) {
+  if (!info || !info.perTypeScores) return '';
+  const pts = info.perTypeScores;
+  return `<table><tr>${PER_TYPE_SCORE_ORDER.map(t => `<th>${t}</th>`).join('')}</tr><tr>${PER_TYPE_SCORE_ORDER.map(t => `<td>${pts[t] !== undefined ? fmtPct(pts[t]) : '-'}</td>`).join('')}</tr></table>`;
+}
+
+function positionScoreTip(panel, tip, td) {
+  const panelRect = panel.getBoundingClientRect();
+  const tdRect = td.getBoundingClientRect();
+  const tipW = tip.offsetWidth;
+  const tipH = tip.offsetHeight;
+  let left = tdRect.left - panelRect.left + tdRect.width / 2 - tipW / 2;
+  left = Math.max(0, Math.min(left, panelRect.width - tipW));
+  tip.style.left = left + 'px';
+  tip.style.top = (tdRect.top - panelRect.top - tipH - 4) + 'px';
+}
+
+function bindScoreTip(panel, wrap, tip, cellIndex) {
+  if (!panel || !wrap || !tip) return;
+
+  const showTip = (td, packName) => {
+    const html = renderPerTypeScoreTip(_lastMatchDetails[packName]);
+    if (!html) {
+      tip.hidden = true;
+      return;
+    }
+    tip.innerHTML = html;
+    tip.hidden = false;
+    positionScoreTip(panel, tip, td);
+  };
+
+  const hideTip = () => { tip.hidden = true; };
+  const isTargetCell = td => td && td.cellIndex === cellIndex;
+  let activePack = null;
+
+  wrap.addEventListener('mouseover', e => {
+    const td = e.target.closest('td');
+    if (!isTargetCell(td)) return;
+    const tr = td.closest('tr[data-pack]');
+    if (tr) showTip(td, tr.dataset.pack);
+  });
+
+  wrap.addEventListener('mouseout', e => {
+    const td = e.target.closest('td');
+    if (isTargetCell(td)) hideTip();
+  });
+
+  wrap.addEventListener('click', e => {
+    const td = e.target.closest('td');
+    if (!isTargetCell(td)) return;
+    const tr = td.closest('tr[data-pack]');
+    if (!tr) return;
+    if (activePack === tr.dataset.pack && !tip.hidden) {
+      hideTip();
+      activePack = null;
+      return;
+    }
+    showTip(td, tr.dataset.pack);
+    activePack = tr.dataset.pack;
+  });
 }
 
 function revokePreviewImageUrl() {
@@ -494,18 +557,14 @@ function renderPackScoreSearch() {
   el.innerHTML = `
     <table class="sbi-search-table">
       <thead>
-        <tr><th>#</th><th>Pack</th><th>Total</th><th>DS</th><th>EP</th><th>HL</th><th>SK/GC</th><th>Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Cover</th><th>Cert</th></tr>
+        <tr><th>#</th><th>Pack</th><th>Total</th><th title="Hover or tap to show DS / EP / HL / SK/GC">Slot</th><th>Widget</th><th>HP</th><th>Hun</th><th>Arm</th><th>Cover</th><th>Cert</th></tr>
       </thead>
       <tbody>${matches.map((row, index) => `
-        <tr>
+        <tr data-pack="${row.name.replace(/"/g, '&quot;')}">
           <td>${index + 1}</td>
           <td title="${row.name}"><a href="/p/${encodeURIComponent(row.name)}/" target="_blank" rel="noopener noreferrer">${row.displayName}</a></td>
           <td>${fmtPct(row.totalScore)}</td>
-          <td>${fmtPct(row.perTypeScores.DS)}</td>
-          <td>${fmtPct(row.perTypeScores.EP)}</td>
-          <td>${fmtPct(row.perTypeScores.HL)}</td>
-          <td>${fmtPct(row.perTypeScores['SK/GC'])}</td>
-          <td>${fmtPct(row.slotScore)}</td>
+          <td class="sbi-score-slot-cell" title="Hover or tap to show DS / EP / HL / SK/GC">${fmtPct(row.slotScore)}</td>
           <td>${fmtPct(row.widgetScore)}</td>
           <td>${fmtPct(row.healthScore)}</td>
           <td>${fmtPct(row.hungerScore)}</td>
@@ -2730,47 +2789,12 @@ function init() {
   const debugPanel = document.getElementById('sbi-debug');
   const debugWrap = document.querySelector('.sbi-debug-wrap');
   const debugTip = document.getElementById('sbi-debug-tip');
-  if (debugPanel && debugWrap && debugTip) {
-    const TYPE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
-    const showTip = (td, packName) => {
-      const info = _lastMatchDetails[packName];
-      if (!info || !info.perTypeScores) { debugTip.hidden = true; return; }
-      const pts = info.perTypeScores;
-      debugTip.innerHTML = `<table><tr>${TYPE_ORDER.map(t => `<th>${t}</th>`).join('')}</tr><tr>${TYPE_ORDER.map(t => `<td>${pts[t] !== undefined ? fmtPct(pts[t]) : '-'}</td>`).join('')}</tr></table>`;
-      const panelRect = debugPanel.getBoundingClientRect();
-      const tdRect = td.getBoundingClientRect();
-      debugTip.hidden = false;
-      const tipW = debugTip.offsetWidth;
-      const tipH = debugTip.offsetHeight;
-      let left = tdRect.left - panelRect.left + tdRect.width / 2 - tipW / 2;
-      left = Math.max(0, Math.min(left, panelRect.width - tipW));
-      debugTip.style.left = left + 'px';
-      debugTip.style.top = (tdRect.top - panelRect.top - tipH - 4) + 'px';
-    };
-    const hideTip = () => { debugTip.hidden = true; };
+  bindScoreTip(debugPanel, debugWrap, debugTip, 3);
 
-    const isSlotCol = td => td && td.cellIndex === 3;
-
-    debugWrap.addEventListener('mouseover', e => {
-      const td = e.target.closest('td');
-      if (!isSlotCol(td)) return;
-      const tr = td.closest('tr[data-pack]');
-      if (tr) showTip(td, tr.dataset.pack);
-    });
-    debugWrap.addEventListener('mouseout', e => {
-      const td = e.target.closest('td');
-      if (isSlotCol(td)) hideTip();
-    });
-    let activePack = null;
-    debugWrap.addEventListener('click', e => {
-      const td = e.target.closest('td');
-      if (!isSlotCol(td)) return;
-      const tr = td.closest('tr[data-pack]');
-      if (!tr) return;
-      if (activePack === tr.dataset.pack && !debugTip.hidden) { hideTip(); activePack = null; }
-      else { showTip(td, tr.dataset.pack); activePack = tr.dataset.pack; }
-    });
-  }
+  const searchPanel = document.getElementById('sbi-search-wrap');
+  const searchResults = document.getElementById('sbi-search-results');
+  const searchTip = document.getElementById('sbi-search-tip');
+  bindScoreTip(searchPanel, searchResults, searchTip, 3);
 }
 
 init();
