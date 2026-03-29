@@ -9,8 +9,6 @@ const widgetH = Math.round(22 * unit);
 const hotbarX = Math.round((W - widgetW) / 2);
 const hotbarY = H - widgetH;
 const inset = Math.max(1, Math.round(unit));
-const slotStep = Math.max(1, Math.round(8 * unit));
-const hudSize = Math.max(1, Math.round(9 * unit));
 
 let rects = '';
 
@@ -19,6 +17,16 @@ function addBox(x, y, w, h, border, color) {
   rects += `<rect x="${x}" y="${y + h - border}" width="${w}" height="${border}" fill="${color}"/>`;
   rects += `<rect x="${x}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
   rects += `<rect x="${x + w - border}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
+}
+
+function addGridRow(x, y, count, side, color) {
+  const step = Math.max(1, side - border);
+  const totalWidth = step * Math.max(0, count - 1) + side;
+  rects += `<rect x="${x}" y="${y}" width="${totalWidth}" height="${border}" fill="${color}"/>`;
+  rects += `<rect x="${x}" y="${y + side - border}" width="${totalWidth}" height="${border}" fill="${color}"/>`;
+  for (let i = 0; i <= count; i++) {
+    rects += `<rect x="${x + i * step}" y="${y}" width="${border}" height="${side}" fill="${color}"/>`;
+  }
 }
 
 const slotX = hotbarX + inset;
@@ -33,22 +41,18 @@ for (let i = 0; i <= 9; i++) {
 }
 
 const heartY = hotbarY - Math.round(17 * unit);
+const hudSpan = Math.max(1, Math.round(81 * unit));
+const hudSize = Math.max(1, Math.floor((hudSpan + 9) / 10));
 
 // Hearts (red)
-for (let i = 0; i < 10; i++) {
-  addBox(hotbarX + i * slotStep, heartY, hudSize, hudSize, border, '#ef4444');
-}
+addGridRow(hotbarX, heartY, 10, hudSize, '#ef4444');
 
 // Hunger (yellow)
-for (let i = 0; i < 10; i++) {
-  addBox(hotbarX + Math.round((182 - 9 - i * 8) * unit), heartY, hudSize, hudSize, border, '#fbbf24');
-}
+addGridRow(hotbarX + Math.round(101 * unit), heartY, 10, hudSize, '#fbbf24');
 
 // Armor (gray)
 const armorY = heartY - Math.round(10 * unit);
-for (let i = 0; i < 10; i++) {
-  addBox(hotbarX + i * slotStep, armorY, hudSize, hudSize, border, '#9ca3af');
-}
+addGridRow(hotbarX, armorY, 10, hudSize, '#9ca3af');
 
 const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
 

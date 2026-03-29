@@ -2360,18 +2360,9 @@ function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
     drawOverlayBox(ctx, rect.x, rect.y, rect.sz, rect.sz, border, SLOT_COLOR_MAP[slotType] || '#ff0');
   }
   if (!hudFeatures) return;
-  for (const b of hudFeatures.heartBoxes || []) {
-    const side = Math.max(1, Math.round(Math.min(b.w, b.h)));
-    drawOverlayBox(ctx, b.x, b.y, side, side, border, HEALTH_BOX_COLOR);
-  }
-  for (const b of hudFeatures.hungerBoxes || []) {
-    const side = Math.max(1, Math.round(Math.min(b.w, b.h)));
-    drawOverlayBox(ctx, b.x, b.y, side, side, border, '#fbbf24');
-  }
-  for (const b of hudFeatures.armorBoxes || []) {
-    const side = Math.max(1, Math.round(Math.min(b.w, b.h)));
-    drawOverlayBox(ctx, b.x, b.y, side, side, border, '#9ca3af');
-  }
+  drawOverlayBoxRow(ctx, hudFeatures.heartBoxes || [], HEALTH_BOX_COLOR);
+  drawOverlayBoxRow(ctx, hudFeatures.hungerBoxes || [], '#fbbf24');
+  drawOverlayBoxRow(ctx, hudFeatures.armorBoxes || [], '#9ca3af');
 }
 
 function getPresetUnit(imgW, imgH, preset) {
@@ -2397,6 +2388,41 @@ function drawOverlayBox(ctx, x, y, w, h, thickness, color) {
   ctx.fillRect(Math.max(left, right - border), top + border, border, innerHeight);
 }
 
+function drawOverlayGridRow(ctx, x, y, count, side, color) {
+  const border = 1;
+  const left = Math.round(x);
+  const top = Math.round(y);
+  const cellSide = Math.max(1, Math.round(side));
+  const step = Math.max(1, cellSide - border);
+  const totalWidth = step * Math.max(0, count - 1) + cellSide;
+  ctx.fillStyle = color;
+  ctx.fillRect(left, top, totalWidth, border);
+  ctx.fillRect(left, top + cellSide - border, totalWidth, border);
+  for (let i = 0; i <= count; i++) {
+    ctx.fillRect(left + i * step, top, border, cellSide);
+  }
+}
+
+function drawOverlayBoxRow(ctx, boxes, color) {
+  if (!boxes || !boxes.length) return;
+  const sorted = [...boxes]
+    .filter(b => b && isFinite(b.x) && isFinite(b.y) && isFinite(b.w) && isFinite(b.h))
+    .sort((a, b) => a.x - b.x);
+  if (!sorted.length) return;
+  const count = sorted.length;
+  const first = sorted[0];
+  const last = sorted[count - 1];
+  const leftEdge = Math.round(first.x);
+  const topEdge = Math.round(first.y);
+  const spanWidth = Math.max(1, Math.round(last.x + last.w) - leftEdge);
+  const meanSide = sorted.reduce((sum, b) => sum + Math.min(b.w, b.h), 0) / count;
+  const sideBySpan = Math.max(1, Math.floor((spanWidth + count - 1) / count));
+  const side = Math.max(1, Math.min(Math.round(meanSide), sideBySpan));
+  const totalWidth = (side - 1) * Math.max(0, count - 1) + side;
+  const offsetX = Math.round((spanWidth - totalWidth) / 2);
+  drawOverlayGridRow(ctx, leftEdge + offsetX, topEdge, count, side, color);
+}
+
 function drawPendingOverlay(ctx, imgW, imgH, preset) {
   const unit = getPresetUnit(imgW, imgH, preset);
   if (unit < 1) return;
@@ -2406,8 +2432,6 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   const widgetX = Math.round((imgW - widgetW) / 2);
   const widgetY = Math.round(imgH - widgetH);
   const inset = Math.max(1, Math.round(unit));
-  const step = Math.max(1, Math.round(8 * unit));
-  const hudSize = Math.max(1, Math.round(9 * unit));
   const slotLeft = widgetX + inset;
   const slotTop = widgetY + inset;
   const slotWidth = Math.max(1, Math.round(181 * unit));
@@ -2422,9 +2446,11 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   }
   const heartY = Math.round(widgetY - 17 * unit);
   const armorY = heartY - Math.max(1, Math.round(10 * unit));
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * step, heartY, hudSize, hudSize, border, HEALTH_BOX_COLOR);
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + Math.max(1, Math.round((182 - 9 - i * 8) * unit)), heartY, hudSize, hudSize, border, '#fbbf24');
-  for (let i = 0; i < 10; i++) drawOverlayBox(ctx, widgetX + i * step, armorY, hudSize, hudSize, border, '#9ca3af');
+  const hudSpan = Math.max(1, Math.round(81 * unit));
+  const hudSide = Math.max(1, Math.floor((hudSpan + 9) / 10));
+  drawOverlayGridRow(ctx, widgetX, heartY, 10, hudSide, HEALTH_BOX_COLOR);
+  drawOverlayGridRow(ctx, widgetX + Math.round(101 * unit), heartY, 10, hudSide, '#fbbf24');
+  drawOverlayGridRow(ctx, widgetX, armorY, 10, hudSide, '#9ca3af');
 }
 
 function scoreColor(pct) {
