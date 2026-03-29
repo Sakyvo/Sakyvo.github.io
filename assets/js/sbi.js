@@ -2346,12 +2346,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   return { results: results.slice(0, 80), slotTypes: displaySlotTypes, details };
 }
 
-function getDetectionOverlayBorder(slots, hudFeatures, imgW, imgH) {
-  return 1;
-}
-
 function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
-  const border = getDetectionOverlayBorder(slots, hudFeatures, ctx.canvas.width, ctx.canvas.height);
   const slotBoxes = [];
   const slotColors = [];
   for (let i = 0; i < slots.length; i++) {
@@ -2392,22 +2387,11 @@ function drawOverlayBox(ctx, x, y, w, h, thickness, color) {
   ctx.fillRect(Math.max(left, right - border), top + border, border, innerHeight);
 }
 
-function gcdInt(a, b) {
-  let x = Math.abs(Math.round(a));
-  let y = Math.abs(Math.round(b));
-  while (y) {
-    const t = x % y;
-    x = y;
-    y = t;
-  }
-  return Math.max(0, x);
-}
-
-function drawOverlayGridRow(ctx, x, y, count, step, color) {
+function drawOverlayGridRow(ctx, x, y, count, step, side, color) {
   const baseX = Math.round(x);
   const top = Math.round(y);
   const cellStep = Math.max(1, Math.round(step));
-  const cellSide = cellStep + 1;
+  const cellSide = Math.max(1, Math.round(side)) + 1;
   for (let i = 0; i < count; i++) {
     const cellColor = Array.isArray(color) ? (color[i] || color[color.length - 1] || '#ff0') : color;
     drawOverlayBox(ctx, baseX + i * cellStep - 1, top, cellSide, cellSide, 1, cellColor);
@@ -2417,31 +2401,17 @@ function drawOverlayGridRow(ctx, x, y, count, step, color) {
 function drawOverlayBoxRow(ctx, boxes, color) {
   if (!boxes || !boxes.length) return;
   const colorList = Array.isArray(color) ? color : null;
-  const entries = boxes
-    .map((box, index) => ({ box, color: colorList ? colorList[index] : color }))
-    .filter(entry => {
-      const b = entry.box;
-      return b && isFinite(b.x) && isFinite(b.y) && isFinite(b.w) && isFinite(b.h);
-    })
-    .sort((a, b) => a.box.x - b.box.x);
-  if (!entries.length) return;
-  let step = 0;
-  for (let i = 1; i < entries.length; i++) {
-    const diff = Math.round(entries[i].box.x - entries[i - 1].box.x);
-    if (diff > 0) step = step ? gcdInt(step, diff) : diff;
-  }
-  if (step < 1) {
-    step = Math.max(1, Math.round(Math.min(entries[0].box.w, entries[0].box.h)) - 1);
-  }
-  for (const entry of entries) {
+  for (let i = 0; i < boxes.length; i++) {
+    const box = boxes[i];
+    if (!box || !isFinite(box.x) || !isFinite(box.y) || !isFinite(box.w) || !isFinite(box.h)) continue;
     drawOverlayBox(
       ctx,
-      Math.round(entry.box.x) - 1,
-      Math.round(entry.box.y),
-      step + 1,
-      step + 1,
+      Math.round(box.x) - 1,
+      Math.round(box.y),
+      Math.max(1, Math.round(box.w)) + 1,
+      Math.max(1, Math.round(box.h)) + 1,
       1,
-      entry.color || '#ff0'
+      (colorList ? colorList[i] : color) || '#ff0'
     );
   }
 }
@@ -2456,14 +2426,15 @@ function drawPendingOverlay(ctx, imgW, imgH, preset) {
   const inset = Math.max(1, Math.round(unit));
   const slotLeft = widgetX + inset;
   const slotTop = widgetY + inset;
-  const slotStep = Math.max(1, Math.round(20 * unit));
-  drawOverlayGridRow(ctx, slotLeft, slotTop, 9, slotStep, '#000');
+  const slotSide = Math.max(1, Math.round(20 * unit));
+  drawOverlayGridRow(ctx, slotLeft, slotTop, 9, slotSide, slotSide, '#000');
   const heartY = Math.round(widgetY - 17 * unit);
   const armorY = heartY - Math.max(1, Math.round(10 * unit));
   const hudStep = Math.max(1, Math.round(8 * unit));
-  drawOverlayGridRow(ctx, widgetX, heartY, 10, hudStep, HEALTH_BOX_COLOR);
-  drawOverlayGridRow(ctx, widgetX + Math.round(101 * unit), heartY, 10, hudStep, '#fbbf24');
-  drawOverlayGridRow(ctx, widgetX, armorY, 10, hudStep, '#9ca3af');
+  const hudSide = Math.max(1, Math.round(9 * unit));
+  drawOverlayGridRow(ctx, widgetX, heartY, 10, hudStep, hudSide, HEALTH_BOX_COLOR);
+  drawOverlayGridRow(ctx, widgetX + Math.round(101 * unit), heartY, 10, hudStep, hudSide, '#fbbf24');
+  drawOverlayGridRow(ctx, widgetX, armorY, 10, hudStep, hudSide, '#9ca3af');
 }
 
 function scoreColor(pct) {
