@@ -3,8 +3,14 @@ const path = require('path');
 
 const W = 1280, H = 720;
 const unit = 2;
-const hotbarX = (W - 182 * unit) / 2;
-const hotbarY = H - 22 * unit;
+const border = 1;
+const widgetW = Math.round(182 * unit);
+const widgetH = Math.round(22 * unit);
+const hotbarX = Math.round((W - widgetW) / 2);
+const hotbarY = H - widgetH;
+const inset = Math.max(1, Math.round(unit));
+const slotStep = Math.max(1, Math.round(8 * unit));
+const hudSize = Math.max(1, Math.round(9 * unit));
 
 let rects = '';
 
@@ -15,33 +21,33 @@ function addBox(x, y, w, h, border, color) {
   rects += `<rect x="${x + w - border}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
 }
 
-const slotX = hotbarX + unit;
-const slotY = hotbarY + unit;
-const slotW = 181 * unit;
-const slotH = 20 * unit;
+const slotX = hotbarX + inset;
+const slotY = hotbarY + inset;
+const slotW = Math.round(181 * unit);
+const slotH = Math.round(20 * unit);
 
-rects += `<rect x="${slotX}" y="${slotY}" width="${slotW}" height="${unit}" fill="#000"/>`;
-rects += `<rect x="${slotX}" y="${slotY + slotH - unit}" width="${slotW}" height="${unit}" fill="#000"/>`;
+rects += `<rect x="${slotX}" y="${slotY}" width="${slotW}" height="${border}" fill="#000"/>`;
+rects += `<rect x="${slotX}" y="${slotY + slotH - border}" width="${slotW}" height="${border}" fill="#000"/>`;
 for (let i = 0; i <= 9; i++) {
-  rects += `<rect x="${hotbarX + (1 + i * 20) * unit}" y="${slotY}" width="${unit}" height="${slotH}" fill="#000"/>`;
+  rects += `<rect x="${hotbarX + Math.round((1 + i * 20) * unit)}" y="${slotY}" width="${border}" height="${slotH}" fill="#000"/>`;
 }
 
-const heartY = hotbarY - 17 * unit;
+const heartY = hotbarY - Math.round(17 * unit);
 
 // Hearts (red)
 for (let i = 0; i < 10; i++) {
-  addBox(hotbarX + i * 8 * unit, heartY, 9 * unit, 9 * unit, 1, '#ef4444');
+  addBox(hotbarX + i * slotStep, heartY, hudSize, hudSize, border, '#ef4444');
 }
 
 // Hunger (yellow)
 for (let i = 0; i < 10; i++) {
-  addBox(hotbarX + (182 - 9 - i * 8) * unit, heartY, 9 * unit, 9 * unit, 1, '#fbbf24');
+  addBox(hotbarX + Math.round((182 - 9 - i * 8) * unit), heartY, hudSize, hudSize, border, '#fbbf24');
 }
 
 // Armor (gray)
-const armorY = heartY - 10 * unit;
+const armorY = heartY - Math.round(10 * unit);
 for (let i = 0; i < 10; i++) {
-  addBox(hotbarX + i * 8 * unit, armorY, 9 * unit, 9 * unit, 1, '#9ca3af');
+  addBox(hotbarX + i * slotStep, armorY, hudSize, hudSize, border, '#9ca3af');
 }
 
 const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
