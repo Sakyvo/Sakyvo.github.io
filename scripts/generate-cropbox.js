@@ -21,9 +21,9 @@ function addBox(x, y, w, h, border, color) {
 
 function addGridRow(x, y, count, step, side, color) {
   const cellStep = Math.max(1, Math.round(step));
-  const cellSide = Math.max(1, Math.round(side)) + 1;
+  const cellSide = Math.max(1, Math.round(side));
   for (let i = 0; i < count; i++) {
-    addBox(x + i * cellStep - 1, y, cellSide, cellSide, border, color);
+    addBox(x + i * cellStep, y, cellSide, cellSide, border, color);
   }
 }
 
