@@ -12,18 +12,22 @@ const inset = Math.max(1, Math.round(unit));
 
 let rects = '';
 
-function addBox(x, y, w, h, border, color) {
+function addBox(x, y, w, h, border, color, hideRightBorder) {
   rects += `<rect x="${x}" y="${y}" width="${w}" height="${border}" fill="${color}"/>`;
   rects += `<rect x="${x}" y="${y + h - border}" width="${w}" height="${border}" fill="${color}"/>`;
   rects += `<rect x="${x}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
-  rects += `<rect x="${x + w - border}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
+  if (!hideRightBorder) {
+    rects += `<rect x="${x + w - border}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
+  }
 }
 
 function addGridRow(x, y, count, step, side, color) {
   const cellStep = Math.max(1, Math.round(step));
   const cellSide = Math.max(1, Math.round(side));
   for (let i = 0; i < count; i++) {
-    addBox(x + i * cellStep, y, cellSide, cellSide, border, color);
+    const cellX = x + i * cellStep;
+    const nextCellX = i < count - 1 ? x + (i + 1) * cellStep : null;
+    addBox(cellX, y, cellSide, cellSide, border, color, nextCellX === cellX + cellSide);
   }
 }
 
@@ -48,7 +52,7 @@ addGridRow(hotbarX, armorY, 10, hudStep, hudSide, '#9ca3af');
 
 const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
 
-const outPath = path.join(__dirname, '..', 'sbi', 'cropbox_large.png');
+const outPath = path.join(__dirname, '..', 'sbi', 'cropbox_preview.png');
 sharp(Buffer.from(svg)).png().toFile(outPath)
   .then(() => console.log(`Created ${outPath} (${W}x${H})`))
   .catch(e => { console.error(e); process.exit(1); });

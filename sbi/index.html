@@ -32,8 +32,8 @@
     <div class="sbi-upload" id="sbi-upload">
       <p class="sbi-upload-text">Drag &amp; drop, click, or paste a screenshot</p>
       <input type="file" id="sbi-file" accept="image/*" hidden>
-      <img id="sbi-cropbox-image" class="sbi-cropbox-image" alt="Upload preview" hidden>
-      <canvas id="sbi-cropbox-overlay" class="sbi-cropbox-overlay"></canvas>
+      <img id="sbi-cropbox-preview-image" class="sbi-cropbox-preview-image" alt="cropbox_preview" hidden>
+      <canvas id="sbi-cropbox-preview-overlay" class="sbi-cropbox-preview-overlay"></canvas>
     </div>
 
     <div class="sbi-controls">
@@ -52,8 +52,8 @@
     </div>
 
     <div class="sbi-preview" id="sbi-preview" hidden>
-      <img class="sbi-preview-image" id="sbi-preview-image" alt="sbi.png" hidden>
-      <canvas class="sbi-preview-overlay" id="sbi-preview-overlay"></canvas>
+      <img class="sbi-cropbox-image" id="sbi-cropbox-image" alt="cropbox" hidden>
+      <canvas class="sbi-cropbox-overlay" id="sbi-cropbox-overlay"></canvas>
       <canvas id="sbi-canvas"></canvas>
     </div>
 
