@@ -270,12 +270,51 @@ function updatePreviewCacheImage(filename, widgetRect, slotTypes) {
     previewImage.hidden = false;
   }
   if (!canvas || !previewOverlay) return Promise.resolve();
-  previewOverlay.width = canvas.width;
-  previewOverlay.height = canvas.height;
-  const overlayCtx = previewOverlay.getContext('2d');
-  overlayCtx.imageSmoothingEnabled = false;
-  overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
-  drawDetectionOverlay(overlayCtx, [], null, slotTypes, widgetRect);
+  const redraw = () => {
+    const overlayCtx = previewOverlay.getContext('2d');
+    if (!overlayCtx) return;
+
+    // Render at displayed size so 1px borders stay 1px and don't disappear when downscaled.
+    let cssW = 0;
+    let cssH = 0;
+
+    if (previewImage && !previewImage.hidden) {
+      const imgRect = previewImage.getBoundingClientRect();
+      cssW = imgRect && imgRect.width ? imgRect.width : 0;
+      cssH = imgRect && imgRect.height ? imgRect.height : 0;
+    }
+
+    if (!(cssW > 0) || !(cssH > 0)) {
+      const wrap = document.getElementById('sbi-preview');
+      const wrapRect = wrap ? wrap.getBoundingClientRect() : null;
+      cssW = wrapRect && wrapRect.width ? wrapRect.width : 0;
+      cssH = cssW > 0 ? (cssW * canvas.height / canvas.width) : 0;
+    }
+
+    if (!(cssW > 0) || !(cssH > 0)) {
+      cssW = canvas.width;
+      cssH = canvas.height;
+    }
+
+    previewOverlay.width = Math.max(1, Math.round(cssW));
+    previewOverlay.height = Math.max(1, Math.round(cssH));
+    overlayCtx.imageSmoothingEnabled = false;
+    overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
+
+    const scaleX = previewOverlay.width / canvas.width;
+    const scaleY = previewOverlay.height / canvas.height;
+    const scaledWidgetRect = widgetRect ? ({
+      x: widgetRect.x * scaleX,
+      y: widgetRect.y * scaleY,
+      w: widgetRect.w * scaleX,
+      h: widgetRect.h * scaleY,
+    }) : null;
+
+    drawDetectionOverlay(overlayCtx, [], null, slotTypes, scaledWidgetRect);
+  };
+
+  redraw();
+  if (window.requestAnimationFrame) requestAnimationFrame(redraw);
   return Promise.resolve();
 }
 
@@ -2454,6 +2493,10 @@ function drawOverlayBoxRow(ctx, boxes, color) {
     const box = boxes[i];
     if (!box || !isFinite(box.x) || !isFinite(box.y) || !isFinite(box.w) || !isFinite(box.h)) continue;
     rowBoxes.push({
+      x: box.x,
+      y: box.y,
+      w: box.w,
+      h: box.h,
       bounds: getOverlayBoxBounds(box.x, box.y, box.w, box.h),
       color: (colorList ? colorList[i] : color) || '#ff0',
     });
@@ -2464,6 +2507,33 @@ function drawOverlayBoxRow(ctx, boxes, color) {
     a.bounds.right - b.bounds.right ||
     a.bounds.bottom - b.bounds.bottom
   );
+
+  const isContiguousRow = () => {
+    if (rowBoxes.length < 2) return false;
+    for (let i = 0; i < rowBoxes.length - 1; i++) {
+      const cur = rowBoxes[i];
+      const next = rowBoxes[i + 1];
+      const eps = Math.max(0.25, Math.max(cur.w, next.w) * 0.03);
+      if (Math.abs((cur.x + cur.w) - next.x) > eps) return false;
+      if (Math.abs(cur.y - next.y) > eps) return false;
+      if (Math.abs(cur.h - next.h) > eps) return false;
+    }
+    return true;
+  };
+
+  const contiguousRow = isContiguousRow();
+  if (contiguousRow) {
+    // Snap shared boundaries once to avoid 2px seams from rounding noise.
+    for (let i = 0; i < rowBoxes.length - 1; i++) {
+      const cur = rowBoxes[i];
+      const next = rowBoxes[i + 1];
+      const shared = Math.round(((cur.x + cur.w) + next.x) * 0.5);
+      const snapped = Math.max(cur.bounds.left + 1, Math.min(shared, next.bounds.right - 1));
+      cur.bounds.right = Math.max(cur.bounds.left + 1, snapped);
+      next.bounds.left = Math.min(next.bounds.right - 1, snapped);
+    }
+  }
+
   for (let i = 0; i < rowBoxes.length; i++) {
     const current = rowBoxes[i];
     const next = rowBoxes[i + 1];
@@ -2472,7 +2542,9 @@ function drawOverlayBoxRow(ctx, boxes, color) {
       current.bounds,
       1,
       current.color,
-      !!next && current.bounds.right === next.bounds.left && current.bounds.top === next.bounds.top && current.bounds.bottom === next.bounds.bottom
+      contiguousRow
+        ? !!next
+        : (!!next && current.bounds.right === next.bounds.left && current.bounds.top === next.bounds.top && current.bounds.bottom === next.bounds.bottom)
     );
   }
 }
@@ -2692,9 +2764,8 @@ async function processImage(file) {
 function drawCropboxPreview() {
   const uploadEl = document.getElementById('sbi-upload');
   const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const dpr = window.devicePixelRatio || 1;
-  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : 1280;
-  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : 720;
+  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : 1280;
+  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : 720;
   const cropImage = document.getElementById('sbi-cropbox-preview-image');
   if (cropImage) {
     cropImage.hidden = true;
@@ -2714,9 +2785,8 @@ function redrawUploadPreview() {
   if (!_pendingImage) { drawCropboxPreview(); return; }
   const uploadEl = document.getElementById('sbi-upload');
   const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const dpr = window.devicePixelRatio || 1;
-  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : _pendingImage.width;
-  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : _pendingImage.height;
+  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : _pendingImage.width;
+  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : _pendingImage.height;
   const cropImage = document.getElementById('sbi-cropbox-preview-image');
   if (cropImage) {
     if (_pendingImageUrl && cropImage.getAttribute('src') !== _pendingImageUrl) cropImage.src = _pendingImageUrl;
