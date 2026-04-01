@@ -2431,58 +2431,61 @@ function buildOverlayLayout(widgetRect, imgW, imgH) {
   const unit = widgetRect.w / 182;
   if (!isFinite(unit) || unit <= 0) return null;
 
-  let heartsY = widgetRect.y - 17 * unit;
-  let armorY = heartsY - 10 * unit;
-  const yShift = armorY < 0 ? -armorY : (heartsY < 0 ? -heartsY : 0);
-  heartsY += yShift;
-  armorY += yShift;
+  const roundEven = v => Math.max(2, Math.round(v / 2) * 2);
+  const slotSide = roundEven(20 * unit);
+  const slotRowW = slotSide * 9;
+  const centerX = widgetRect.x + widgetRect.w * 0.5;
+  const slotX = Math.round(centerX - slotRowW * 0.5);
+  const slotY0 = Math.round(widgetRect.y + (widgetRect.h - slotSide) * 0.5);
 
-  const hudShift = getHudHorizontalShift(unit, imgW, imgH);
+  const minHudGap = Math.max(0, Math.round(slotSide * 0.5));
+  const maxHudSide = Math.max(1, Math.floor((slotRowW - minHudGap) / 20));
+  let hudSide = Math.max(1, Math.round(slotSide * 0.375));
+  hudSide = Math.min(hudSide, maxHudSide);
+  const hudGroupW = hudSide * 10;
+
+  const gapToHotbar = Math.max(1, Math.round(hudSide * 1.2));
+  const gapToArmor = Math.max(1, Math.round(hudSide * 0.2));
+
+  let heartsY = slotY0 - gapToHotbar - hudSide;
+  let armorY = heartsY - gapToArmor - hudSide;
+  let slotY = slotY0;
+  const minY = Math.min(armorY, heartsY, slotY);
+  if (minY < 0) {
+    const dy = -minY;
+    heartsY += dy;
+    armorY += dy;
+    slotY += dy;
+  }
+  const maxY = Math.max(slotY + slotSide, heartsY + hudSide, armorY + hudSide);
+  if (maxY > imgH) {
+    const dy = maxY - imgH;
+    heartsY -= dy;
+    armorY -= dy;
+    slotY -= dy;
+  }
+
   const slotBoxes = [];
   const heartBoxes = [];
   const hungerBoxes = [];
   const armorBoxes = [];
 
   for (let i = 0; i < 9; i++) {
-    slotBoxes.push({
-      x: widgetRect.x + (1 + i * 20) * unit,
-      y: widgetRect.y + unit,
-      w: 20 * unit,
-      h: 20 * unit,
-    });
+    slotBoxes.push({ x: slotX + i * slotSide, y: slotY, w: slotSide, h: slotSide });
   }
 
+  const heartsX = slotX;
+  const hungerX = slotX + slotRowW - hudGroupW;
   for (let i = 0; i < 10; i++) {
-    const heartX = widgetRect.x + i * 8 * unit + hudShift;
-    const hungerX = widgetRect.x + (182 - 9 - i * 8) * unit - hudShift;
-    heartBoxes.push({ x: heartX, y: heartsY, w: 9 * unit, h: 9 * unit });
-    hungerBoxes.push({ x: hungerX, y: heartsY, w: 9 * unit, h: 9 * unit });
-    armorBoxes.push({ x: heartX, y: armorY, w: 9 * unit, h: 9 * unit });
+    const x = heartsX + i * hudSide;
+    heartBoxes.push({ x, y: heartsY, w: hudSide, h: hudSide });
+    armorBoxes.push({ x, y: armorY, w: hudSide, h: hudSide });
+  }
+  for (let i = 0; i < 10; i++) {
+    hungerBoxes.push({ x: hungerX + i * hudSide, y: heartsY, w: hudSide, h: hudSide });
   }
 
   return { slotBoxes, heartBoxes, hungerBoxes, armorBoxes };
-}
-
-function getOverlayBoxBounds(x, y, w, h) {
-  const left = Math.round(x);
-  const top = Math.round(y);
-  const right = Math.max(left + 1, Math.round(x + w));
-  const bottom = Math.max(top + 1, Math.round(y + h));
-  return { left, top, right, bottom };
-}
-
-function drawOverlayBox(ctx, bounds, thickness, color, hideRightBorder) {
-  const border = Math.max(1, Math.round(thickness) || 1);
-  const width = Math.max(border, bounds.right - bounds.left);
-  const height = Math.max(border, bounds.bottom - bounds.top);
-  const innerHeight = Math.max(0, height - border * 2);
-  ctx.fillStyle = color;
-  ctx.fillRect(bounds.left, bounds.top, width, border);
-  ctx.fillRect(bounds.left, Math.max(bounds.top, bounds.bottom - border), width, border);
-  ctx.fillRect(bounds.left, bounds.top + border, border, innerHeight);
-  if (!hideRightBorder) {
-    ctx.fillRect(Math.max(bounds.left, bounds.right - border), bounds.top + border, border, innerHeight);
-  }
 }
 
 function drawOverlayBoxRow(ctx, boxes, color) {
@@ -2493,59 +2496,33 @@ function drawOverlayBoxRow(ctx, boxes, color) {
     const box = boxes[i];
     if (!box || !isFinite(box.x) || !isFinite(box.y) || !isFinite(box.w) || !isFinite(box.h)) continue;
     rowBoxes.push({
-      x: box.x,
-      y: box.y,
-      w: box.w,
-      h: box.h,
-      bounds: getOverlayBoxBounds(box.x, box.y, box.w, box.h),
+      x: Math.round(box.x),
+      y: Math.round(box.y),
+      w: Math.max(1, Math.round(box.w)),
+      h: Math.max(1, Math.round(box.h)),
       color: (colorList ? colorList[i] : color) || '#ff0',
     });
   }
-  rowBoxes.sort((a, b) =>
-    a.bounds.top - b.bounds.top ||
-    a.bounds.left - b.bounds.left ||
-    a.bounds.right - b.bounds.right ||
-    a.bounds.bottom - b.bounds.bottom
-  );
+  rowBoxes.sort((a, b) => a.y - b.y || a.x - b.x || a.w - b.w || a.h - b.h);
 
-  const isContiguousRow = () => {
-    if (rowBoxes.length < 2) return false;
-    for (let i = 0; i < rowBoxes.length - 1; i++) {
-      const cur = rowBoxes[i];
-      const next = rowBoxes[i + 1];
-      const eps = Math.max(0.25, Math.max(cur.w, next.w) * 0.03);
-      if (Math.abs((cur.x + cur.w) - next.x) > eps) return false;
-      if (Math.abs(cur.y - next.y) > eps) return false;
-      if (Math.abs(cur.h - next.h) > eps) return false;
-    }
-    return true;
+  const drawBox = (x, y, w, h, c, right) => {
+    if (!(w > 0) || !(h > 0)) return;
+    ctx.fillStyle = c;
+    ctx.fillRect(x, y, w, 1);
+    ctx.fillRect(x, y + h - 1, w, 1);
+    ctx.fillRect(x, y, 1, h);
+    if (right) ctx.fillRect(x + w - 1, y, 1, h);
   };
 
-  const contiguousRow = isContiguousRow();
-  if (contiguousRow) {
-    // Snap shared boundaries once to avoid 2px seams from rounding noise.
-    for (let i = 0; i < rowBoxes.length - 1; i++) {
-      const cur = rowBoxes[i];
-      const next = rowBoxes[i + 1];
-      const shared = Math.round(((cur.x + cur.w) + next.x) * 0.5);
-      const snapped = Math.max(cur.bounds.left + 1, Math.min(shared, next.bounds.right - 1));
-      cur.bounds.right = Math.max(cur.bounds.left + 1, snapped);
-      next.bounds.left = Math.min(next.bounds.right - 1, snapped);
-    }
-  }
-
   for (let i = 0; i < rowBoxes.length; i++) {
-    const current = rowBoxes[i];
+    const cur = rowBoxes[i];
     const next = rowBoxes[i + 1];
-    drawOverlayBox(
-      ctx,
-      current.bounds,
-      1,
-      current.color,
-      contiguousRow
-        ? !!next
-        : (!!next && current.bounds.right === next.bounds.left && current.bounds.top === next.bounds.top && current.bounds.bottom === next.bounds.bottom)
-    );
+    const contiguous =
+      !!next &&
+      next.y === cur.y &&
+      next.h === cur.h &&
+      next.x === cur.x + cur.w;
+    drawBox(cur.x, cur.y, cur.w, cur.h, cur.color, !contiguous);
   }
 }
 
