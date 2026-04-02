@@ -72,7 +72,6 @@ let _previewImageUrl = '';
 let _currentPreset = 'large';
 let _pendingFile = null;
 let _pendingImage = null;
-let _pendingImageUrl = '';
 let _autoSearch = false;
 let _uploadPreviewResizeObserver = null;
 const SLOT_COLOR_MAP = {
@@ -85,7 +84,6 @@ const SLOT_COLOR_MAP = {
   apple_golden: '#fde68a',
   none: '#94a3b8',
 };
-const HEALTH_BOX_COLOR = '#ef4444';
 const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
@@ -238,84 +236,37 @@ function revokePreviewImageUrl() {
   _previewImageUrl = '';
 }
 
-function revokePendingImageUrl() {
-  if (!_pendingImageUrl) return;
-  URL.revokeObjectURL(_pendingImageUrl);
-  _pendingImageUrl = '';
-}
-
 function clearPreviewCacheImage() {
-  const previewImage = document.getElementById('sbi-cropbox-image');
-  const previewOverlay = document.getElementById('sbi-cropbox-overlay');
+  const previewImage = document.getElementById('sbi-preview-image');
   revokePreviewImageUrl();
   if (previewImage) {
     previewImage.hidden = true;
     previewImage.removeAttribute('src');
   }
-  if (previewOverlay) {
-    const overlayCtx = previewOverlay.getContext('2d');
-    if (overlayCtx) overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
-    previewOverlay.width = 0;
-    previewOverlay.height = 0;
-  }
 }
 
-function updatePreviewCacheImage(filename, widgetRect, slotTypes) {
+function updatePreviewCacheImage(filename) {
   const canvas = document.getElementById('sbi-canvas');
-  const previewImage = document.getElementById('sbi-cropbox-image');
-  const previewOverlay = document.getElementById('sbi-cropbox-overlay');
-  if (previewImage) {
-    previewImage.src = _pendingImageUrl || canvas?.toDataURL('image/png') || '';
-    previewImage.alt = filename;
-    previewImage.hidden = false;
-  }
-  if (!canvas || !previewOverlay) return Promise.resolve();
-  const redraw = () => {
-    const overlayCtx = previewOverlay.getContext('2d');
-    if (!overlayCtx) return;
-
-    // Render at displayed size so 1px borders stay 1px and don't disappear when downscaled.
-    let cssW = 0;
-    let cssH = 0;
-
-    if (previewImage && !previewImage.hidden) {
-      const imgRect = previewImage.getBoundingClientRect();
-      cssW = imgRect && imgRect.width ? imgRect.width : 0;
-      cssH = imgRect && imgRect.height ? imgRect.height : 0;
-    }
-
-    if (!(cssW > 0) || !(cssH > 0)) {
-      const wrap = document.getElementById('sbi-preview');
-      const wrapRect = wrap ? wrap.getBoundingClientRect() : null;
-      cssW = wrapRect && wrapRect.width ? wrapRect.width : 0;
-      cssH = cssW > 0 ? (cssW * canvas.height / canvas.width) : 0;
-    }
-
-    if (!(cssW > 0) || !(cssH > 0)) {
-      cssW = canvas.width;
-      cssH = canvas.height;
-    }
-
-    previewOverlay.width = Math.max(1, Math.round(cssW));
-    previewOverlay.height = Math.max(1, Math.round(cssH));
-    overlayCtx.imageSmoothingEnabled = false;
-    overlayCtx.clearRect(0, 0, previewOverlay.width, previewOverlay.height);
-
-    const scaleX = previewOverlay.width / canvas.width;
-    const scaleY = previewOverlay.height / canvas.height;
-    const scaledWidgetRect = widgetRect ? ({
-      x: widgetRect.x * scaleX,
-      y: widgetRect.y * scaleY,
-      w: widgetRect.w * scaleX,
-      h: widgetRect.h * scaleY,
-    }) : null;
-
-    drawDetectionOverlay(overlayCtx, [], null, slotTypes, scaledWidgetRect);
-  };
-
-  redraw();
-  if (window.requestAnimationFrame) requestAnimationFrame(redraw);
-  return Promise.resolve();
+  const previewImage = document.getElementById('sbi-preview-image');
+  if (!canvas || !previewImage) return Promise.resolve();
+  return new Promise(resolve => {
+    canvas.toBlob(blob => {
+      if (!blob) {
+        clearPreviewCacheImage();
+        resolve();
+        return;
+      }
+      revokePreviewImageUrl();
+      const file = typeof File === 'function'
+        ? new File([blob], filename, { type: 'image/png' })
+        : blob;
+      _previewImageUrl = URL.createObjectURL(file);
+      previewImage.src = _previewImageUrl;
+      previewImage.alt = filename;
+      previewImage.hidden = false;
+      resolve();
+    }, 'image/png');
+  });
 }
 
 function summarizeSlotTypes(types) {
@@ -2377,33 +2328,24 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   return { results: results.slice(0, 80), slotTypes: displaySlotTypes, details };
 }
 
-function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes, widgetRect) {
-  const layout = buildOverlayLayout(widgetRect, ctx.canvas.width, ctx.canvas.height);
-  if (layout) {
-    const slotColors = layout.slotBoxes.map((_, index) => SLOT_COLOR_MAP[(slotTypes && slotTypes[index]) || ''] || '#ff0');
-    drawOverlayBoxRow(ctx, layout.slotBoxes, slotColors);
-    drawOverlayBoxRow(ctx, layout.heartBoxes, HEALTH_BOX_COLOR);
-    drawOverlayBoxRow(ctx, layout.hungerBoxes, '#fbbf24');
-    drawOverlayBoxRow(ctx, layout.armorBoxes, '#9ca3af');
-    return;
-  }
-  const slotBoxes = [];
-  const slotColors = [];
-  const orderedSlots = [...(slots || [])]
-    .filter(Boolean)
-    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-  for (const slot of orderedSlots) {
-    const slotType = slotTypes && slot.index >= 0 ? slotTypes[slot.index] : '';
+function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
+  ctx.lineWidth = 2.5;
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i];
+    const slotType = slotTypes && slotTypes[i] ? slotTypes[i] : '';
+    ctx.strokeStyle = SLOT_COLOR_MAP[slotType] || '#ff0';
     const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
     if (!rect) continue;
-    slotBoxes.push({ x: rect.x, y: rect.y, w: rect.sz, h: rect.sz });
-    slotColors.push(SLOT_COLOR_MAP[slotType] || '#ff0');
+    ctx.strokeRect(rect.x, rect.y, rect.sz, rect.sz);
   }
-  drawOverlayBoxRow(ctx, slotBoxes, slotColors);
   if (!hudFeatures) return;
-  drawOverlayBoxRow(ctx, hudFeatures.heartBoxes || [], HEALTH_BOX_COLOR);
-  drawOverlayBoxRow(ctx, hudFeatures.hungerBoxes || [], '#fbbf24');
-  drawOverlayBoxRow(ctx, hudFeatures.armorBoxes || [], '#9ca3af');
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#fca5a5';
+  for (const b of hudFeatures.heartBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = '#fbbf24';
+  for (const b of hudFeatures.hungerBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = '#9ca3af';
+  for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
 }
 
 function getPresetUnit(imgW, imgH, preset) {
@@ -2413,127 +2355,38 @@ function getPresetUnit(imgW, imgH, preset) {
   return base;
 }
 
-function getPendingOverlayWidgetRect(imgW, imgH, preset) {
-  const unit = getPresetUnit(imgW, imgH, preset);
-  if (!isFinite(unit) || unit < 1) return null;
-  const w = Math.max(1, Math.round(182 * unit));
-  const h = Math.max(1, Math.round(22 * unit));
-  return {
-    x: Math.round((imgW - w) / 2),
-    y: Math.round(imgH - h),
-    w,
-    h,
-  };
-}
-
-function buildOverlayLayout(widgetRect, imgW, imgH) {
-  if (!widgetRect) return null;
-  const unit = widgetRect.w / 182;
-  if (!isFinite(unit) || unit <= 0) return null;
-
-  const roundEven = v => Math.max(2, Math.round(v / 2) * 2);
-  const slotSide = roundEven(20 * unit);
-  const slotRowW = slotSide * 9;
-  const centerX = widgetRect.x + widgetRect.w * 0.5;
-  const slotX = Math.round(centerX - slotRowW * 0.5);
-  const slotY0 = Math.round(widgetRect.y + (widgetRect.h - slotSide) * 0.5);
-
-  const minHudGap = Math.max(0, Math.round(slotSide * 0.5));
-  const maxHudSide = Math.max(1, Math.floor((slotRowW - minHudGap) / 20));
-  let hudSide = Math.max(1, Math.round(slotSide * 0.375));
-  hudSide = Math.min(hudSide, maxHudSide);
-  const hudGroupW = hudSide * 10;
-
-  const gapToHotbar = Math.max(1, Math.round(hudSide * 1.2));
-  const gapToArmor = Math.max(1, Math.round(hudSide * 0.2));
-
-  let heartsY = slotY0 - gapToHotbar - hudSide;
-  let armorY = heartsY - gapToArmor - hudSide;
-  let slotY = slotY0;
-  const minY = Math.min(armorY, heartsY, slotY);
-  if (minY < 0) {
-    const dy = -minY;
-    heartsY += dy;
-    armorY += dy;
-    slotY += dy;
-  }
-  const maxY = Math.max(slotY + slotSide, heartsY + hudSide, armorY + hudSide);
-  if (maxY > imgH) {
-    const dy = maxY - imgH;
-    heartsY -= dy;
-    armorY -= dy;
-    slotY -= dy;
-  }
-
-  const slotBoxes = [];
-  const heartBoxes = [];
-  const hungerBoxes = [];
-  const armorBoxes = [];
-
-  for (let i = 0; i < 9; i++) {
-    slotBoxes.push({ x: slotX + i * slotSide, y: slotY, w: slotSide, h: slotSide });
-  }
-
-  const heartsX = slotX;
-  const hungerX = slotX + slotRowW - hudGroupW;
-  for (let i = 0; i < 10; i++) {
-    const x = heartsX + i * hudSide;
-    heartBoxes.push({ x, y: heartsY, w: hudSide, h: hudSide });
-    armorBoxes.push({ x, y: armorY, w: hudSide, h: hudSide });
-  }
-  for (let i = 0; i < 10; i++) {
-    hungerBoxes.push({ x: hungerX + i * hudSide, y: heartsY, w: hudSide, h: hudSide });
-  }
-
-  return { slotBoxes, heartBoxes, hungerBoxes, armorBoxes };
-}
-
-function drawOverlayBoxRow(ctx, boxes, color) {
-  if (!boxes || !boxes.length) return;
-  const colorList = Array.isArray(color) ? color : null;
-  const rowBoxes = [];
-  for (let i = 0; i < boxes.length; i++) {
-    const box = boxes[i];
-    if (!box || !isFinite(box.x) || !isFinite(box.y) || !isFinite(box.w) || !isFinite(box.h)) continue;
-    rowBoxes.push({
-      x: Math.round(box.x),
-      y: Math.round(box.y),
-      w: Math.max(1, Math.round(box.w)),
-      h: Math.max(1, Math.round(box.h)),
-      color: (colorList ? colorList[i] : color) || '#ff0',
-    });
-  }
-  rowBoxes.sort((a, b) => a.y - b.y || a.x - b.x || a.w - b.w || a.h - b.h);
-
-  const drawBox = (x, y, w, h, c, right) => {
-    if (!(w > 0) || !(h > 0)) return;
-    ctx.fillStyle = c;
-    ctx.fillRect(x, y, w, 1);
-    ctx.fillRect(x, y + h - 1, w, 1);
-    ctx.fillRect(x, y, 1, h);
-    if (right) ctx.fillRect(x + w - 1, y, 1, h);
-  };
-
-  for (let i = 0; i < rowBoxes.length; i++) {
-    const cur = rowBoxes[i];
-    const next = rowBoxes[i + 1];
-    const contiguous =
-      !!next &&
-      next.y === cur.y &&
-      next.h === cur.h &&
-      next.x === cur.x + cur.w;
-    drawBox(cur.x, cur.y, cur.w, cur.h, cur.color, !contiguous);
-  }
-}
-
 function drawPendingOverlay(ctx, imgW, imgH, preset) {
-  const widgetRect = getPendingOverlayWidgetRect(imgW, imgH, preset);
-  const layout = buildOverlayLayout(widgetRect, imgW, imgH);
-  if (!layout) return;
-  drawOverlayBoxRow(ctx, layout.slotBoxes, '#000');
-  drawOverlayBoxRow(ctx, layout.heartBoxes, HEALTH_BOX_COLOR);
-  drawOverlayBoxRow(ctx, layout.hungerBoxes, '#fbbf24');
-  drawOverlayBoxRow(ctx, layout.armorBoxes, '#9ca3af');
+  const unit = getPresetUnit(imgW, imgH, preset);
+  if (unit < 1) return;
+  const widgetW = 182 * unit;
+  const widgetX = Math.round((imgW - widgetW) / 2);
+  const widgetY = Math.round(imgH - 22 * unit);
+  const border = Math.max(1, Math.round(unit));
+  const slotX = widgetX + unit;
+  const slotY = widgetY + unit;
+  const slotH = 20 * unit;
+  const slotW = 181 * unit;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(Math.round(slotX), Math.round(slotY), Math.round(slotW), border);
+  ctx.fillRect(Math.round(slotX), Math.round(slotY + slotH - unit), Math.round(slotW), border);
+  for (let i = 0; i <= 9; i++) {
+    ctx.fillRect(
+      Math.round(widgetX + (1 + i * 20) * unit),
+      Math.round(slotY),
+      border,
+      Math.round(slotH)
+    );
+  }
+  const heartY = Math.round(widgetY - 17 * unit);
+  const iconSz = Math.round(9 * unit);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#fca5a5';
+  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), heartY, iconSz, iconSz);
+  ctx.strokeStyle = '#fbbf24';
+  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + (182 - 9 - i * 8) * unit), heartY, iconSz, iconSz);
+  ctx.strokeStyle = '#9ca3af';
+  const armorY = Math.round(heartY - 10 * unit);
+  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), armorY, iconSz, iconSz);
 }
 
 function scoreColor(pct) {
@@ -2661,8 +2514,8 @@ async function processImage(file) {
 
     // Phase 2: Replace black overlay with colored detection overlay
     ctx.drawImage(rawCanvas, 0, 0);
-    drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes, widgetRect);
-    await updatePreviewCacheImage('cropbox.png', widgetRect, slotTypes);
+    drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
+    await updatePreviewCacheImage('cropbox_large_analysed.png');
     preview.hidden = false;
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');
@@ -2741,14 +2594,18 @@ async function processImage(file) {
 function drawCropboxPreview() {
   const uploadEl = document.getElementById('sbi-upload');
   const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : 1280;
-  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : 720;
-  const cropImage = document.getElementById('sbi-cropbox-preview-image');
-  if (cropImage) {
-    cropImage.hidden = true;
-    cropImage.removeAttribute('src');
+  const dpr = window.devicePixelRatio || 1;
+  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : 1280;
+  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : 720;
+  const cropCanvas = document.getElementById('sbi-cropbox-canvas');
+  if (cropCanvas) {
+    cropCanvas.width = previewW;
+    cropCanvas.height = previewH;
+    const cropCtx = cropCanvas.getContext('2d');
+    cropCtx.imageSmoothingEnabled = false;
+    cropCtx.clearRect(0, 0, previewW, previewH);
   }
-  const overlayCanvas = document.getElementById('sbi-cropbox-preview-overlay');
+  const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
   if (!overlayCanvas) return;
   overlayCanvas.width = previewW;
   overlayCanvas.height = previewH;
@@ -2762,14 +2619,19 @@ function redrawUploadPreview() {
   if (!_pendingImage) { drawCropboxPreview(); return; }
   const uploadEl = document.getElementById('sbi-upload');
   const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : _pendingImage.width;
-  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : _pendingImage.height;
-  const cropImage = document.getElementById('sbi-cropbox-preview-image');
-  if (cropImage) {
-    if (_pendingImageUrl && cropImage.getAttribute('src') !== _pendingImageUrl) cropImage.src = _pendingImageUrl;
-    cropImage.hidden = false;
+  const dpr = window.devicePixelRatio || 1;
+  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : _pendingImage.width;
+  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : _pendingImage.height;
+  const imageCanvas = document.getElementById('sbi-cropbox-canvas');
+  if (imageCanvas) {
+    imageCanvas.width = previewW;
+    imageCanvas.height = previewH;
+    const imageCtx = imageCanvas.getContext('2d');
+    imageCtx.imageSmoothingEnabled = false;
+    imageCtx.clearRect(0, 0, previewW, previewH);
+    imageCtx.drawImage(_pendingImage, 0, 0, previewW, previewH);
   }
-  const overlayCanvas = document.getElementById('sbi-cropbox-preview-overlay');
+  const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
   if (!overlayCanvas) return;
   overlayCanvas.width = previewW;
   overlayCanvas.height = previewH;
@@ -2781,23 +2643,22 @@ function redrawUploadPreview() {
 
 function loadImagePreview(file) {
   _pendingFile = file;
-  revokePendingImageUrl();
-  _pendingImageUrl = URL.createObjectURL(file);
   const img = new Image();
+  const url = URL.createObjectURL(file);
   img.onload = () => {
     _pendingImage = img;
+    URL.revokeObjectURL(url);
     redrawUploadPreview();
     syncUploadPreviewState();
     document.getElementById('sbi-search-btn').disabled = false;
     document.getElementById('sbi-clear-btn').disabled = false;
   };
-  img.src = _pendingImageUrl;
+  img.src = url;
 }
 
 function clearImagePreview() {
   _pendingFile = null;
   _pendingImage = null;
-  revokePendingImageUrl();
   drawCropboxPreview();
   syncUploadPreviewState();
   setUploadReplaceHover(false);
