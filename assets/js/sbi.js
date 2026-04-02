@@ -75,15 +75,25 @@ let _pendingImage = null;
 let _autoSearch = false;
 let _uploadPreviewResizeObserver = null;
 const SLOT_COLOR_MAP = {
-  diamond_sword: '#3b82f6',
-  iron_sword: '#3b82f6',
-  ender_pearl: '#4c1d95',
+  diamond_sword: '#38bdf8',
+  iron_sword: '#38bdf8',
+  ender_pearl: '#c084fc',
   splash_potion: '#7f1d1d',
-  steak: '#fde68a',
-  golden_carrot: '#fde68a',
-  apple_golden: '#fde68a',
-  none: '#94a3b8',
+  steak: '#8b5a2b',
+  golden_carrot: '#d4af37',
+  apple_golden: '#d4af37',
+  none: '#000000',
 };
+const CROPBOX_ASSET_VERSION = 2;
+const CROPBOX_PREVIEW_SRC = `/sbi/cropbox_preview.png?v=${CROPBOX_ASSET_VERSION}`;
+const CROPBOX_RESULT_SRC = `/sbi/cropbox.png?v=${CROPBOX_ASSET_VERSION}`;
+const CROPBOX_SPRITE_W = 182;
+const CROPBOX_SPRITE_H = 48;
+const CROPBOX_SLOT_COUNT = 9;
+const CROPBOX_SLOT_LEFT = 1;
+const CROPBOX_SLOT_STEP = 20;
+const CROPBOX_SLOT_TOP = 28;
+const CROPBOX_SLOT_SIZE = 20;
 const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
@@ -238,6 +248,7 @@ function revokePreviewImageUrl() {
 
 function clearPreviewCacheImage() {
   const previewImage = document.getElementById('sbi-preview-image');
+  clearPreviewCropbox();
   revokePreviewImageUrl();
   if (previewImage) {
     previewImage.hidden = true;
@@ -267,6 +278,117 @@ function updatePreviewCacheImage(filename) {
       resolve();
     }, 'image/png');
   });
+}
+
+function hideCropboxElement(el) {
+  if (!el) return;
+  el.hidden = true;
+  el.style.left = '';
+  el.style.top = '';
+  el.style.width = '';
+  el.style.height = '';
+}
+
+function clearPreviewCropbox() {
+  hideCropboxElement(document.getElementById('sbi-preview-overlay'));
+  const slotLayer = document.getElementById('sbi-preview-slot-layer');
+  if (!slotLayer) return;
+  slotLayer.hidden = true;
+  slotLayer.innerHTML = '';
+}
+
+function applyCropboxPlacement(el, layout, surfaceW, surfaceH, src) {
+  if (!el || !layout || !surfaceW || !surfaceH) {
+    hideCropboxElement(el);
+    return;
+  }
+  if (src && el.getAttribute('src') !== src) el.src = src;
+  el.hidden = false;
+  el.style.left = `${(layout.x / surfaceW) * 100}%`;
+  el.style.top = `${(layout.y / surfaceH) * 100}%`;
+  el.style.width = `${(layout.w / surfaceW) * 100}%`;
+  el.style.height = `${(layout.h / surfaceH) * 100}%`;
+}
+
+function getCropboxLayoutFromWidgetRect(widgetRect) {
+  if (!widgetRect || !widgetRect.w) return null;
+  const unit = widgetRect.w / CROPBOX_SPRITE_W;
+  if (!isFinite(unit) || unit <= 0) return null;
+  return {
+    x: Math.round(widgetRect.x),
+    y: Math.round(widgetRect.y - 27 * unit),
+    w: Math.round(CROPBOX_SPRITE_W * unit),
+    h: Math.round(CROPBOX_SPRITE_H * unit),
+  };
+}
+
+function getPendingCropboxLayout(imgW, imgH, preset) {
+  const unit = getPresetUnit(imgW, imgH, preset);
+  if (!isFinite(unit) || unit < 1) return null;
+  const widgetW = CROPBOX_SPRITE_W * unit;
+  const widgetY = imgH - 22 * unit;
+  return {
+    x: Math.round((imgW - widgetW) / 2),
+    y: Math.round(widgetY - 27 * unit),
+    w: Math.round(widgetW),
+    h: Math.round(CROPBOX_SPRITE_H * unit),
+  };
+}
+
+function buildCropboxSlotClip(index) {
+  const left = ((CROPBOX_SLOT_LEFT + index * CROPBOX_SLOT_STEP) / CROPBOX_SPRITE_W) * 100;
+  const right = 100 - (((CROPBOX_SLOT_LEFT + index * CROPBOX_SLOT_STEP) + CROPBOX_SLOT_SIZE) / CROPBOX_SPRITE_W) * 100;
+  const top = (CROPBOX_SLOT_TOP / CROPBOX_SPRITE_H) * 100;
+  const bottom = 100 - ((CROPBOX_SLOT_TOP + CROPBOX_SLOT_SIZE) / CROPBOX_SPRITE_H) * 100;
+  return `inset(${top}% ${right}% ${bottom}% ${left}%)`;
+}
+
+function renderUploadCropbox(surfaceW, surfaceH) {
+  const overlay = document.getElementById('sbi-cropbox-overlay');
+  applyCropboxPlacement(overlay, getPendingCropboxLayout(surfaceW, surfaceH, _currentPreset), surfaceW, surfaceH, CROPBOX_PREVIEW_SRC);
+}
+
+function renderPreviewCropbox(surfaceW, surfaceH, widgetRect, slotTypes) {
+  const overlay = document.getElementById('sbi-preview-overlay');
+  const slotLayer = document.getElementById('sbi-preview-slot-layer');
+  const layout = getCropboxLayoutFromWidgetRect(widgetRect);
+  applyCropboxPlacement(overlay, layout, surfaceW, surfaceH, CROPBOX_RESULT_SRC);
+  if (!slotLayer || !layout) {
+    if (slotLayer) {
+      slotLayer.hidden = true;
+      slotLayer.innerHTML = '';
+    }
+    return;
+  }
+
+  slotLayer.innerHTML = '';
+  let hasColoredSlots = false;
+  for (let i = 0; i < Math.min(CROPBOX_SLOT_COUNT, slotTypes ? slotTypes.length : 0); i++) {
+    const slotType = slotTypes[i] || 'none';
+    const color = SLOT_COLOR_MAP[slotType] || SLOT_COLOR_MAP.none;
+    if (color === SLOT_COLOR_MAP.none) continue;
+    hasColoredSlots = true;
+    const slotEl = document.createElement('div');
+    const clipPath = buildCropboxSlotClip(i);
+    slotEl.className = 'sbi-preview-slot-overlay';
+    slotEl.style.left = overlay.style.left;
+    slotEl.style.top = overlay.style.top;
+    slotEl.style.width = overlay.style.width;
+    slotEl.style.height = overlay.style.height;
+    slotEl.style.background = color;
+    slotEl.style.clipPath = clipPath;
+    slotEl.style.webkitClipPath = clipPath;
+    slotEl.style.maskImage = `url("${CROPBOX_RESULT_SRC}")`;
+    slotEl.style.webkitMaskImage = `url("${CROPBOX_RESULT_SRC}")`;
+    slotEl.style.maskRepeat = 'no-repeat';
+    slotEl.style.webkitMaskRepeat = 'no-repeat';
+    slotEl.style.maskSize = '100% 100%';
+    slotEl.style.webkitMaskSize = '100% 100%';
+    slotEl.style.maskPosition = '0 0';
+    slotEl.style.webkitMaskPosition = '0 0';
+    slotLayer.appendChild(slotEl);
+  }
+  slotLayer.hidden = !hasColoredSlots;
 }
 
 function summarizeSlotTypes(types) {
@@ -2328,65 +2450,11 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   return { results: results.slice(0, 80), slotTypes: displaySlotTypes, details };
 }
 
-function drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes) {
-  ctx.lineWidth = 2.5;
-  for (let i = 0; i < slots.length; i++) {
-    const slot = slots[i];
-    const slotType = slotTypes && slotTypes[i] ? slotTypes[i] : '';
-    ctx.strokeStyle = SLOT_COLOR_MAP[slotType] || '#ff0';
-    const rect = getSlotDisplayRect(slot, ctx.canvas.width, ctx.canvas.height);
-    if (!rect) continue;
-    ctx.strokeRect(rect.x, rect.y, rect.sz, rect.sz);
-  }
-  if (!hudFeatures) return;
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#fca5a5';
-  for (const b of hudFeatures.heartBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-  ctx.strokeStyle = '#fbbf24';
-  for (const b of hudFeatures.hungerBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-  ctx.strokeStyle = '#9ca3af';
-  for (const b of hudFeatures.armorBoxes || []) ctx.strokeRect(b.x, b.y, b.w, b.h);
-}
-
 function getPresetUnit(imgW, imgH, preset) {
   if (preset === 'auto') return 0;
   const base = getWide16By9Unit(imgW, imgH) || getMaxGuiScale(imgW, imgH);
   if (preset === 'small') return Math.max(1, Math.round(base) - 1);
   return base;
-}
-
-function drawPendingOverlay(ctx, imgW, imgH, preset) {
-  const unit = getPresetUnit(imgW, imgH, preset);
-  if (unit < 1) return;
-  const widgetW = 182 * unit;
-  const widgetX = Math.round((imgW - widgetW) / 2);
-  const widgetY = Math.round(imgH - 22 * unit);
-  const border = Math.max(1, Math.round(unit));
-  const slotX = widgetX + unit;
-  const slotY = widgetY + unit;
-  const slotH = 20 * unit;
-  const slotW = 181 * unit;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(Math.round(slotX), Math.round(slotY), Math.round(slotW), border);
-  ctx.fillRect(Math.round(slotX), Math.round(slotY + slotH - unit), Math.round(slotW), border);
-  for (let i = 0; i <= 9; i++) {
-    ctx.fillRect(
-      Math.round(widgetX + (1 + i * 20) * unit),
-      Math.round(slotY),
-      border,
-      Math.round(slotH)
-    );
-  }
-  const heartY = Math.round(widgetY - 17 * unit);
-  const iconSz = Math.round(9 * unit);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#fca5a5';
-  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), heartY, iconSz, iconSz);
-  ctx.strokeStyle = '#fbbf24';
-  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + (182 - 9 - i * 8) * unit), heartY, iconSz, iconSz);
-  ctx.strokeStyle = '#9ca3af';
-  const armorY = Math.round(heartY - 10 * unit);
-  for (let i = 0; i < 10; i++) ctx.strokeRect(Math.round(widgetX + i * 8 * unit), armorY, iconSz, iconSz);
 }
 
 function scoreColor(pct) {
@@ -2485,9 +2553,6 @@ async function processImage(file) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0);
 
-  // Phase 1: Prepare canvas with cropbox overlay (hidden during analysis)
-  drawPendingOverlay(ctx, img.width, img.height, _currentPreset);
-
   try {
     if (!fingerprints) {
       const resp = await fetch('/data/sbi-fingerprints.json?v=' + SBI_FINGERPRINT_VERSION);
@@ -2512,10 +2577,10 @@ async function processImage(file) {
     };
     renderCrops(rawCtx, img.width, img.height, widgetRect, hudFeatures, slots, slotTypes, _currentPreset);
 
-    // Phase 2: Replace black overlay with colored detection overlay
+    // Phase 2: Show the raw screenshot and place the cropbox on a separate layer
     ctx.drawImage(rawCanvas, 0, 0);
-    drawDetectionOverlay(ctx, slots, hudFeatures, slotTypes);
     await updatePreviewCacheImage('cropbox_large_analysed.png');
+    renderPreviewCropbox(img.width, img.height, widgetRect, slotTypes);
     preview.hidden = false;
     progress.hidden = true;
     if (uploadEl) uploadEl.classList.remove('analyzing');
@@ -2605,14 +2670,7 @@ function drawCropboxPreview() {
     cropCtx.imageSmoothingEnabled = false;
     cropCtx.clearRect(0, 0, previewW, previewH);
   }
-  const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
-  if (!overlayCanvas) return;
-  overlayCanvas.width = previewW;
-  overlayCanvas.height = previewH;
-  const overlayCtx = overlayCanvas.getContext('2d');
-  overlayCtx.imageSmoothingEnabled = false;
-  overlayCtx.clearRect(0, 0, previewW, previewH);
-  drawPendingOverlay(overlayCtx, previewW, previewH, _currentPreset);
+  renderUploadCropbox(previewW, previewH);
 }
 
 function redrawUploadPreview() {
@@ -2631,14 +2689,7 @@ function redrawUploadPreview() {
     imageCtx.clearRect(0, 0, previewW, previewH);
     imageCtx.drawImage(_pendingImage, 0, 0, previewW, previewH);
   }
-  const overlayCanvas = document.getElementById('sbi-cropbox-overlay');
-  if (!overlayCanvas) return;
-  overlayCanvas.width = previewW;
-  overlayCanvas.height = previewH;
-  const overlayCtx = overlayCanvas.getContext('2d');
-  overlayCtx.imageSmoothingEnabled = false;
-  overlayCtx.clearRect(0, 0, previewW, previewH);
-  drawPendingOverlay(overlayCtx, previewW, previewH, _currentPreset);
+  renderUploadCropbox(previewW, previewH);
 }
 
 function loadImagePreview(file) {

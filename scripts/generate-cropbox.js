@@ -1,58 +1,71 @@
 const sharp = require('sharp');
 const path = require('path');
 
-const W = 1280, H = 720;
-const unit = 2;
-const border = 1;
-const widgetW = Math.round(182 * unit);
-const widgetH = Math.round(22 * unit);
-const hotbarX = Math.round((W - widgetW) / 2);
-const hotbarY = H - widgetH;
-const inset = Math.max(1, Math.round(unit));
+const W = 182;
+const H = 48;
+const HOTBAR_SLOTS = 9;
+const pixels = Buffer.alloc(W * H * 4, 0);
 
-let rects = '';
+const COLORS = {
+  armor: [156, 163, 175, 255],
+  health: [255, 77, 79, 255],
+  hunger: [255, 159, 28, 255],
+  hotbar: [0, 0, 0, 255],
+};
 
-function addBox(x, y, w, h, border, color, hideRightBorder) {
-  rects += `<rect x="${x}" y="${y}" width="${w}" height="${border}" fill="${color}"/>`;
-  rects += `<rect x="${x}" y="${y + h - border}" width="${w}" height="${border}" fill="${color}"/>`;
-  rects += `<rect x="${x}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
+function setPixel(x, y, color) {
+  if (x < 0 || y < 0 || x >= W || y >= H) return;
+  const offset = (y * W + x) * 4;
+  pixels[offset] = color[0];
+  pixels[offset + 1] = color[1];
+  pixels[offset + 2] = color[2];
+  pixels[offset + 3] = color[3];
+}
+
+function drawBox(x, y, size, border, color, hideRightBorder) {
+  for (let yy = y; yy < y + border; yy++) {
+    for (let xx = x; xx < x + size; xx++) setPixel(xx, yy, color);
+  }
+  for (let yy = y + size - border; yy < y + size; yy++) {
+    for (let xx = x; xx < x + size; xx++) setPixel(xx, yy, color);
+  }
+  for (let xx = x; xx < x + border; xx++) {
+    for (let yy = y + border; yy < y + size - border; yy++) setPixel(xx, yy, color);
+  }
   if (!hideRightBorder) {
-    rects += `<rect x="${x + w - border}" y="${y + border}" width="${border}" height="${h - border * 2}" fill="${color}"/>`;
+    for (let xx = x + size - border; xx < x + size; xx++) {
+      for (let yy = y + border; yy < y + size - border; yy++) setPixel(xx, yy, color);
+    }
   }
 }
 
-function addGridRow(x, y, count, step, side, color) {
-  const cellStep = Math.max(1, Math.round(step));
-  const cellSide = Math.max(1, Math.round(side));
-  for (let i = 0; i < count; i++) {
-    const cellX = x + i * cellStep;
-    const nextCellX = i < count - 1 ? x + (i + 1) * cellStep : null;
-    addBox(cellX, y, cellSide, cellSide, border, color, nextCellX === cellX + cellSide);
+function drawHudRow(x, y, color) {
+  for (let i = 0; i < 10; i++) {
+    drawBox(x + i * 8, y, 9, 1, color, i < 9);
   }
 }
 
-const slotX = hotbarX + inset;
-const slotY = hotbarY + inset;
-const slotSide = Math.max(1, Math.round(20 * unit));
-addGridRow(slotX, slotY, 9, slotSide, slotSide, '#000');
+function drawHotbarRow() {
+  for (let i = 0; i < HOTBAR_SLOTS; i++) {
+    drawBox(1 + i * 20, 28, 20, 2, COLORS.hotbar, i < HOTBAR_SLOTS - 1);
+  }
+}
 
-const heartY = hotbarY - Math.round(17 * unit);
-const hudStep = Math.max(1, Math.round(8 * unit));
-const hudSide = Math.max(1, Math.round(9 * unit));
+async function writePng(name) {
+  const outPath = path.join(__dirname, '..', 'sbi', name);
+  await sharp(pixels, { raw: { width: W, height: H, channels: 4 } }).png().toFile(outPath);
+  console.log(`Created ${outPath} (${W}x${H})`);
+}
 
-// Hearts (red)
-addGridRow(hotbarX, heartY, 10, hudStep, hudSide, '#ef4444');
+drawHudRow(0, 0, COLORS.armor);
+drawHudRow(0, 10, COLORS.health);
+drawHudRow(101, 10, COLORS.hunger);
+drawHotbarRow();
 
-// Hunger (yellow)
-addGridRow(hotbarX + Math.round(101 * unit), heartY, 10, hudStep, hudSide, '#fbbf24');
-
-// Armor (gray)
-const armorY = heartY - Math.round(10 * unit);
-addGridRow(hotbarX, armorY, 10, hudStep, hudSide, '#9ca3af');
-
-const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
-
-const outPath = path.join(__dirname, '..', 'sbi', 'cropbox_preview.png');
-sharp(Buffer.from(svg)).png().toFile(outPath)
-  .then(() => console.log(`Created ${outPath} (${W}x${H})`))
-  .catch(e => { console.error(e); process.exit(1); });
+Promise.all([
+  writePng('cropbox_preview.png'),
+  writePng('cropbox.png'),
+]).catch(error => {
+  console.error(error);
+  process.exit(1);
+});
