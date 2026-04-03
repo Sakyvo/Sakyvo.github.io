@@ -84,7 +84,7 @@ const SLOT_COLOR_MAP = {
   apple_golden: '#d4af37',
   none: '#000000',
 };
-const CROPBOX_ASSET_VERSION = 2;
+const CROPBOX_ASSET_VERSION = 3;
 const CROPBOX_PREVIEW_SRC = `/sbi/cropbox_preview.png?v=${CROPBOX_ASSET_VERSION}`;
 const CROPBOX_RESULT_SRC = `/sbi/cropbox.png?v=${CROPBOX_ASSET_VERSION}`;
 const CROPBOX_SPRITE_W = 182;
