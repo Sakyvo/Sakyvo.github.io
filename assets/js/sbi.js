@@ -121,27 +121,22 @@ const SLOT_STRONG_MATCH_THRESHOLDS = {
 
 function drawCropboxLines(ctx, w, h) {
   ctx.clearRect(0, 0, w, h);
-  const ux = w / CROPBOX_SPRITE_W;
-  const uy = h / CROPBOX_SPRITE_H;
+  const u = Math.max(1, Math.floor(Math.min(w / CROPBOX_SPRITE_W, h / CROPBOX_SPRITE_H)));
+  const ox = Math.floor((w - CROPBOX_SPRITE_W * u) / 2);
+  const oy = Math.floor((h - CROPBOX_SPRITE_H * u) / 2);
 
-  function fillPx(x, y, color) {
-    const px = Math.floor(x * ux);
-    const py = Math.floor(y * uy);
-    const pw = Math.floor((x + 1) * ux) - px;
-    const ph = Math.floor((y + 1) * uy) - py;
-    if (pw > 0 && ph > 0) {
-      ctx.fillStyle = color;
-      ctx.fillRect(px, py, pw, ph);
-    }
+  function fill(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(ox + x * u, oy + y * u, u, u);
   }
 
   function rect1px(x, y, rw, rh, color) {
-    for (let i = 0; i < rw; i++) { fillPx(x + i, y, color); fillPx(x + i, y + rh - 1, color); }
-    for (let i = 1; i < rh - 1; i++) { fillPx(x, y + i, color); fillPx(x + rw - 1, y + i, color); }
+    for (let i = 0; i < rw; i++) { fill(x + i, y, color); fill(x + i, y + rh - 1, color); }
+    for (let i = 1; i < rh - 1; i++) { fill(x, y + i, color); fill(x + rw - 1, y + i, color); }
   }
 
   function vline(x, y1, y2, color) {
-    for (let y = y1; y <= y2; y++) fillPx(x, y, color);
+    for (let y = y1; y <= y2; y++) fill(x, y, color);
   }
 
   function hudRow(sx, sy, color) {
