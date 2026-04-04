@@ -2742,8 +2742,7 @@ function redrawUploadPreview() {
     imageCanvas.width = previewW;
     imageCanvas.height = previewH;
     const imageCtx = imageCanvas.getContext('2d');
-    imageCtx.imageSmoothingEnabled = true;
-    imageCtx.imageSmoothingQuality = 'high';
+    imageCtx.imageSmoothingEnabled = false;
     imageCtx.clearRect(0, 0, previewW, previewH);
     imageCtx.drawImage(_pendingImage, 0, 0, previewW, previewH);
   }

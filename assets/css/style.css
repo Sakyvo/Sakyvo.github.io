@@ -1017,8 +1017,8 @@ footer {
 .sbi-preview-slot-layer { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 .sbi-preview-overlay { z-index: 1; }
 .sbi-preview-slot-overlay { z-index: 0; }
-.sbi-preview canvas { max-width: 100%; border: 2px solid var(--border); display: block; }
-.sbi-preview canvas { display: none; }
+.sbi-preview canvas:not(.sbi-preview-overlay) { max-width: 100%; border: 2px solid var(--border); display: block; }
+.sbi-preview canvas#sbi-canvas { display: none; }
 .sbi-progress { text-align: center; padding: 24px; }
 .sbi-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: transparent; animation: sbi-spin .8s linear infinite; margin: 0 auto 12px; }
 @keyframes sbi-spin { to { transform: rotate(360deg); } }
