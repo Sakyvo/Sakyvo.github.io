@@ -72,6 +72,7 @@ let _previewImageUrl = '';
 let _currentPreset = 'large';
 let _pendingFile = null;
 let _pendingImage = null;
+let _pendingImageUrl = '';
 let _autoSearch = false;
 let _uploadPreviewResizeObserver = null;
 const SLOT_COLOR_MAP = {
@@ -2712,26 +2713,11 @@ function drawCropboxPreview() {
   const dpr = window.devicePixelRatio || 1;
   const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : 1280;
   const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : 720;
-  const cropCanvas = document.getElementById('sbi-cropbox-canvas');
-  if (cropCanvas) {
-    cropCanvas.width = previewW;
-    cropCanvas.height = previewH;
-    const cropCtx = cropCanvas.getContext('2d');
-    cropCtx.imageSmoothingEnabled = false;
-    cropCtx.clearRect(0, 0, previewW, previewH);
-  }
   renderUploadCropbox(previewW, previewH);
 }
 
 function redrawUploadPreview() {
   if (!_pendingImage) { drawCropboxPreview(); return; }
-  const imageCanvas = document.getElementById('sbi-cropbox-canvas');
-  if (imageCanvas) {
-    imageCanvas.width = _pendingImage.width;
-    imageCanvas.height = _pendingImage.height;
-    const imageCtx = imageCanvas.getContext('2d');
-    imageCtx.drawImage(_pendingImage, 0, 0);
-  }
   const uploadEl = document.getElementById('sbi-upload');
   const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
   const dpr = window.devicePixelRatio || 1;
@@ -2746,6 +2732,13 @@ function loadImagePreview(file) {
   const url = URL.createObjectURL(file);
   img.onload = () => {
     _pendingImage = img;
+    const imgEl = document.getElementById('sbi-cropbox-image');
+    if (imgEl) {
+      if (_pendingImageUrl) URL.revokeObjectURL(_pendingImageUrl);
+      _pendingImageUrl = URL.createObjectURL(file);
+      imgEl.src = _pendingImageUrl;
+      imgEl.hidden = false;
+    }
     URL.revokeObjectURL(url);
     redrawUploadPreview();
     syncUploadPreviewState();
@@ -2758,6 +2751,15 @@ function loadImagePreview(file) {
 function clearImagePreview() {
   _pendingFile = null;
   _pendingImage = null;
+  const imgEl = document.getElementById('sbi-cropbox-image');
+  if (imgEl) {
+    imgEl.hidden = true;
+    imgEl.removeAttribute('src');
+  }
+  if (_pendingImageUrl) {
+    URL.revokeObjectURL(_pendingImageUrl);
+    _pendingImageUrl = '';
+  }
   drawCropboxPreview();
   syncUploadPreviewState();
   setUploadReplaceHover(false);
