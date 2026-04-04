@@ -123,43 +123,36 @@ function drawCropboxLines(ctx, w, h) {
   const ux = w / CROPBOX_SPRITE_W;
   const uy = h / CROPBOX_SPRITE_H;
 
-  function strokeRect(x, y, rw, rh, color) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    const px = Math.round(x * ux) + 0.5;
-    const py = Math.round(y * uy) + 0.5;
-    const pw = Math.round((x + rw) * ux) - Math.round(x * ux);
-    const ph = Math.round((y + rh) * uy) - Math.round(y * uy);
-    ctx.strokeRect(px, py, pw, ph);
+  function fillPx(x, y, color) {
+    const px = Math.floor(x * ux);
+    const py = Math.floor(y * uy);
+    const pw = Math.floor((x + 1) * ux) - px;
+    const ph = Math.floor((y + 1) * uy) - py;
+    if (pw > 0 && ph > 0) {
+      ctx.fillStyle = color;
+      ctx.fillRect(px, py, pw, ph);
+    }
+  }
+
+  function rect1px(x, y, rw, rh, color) {
+    for (let i = 0; i < rw; i++) { fillPx(x + i, y, color); fillPx(x + i, y + rh - 1, color); }
+    for (let i = 1; i < rh - 1; i++) { fillPx(x, y + i, color); fillPx(x + rw - 1, y + i, color); }
+  }
+
+  function vline(x, y1, y2, color) {
+    for (let y = y1; y <= y2; y++) fillPx(x, y, color);
   }
 
   function hudRow(sx, sy, color) {
-    for (let i = 0; i < 10; i++) strokeRect(sx + i * 8, sy, 8, 8, color);
+    for (let i = 0; i < 10; i++) rect1px(sx + i * 8, sy, 9, 9, color);
   }
 
   hudRow(0, 0, CROPBOX_COLORS.armor);
   hudRow(0, 10, CROPBOX_COLORS.health);
   hudRow(101, 10, CROPBOX_COLORS.hunger);
 
-  // Hotbar: single outer rect + inner dividers
-  const hx = 1, hy = 28, hw = 180, hh = 20;
-  const color = CROPBOX_COLORS.hotbar;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-  const opx = Math.round(hx * ux) + 0.5;
-  const opy = Math.round(hy * uy) + 0.5;
-  const opw = Math.round((hx + hw - 1) * ux) - Math.round(hx * ux);
-  const oph = Math.round((hy + hh - 1) * uy) - Math.round(hy * uy);
-  ctx.strokeRect(opx, opy, opw, oph);
-  for (let i = 1; i < 9; i++) {
-    const dx = Math.round((hx + i * 20) * ux) + 0.5;
-    const dy1 = Math.round((hy + 1) * uy) + 0.5;
-    const dy2 = Math.round((hy + hh - 2) * uy) + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(dx, dy1);
-    ctx.lineTo(dx, dy2);
-    ctx.stroke();
-  }
+  rect1px(1, 28, 180, 20, CROPBOX_COLORS.hotbar);
+  for (let i = 1; i < 9; i++) vline(1 + i * 20, 29, 46, CROPBOX_COLORS.hotbar);
 }
 
 function clamp01(v) {
