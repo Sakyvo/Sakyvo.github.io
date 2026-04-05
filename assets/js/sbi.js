@@ -338,12 +338,19 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
     return;
   }
   el.hidden = false;
-  el.style.left = `${(layout.x / surfaceW) * 100}%`;
-  el.style.top = `${(layout.y / surfaceH) * 100}%`;
-  el.style.width = `${(layout.w / surfaceW) * 100}%`;
-  el.style.height = `${(layout.h / surfaceH) * 100}%`;
+  const pctL = (layout.x / surfaceW) * 100;
+  const pctT = (layout.y / surfaceH) * 100;
+  const pctW = (layout.w / surfaceW) * 100;
+  const pctH = (layout.h / surfaceH) * 100;
+  el.style.left = `${pctL}%`;
+  el.style.top = `${pctT}%`;
+  el.style.width = `${pctW}%`;
+  el.style.height = `${pctH}%`;
   if (el.tagName === 'CANVAS') {
-    const u = Math.max(1, Math.round(layout.w / CROPBOX_SPRITE_W));
+    const parent = el.parentElement;
+    const parentW = parent ? parent.clientWidth : surfaceW;
+    const displayW = parentW * pctW / 100;
+    const u = Math.max(1, Math.round(displayW / CROPBOX_SPRITE_W));
     el.width = CROPBOX_SPRITE_W * u;
     el.height = CROPBOX_SPRITE_H * u;
     drawCropboxLines(el.getContext('2d'), u);
