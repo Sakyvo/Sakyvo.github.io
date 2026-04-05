@@ -351,10 +351,14 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
     const parentW = parent ? parent.clientWidth : surfaceW;
     const parentH = parent ? parent.clientHeight : surfaceH;
     const dpr = window.devicePixelRatio || 1;
-    const bufW = Math.max(1, Math.round(parentW * pctW / 100 * dpr));
-    const bufH = Math.max(1, Math.round(parentH * pctH / 100 * dpr));
+    const cssW = parentW * pctW / 100;
+    const cssH = parentH * pctH / 100;
+    const bufW = Math.max(1, Math.round(cssW * dpr));
+    const bufH = Math.max(1, Math.round(cssH * dpr));
     el.width = bufW;
     el.height = bufH;
+    el.style.width = (bufW / dpr) + 'px';
+    el.style.height = (bufH / dpr) + 'px';
     drawCropboxLines(el.getContext('2d'), bufW, bufH);
   }
 }
