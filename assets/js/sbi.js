@@ -2700,20 +2700,12 @@ async function processImage(file) {
 }
 
 function drawCropboxPreview() {
-  const uploadEl = document.getElementById('sbi-upload');
-  const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : 1280;
-  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : 720;
-  renderUploadCropbox(previewW, previewH);
+  renderUploadCropbox(1920, 1080);
 }
 
 function redrawUploadPreview() {
   if (!_pendingImage) { drawCropboxPreview(); return; }
-  const uploadEl = document.getElementById('sbi-upload');
-  const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const surfaceW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : _pendingImage.width;
-  const surfaceH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : _pendingImage.height;
-  renderUploadCropbox(surfaceW, surfaceH);
+  renderUploadCropbox(_pendingImage.width, _pendingImage.height);
 }
 
 function loadImagePreview(file) {
