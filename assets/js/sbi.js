@@ -343,8 +343,7 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
   el.style.width = `${(layout.w / surfaceW) * 100}%`;
   el.style.height = `${(layout.h / surfaceH) * 100}%`;
   if (el.tagName === 'CANVAS') {
-    const dpr = window.devicePixelRatio || 1;
-    const u = Math.max(1, Math.round(layout.w * dpr / CROPBOX_SPRITE_W));
+    const u = Math.max(1, Math.round(layout.w / CROPBOX_SPRITE_W));
     el.width = CROPBOX_SPRITE_W * u;
     el.height = CROPBOX_SPRITE_H * u;
     drawCropboxLines(el.getContext('2d'), u);
@@ -2703,9 +2702,8 @@ async function processImage(file) {
 function drawCropboxPreview() {
   const uploadEl = document.getElementById('sbi-upload');
   const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const dpr = window.devicePixelRatio || 1;
-  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : 1280;
-  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : 720;
+  const previewW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : 1280;
+  const previewH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : 720;
   renderUploadCropbox(previewW, previewH);
 }
 
@@ -2713,9 +2711,8 @@ function redrawUploadPreview() {
   if (!_pendingImage) { drawCropboxPreview(); return; }
   const uploadEl = document.getElementById('sbi-upload');
   const rect = uploadEl ? uploadEl.getBoundingClientRect() : null;
-  const dpr = window.devicePixelRatio || 1;
-  const surfaceW = rect && rect.width ? Math.max(1, Math.round(rect.width * dpr)) : _pendingImage.width;
-  const surfaceH = rect && rect.height ? Math.max(1, Math.round(rect.height * dpr)) : _pendingImage.height;
+  const surfaceW = rect && rect.width ? Math.max(1, Math.round(rect.width)) : _pendingImage.width;
+  const surfaceH = rect && rect.height ? Math.max(1, Math.round(rect.height)) : _pendingImage.height;
   renderUploadCropbox(surfaceW, surfaceH);
 }
 
