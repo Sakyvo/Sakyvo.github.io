@@ -119,14 +119,14 @@ const SLOT_STRONG_MATCH_THRESHOLDS = {
   apple_golden: 0.58,
 };
 
-function drawCropboxLines(ctx, u) {
-  const w = CROPBOX_SPRITE_W * u;
-  const h = CROPBOX_SPRITE_H * u;
-  ctx.clearRect(0, 0, w, h);
+function drawCropboxLines(ctx, cw, ch) {
+  ctx.clearRect(0, 0, cw, ch);
+  function mx(x) { return Math.round(x * cw / CROPBOX_SPRITE_W); }
+  function my(y) { return Math.round(y * ch / CROPBOX_SPRITE_H); }
 
   function fill(x, y, color) {
     ctx.fillStyle = color;
-    ctx.fillRect(x * u, y * u, u, u);
+    ctx.fillRect(mx(x), my(y), mx(x + 1) - mx(x), my(y + 1) - my(y));
   }
 
   function rect1px(x, y, rw, rh, color) {
@@ -349,11 +349,13 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
   if (el.tagName === 'CANVAS') {
     const parent = el.parentElement;
     const parentW = parent ? parent.clientWidth : surfaceW;
-    const displayW = parentW * pctW / 100;
-    const u = Math.max(1, Math.round(displayW / CROPBOX_SPRITE_W));
-    el.width = CROPBOX_SPRITE_W * u;
-    el.height = CROPBOX_SPRITE_H * u;
-    drawCropboxLines(el.getContext('2d'), u);
+    const parentH = parent ? parent.clientHeight : surfaceH;
+    const dpr = window.devicePixelRatio || 1;
+    const bufW = Math.max(1, Math.round(parentW * pctW / 100 * dpr));
+    const bufH = Math.max(1, Math.round(parentH * pctH / 100 * dpr));
+    el.width = bufW;
+    el.height = bufH;
+    drawCropboxLines(el.getContext('2d'), bufW, bufH);
   }
 }
 

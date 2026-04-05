@@ -1122,4 +1122,11 @@ footer {
     padding: 6px 10px;
     font-size: 12px;
   }
+
+  .sbi-result-card { height: 56px; }
+  .sbi-rank { min-width: 28px; font-size: 12px; }
+  .sbi-score { min-width: 44px; font-size: 16px; padding: 0 4px; }
+  .sbi-pack-icon { width: 28px; height: 28px; margin: 0 4px; }
+  .sbi-result-name { font-size: 12px; padding: 0 4px; }
+  .sbi-result-cover { width: 112px; height: 56px; }
 }
