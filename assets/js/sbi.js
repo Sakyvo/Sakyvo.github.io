@@ -119,15 +119,14 @@ const SLOT_STRONG_MATCH_THRESHOLDS = {
   apple_golden: 0.58,
 };
 
-function drawCropboxLines(ctx, w, h) {
+function drawCropboxLines(ctx, u) {
+  const w = CROPBOX_SPRITE_W * u;
+  const h = CROPBOX_SPRITE_H * u;
   ctx.clearRect(0, 0, w, h);
-  const u = Math.max(1, Math.floor(Math.min(w / CROPBOX_SPRITE_W, h / CROPBOX_SPRITE_H)));
-  const ox = Math.floor((w - CROPBOX_SPRITE_W * u) / 2);
-  const oy = Math.floor((h - CROPBOX_SPRITE_H * u) / 2);
 
   function fill(x, y, color) {
     ctx.fillStyle = color;
-    ctx.fillRect(ox + x * u, oy + y * u, u, u);
+    ctx.fillRect(x * u, y * u, u, u);
   }
 
   function rect1px(x, y, rw, rh, color) {
@@ -343,13 +342,12 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
   el.style.top = `${(layout.y / surfaceH) * 100}%`;
   el.style.width = `${(layout.w / surfaceW) * 100}%`;
   el.style.height = `${(layout.h / surfaceH) * 100}%`;
-  const dpr = window.devicePixelRatio || 1;
-  const cw = Math.round(layout.w * dpr);
-  const ch = Math.round(layout.h * dpr);
   if (el.tagName === 'CANVAS') {
-    el.width = cw;
-    el.height = ch;
-    drawCropboxLines(el.getContext('2d'), cw, ch);
+    const dpr = window.devicePixelRatio || 1;
+    const u = Math.max(1, Math.round(layout.w * dpr / CROPBOX_SPRITE_W));
+    el.width = CROPBOX_SPRITE_W * u;
+    el.height = CROPBOX_SPRITE_H * u;
+    drawCropboxLines(el.getContext('2d'), u);
   }
 }
 
