@@ -307,17 +307,23 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
     return;
   }
   el.hidden = false;
-  const pctL = (layout.x / surfaceW) * 100;
-  const pctT = (layout.y / surfaceH) * 100;
-  el.style.left = `${pctL}%`;
-  el.style.top = `${pctT}%`;
 
   const parent = el.parentElement;
   const parentW = parent ? parent.clientWidth : surfaceW;
+  const parentH = parent ? parent.clientHeight : surfaceH;
   const rawCssW = parentW * layout.w / surfaceW;
+  const rawCssH = parentH * layout.h / surfaceH;
   const scale = Math.max(1, Math.floor(rawCssW / CROPBOX_SPRITE_W));
   const snapW = CROPBOX_SPRITE_W * scale;
   const snapH = CROPBOX_SPRITE_H * scale;
+
+  const rawCssL = parentW * layout.x / surfaceW;
+  const rawCssT = parentH * layout.y / surfaceH;
+  const offsetL = rawCssL + (rawCssW - snapW) / 2;
+  const offsetT = rawCssT + (rawCssH - snapH) / 2;
+
+  el.style.left = offsetL + 'px';
+  el.style.top = offsetT + 'px';
   el.style.width = snapW + 'px';
   el.style.height = snapH + 'px';
 }
