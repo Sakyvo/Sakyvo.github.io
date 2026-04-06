@@ -309,12 +309,17 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
   el.hidden = false;
   const pctL = (layout.x / surfaceW) * 100;
   const pctT = (layout.y / surfaceH) * 100;
-  const pctW = (layout.w / surfaceW) * 100;
-  const pctH = (layout.h / surfaceH) * 100;
   el.style.left = `${pctL}%`;
   el.style.top = `${pctT}%`;
-  el.style.width = `${pctW}%`;
-  el.style.height = `${pctH}%`;
+
+  const parent = el.parentElement;
+  const parentW = parent ? parent.clientWidth : surfaceW;
+  const rawCssW = parentW * layout.w / surfaceW;
+  const scale = Math.max(1, Math.floor(rawCssW / CROPBOX_SPRITE_W));
+  const snapW = CROPBOX_SPRITE_W * scale;
+  const snapH = CROPBOX_SPRITE_H * scale;
+  el.style.width = snapW + 'px';
+  el.style.height = snapH + 'px';
 }
 
 function getCropboxLayoutFromWidgetRect(widgetRect) {
