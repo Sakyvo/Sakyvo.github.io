@@ -291,6 +291,7 @@ function hideCropboxElement(el) {
   el.style.top = '';
   el.style.width = '';
   el.style.height = '';
+  el.style.transform = '';
 }
 
 function clearPreviewCropbox() {
@@ -310,22 +311,19 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
 
   const parent = el.parentElement;
   const parentW = parent ? parent.clientWidth : surfaceW;
-  const parentH = parent ? parent.clientHeight : surfaceH;
   const rawCssW = parentW * layout.w / surfaceW;
-  const rawCssH = parentH * layout.h / surfaceH;
   const scale = Math.max(1, Math.floor(rawCssW / CROPBOX_SPRITE_W));
   const snapW = CROPBOX_SPRITE_W * scale;
   const snapH = CROPBOX_SPRITE_H * scale;
 
-  const rawCssL = parentW * layout.x / surfaceW;
-  const rawCssT = parentH * layout.y / surfaceH;
-  const offsetL = rawCssL + (rawCssW - snapW) / 2;
-  const offsetT = rawCssT + (rawCssH - snapH) / 2;
+  const centerXPct = ((layout.x + layout.w / 2) / surfaceW) * 100;
+  const centerYPct = ((layout.y + layout.h / 2) / surfaceH) * 100;
 
-  el.style.left = offsetL + 'px';
-  el.style.top = offsetT + 'px';
+  el.style.left = `${centerXPct}%`;
+  el.style.top = `${centerYPct}%`;
   el.style.width = snapW + 'px';
   el.style.height = snapH + 'px';
+  el.style.transform = 'translate(-50%, -50%)';
 }
 
 function getCropboxLayoutFromWidgetRect(widgetRect) {
@@ -394,6 +392,7 @@ function renderPreviewCropbox(surfaceW, surfaceH, widgetRect, slotTypes) {
     slotEl.style.top = overlay.style.top;
     slotEl.style.width = overlay.style.width;
     slotEl.style.height = overlay.style.height;
+    slotEl.style.transform = overlay.style.transform;
     slotEl.style.background = color;
     slotEl.style.clipPath = clipPath;
     slotEl.style.webkitClipPath = clipPath;
