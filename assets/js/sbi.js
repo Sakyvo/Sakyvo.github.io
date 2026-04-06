@@ -91,6 +91,8 @@ const CROPBOX_COLORS = {
   hunger: 'rgba(255,159,28,1)',
   hotbar: 'rgba(0,0,0,1)',
 };
+const CROPBOX_HUD_DIVIDERS = [8, 16, 24, 32, 40, 48, 56, 64, 72];
+const CROPBOX_HOTBAR_DIVIDERS = [20, 40, 60, 80, 100, 120, 140, 160];
 const CROPBOX_SPRITE_W = 182;
 const CROPBOX_SPRITE_H = 48;
 const CROPBOX_SLOT_COUNT = 9;
@@ -99,10 +101,10 @@ const CROPBOX_SLOT_STEP = 20;
 const CROPBOX_SLOT_TOP = 28;
 const CROPBOX_SLOT_SIZE = 20;
 const CROPBOX_REGIONS = [
-  { color: CROPBOX_COLORS.armor, x: 0, y: 0, w: 81, h: 9 },
-  { color: CROPBOX_COLORS.health, x: 0, y: 10, w: 81, h: 9 },
-  { color: CROPBOX_COLORS.hunger, x: 101, y: 10, w: 81, h: 9 },
-  { color: CROPBOX_COLORS.hotbar, x: 1, y: 28, w: 180, h: 20 },
+  { color: CROPBOX_COLORS.armor, x: 0, y: 0, w: 81, h: 9, dividerOffsets: CROPBOX_HUD_DIVIDERS, dividerInsetTop: 0, dividerInsetBottom: 0 },
+  { color: CROPBOX_COLORS.health, x: 0, y: 10, w: 81, h: 9, dividerOffsets: CROPBOX_HUD_DIVIDERS, dividerInsetTop: 0, dividerInsetBottom: 0 },
+  { color: CROPBOX_COLORS.hunger, x: 101, y: 10, w: 81, h: 9, dividerOffsets: CROPBOX_HUD_DIVIDERS, dividerInsetTop: 0, dividerInsetBottom: 0 },
+  { color: CROPBOX_COLORS.hotbar, x: 1, y: 28, w: 180, h: 20, dividerOffsets: CROPBOX_HOTBAR_DIVIDERS, dividerInsetTop: 1, dividerInsetBottom: 1 },
 ];
 const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
@@ -330,6 +332,9 @@ function buildCropboxRegions(widgetRect) {
     y: widgetRect.y - 27 * unit + region.y * unit,
     w: region.w * unit,
     h: region.h * unit,
+    dividerOffsets: region.dividerOffsets,
+    dividerInsetTop: region.dividerInsetTop,
+    dividerInsetBottom: region.dividerInsetBottom,
   }));
 }
 
@@ -349,6 +354,24 @@ function getPendingWidgetRect(imgW, imgH, preset) {
   return findDisplayWidgetRect(null, imgW, imgH, null, preset);
 }
 
+function appendCropboxDividers(box, region) {
+  if (!box || !region || !Array.isArray(region.dividerOffsets) || !region.dividerOffsets.length) return;
+  const insetTop = Math.max(0, region.dividerInsetTop || 0);
+  const insetBottom = Math.max(0, region.dividerInsetBottom || 0);
+  const innerHeight = Math.max(0, region.h - insetTop - insetBottom);
+  if (!innerHeight) return;
+  for (const offset of region.dividerOffsets) {
+    if (!isFinite(offset) || offset <= 0 || offset >= region.w) continue;
+    const divider = document.createElement('div');
+    divider.className = 'sbi-cropbox-divider';
+    divider.style.setProperty('--cropbox-color', region.color);
+    divider.style.left = `calc(${(offset / region.w) * 100}% - 0.5px)`;
+    divider.style.top = `${(insetTop / region.h) * 100}%`;
+    divider.style.height = `${(innerHeight / region.h) * 100}%`;
+    box.appendChild(divider);
+  }
+}
+
 function renderCropboxLayer(layer, regions, surfaceW, surfaceH, className, fillAlpha) {
   if (!layer || !surfaceW || !surfaceH || !regions || !regions.length) {
     hideCropboxElement(layer);
@@ -362,6 +385,7 @@ function renderCropboxLayer(layer, regions, surfaceW, surfaceH, className, fillA
     box.style.setProperty('--cropbox-color', region.color);
     if (fillAlpha) box.style.background = alphaColor(region.color, fillAlpha);
     setCropboxRectStyle(box, region, surfaceW, surfaceH);
+    appendCropboxDividers(box, region);
     layer.appendChild(box);
   }
 }
