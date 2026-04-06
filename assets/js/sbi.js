@@ -312,7 +312,7 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
   const parent = el.parentElement;
   const parentW = parent ? parent.clientWidth : surfaceW;
   const rawCssW = parentW * layout.w / surfaceW;
-  const scale = Math.max(1, Math.floor(rawCssW / CROPBOX_SPRITE_W));
+  const scale = Math.max(1, Math.round(rawCssW / CROPBOX_SPRITE_W));
   const snapW = CROPBOX_SPRITE_W * scale;
   const snapH = CROPBOX_SPRITE_H * scale;
 
