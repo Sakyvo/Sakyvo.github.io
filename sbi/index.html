@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VALE - Search by Image</title>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=16">
+  <link rel="stylesheet" href="/assets/css/style.css?v=17">
 </head>
 <body class="sbi-page">
   <header class="sbi-header">
@@ -33,7 +33,7 @@
       <p class="sbi-upload-text">Drag &amp; drop, click, or paste a screenshot</p>
       <input type="file" id="sbi-file" accept="image/*" hidden>
       <img id="sbi-cropbox-image" class="sbi-cropbox-image" alt="" hidden>
-      <img id="sbi-cropbox-overlay" class="sbi-cropbox-overlay" src="/sbi/cropbox_preview.png" alt="" hidden>
+      <div id="sbi-cropbox-overlay" class="sbi-cropbox-overlay" hidden></div>
     </div>
 
     <div class="sbi-controls">
@@ -54,7 +54,7 @@
     <div class="sbi-preview" id="sbi-preview" hidden>
       <div class="sbi-preview-stack" id="sbi-preview-stack">
         <img class="sbi-preview-image" id="sbi-preview-image" alt="sbi.png" hidden>
-        <img class="sbi-preview-overlay" id="sbi-preview-overlay" src="/sbi/cropbox.png" alt="" hidden>
+        <div class="sbi-preview-overlay" id="sbi-preview-overlay" hidden></div>
         <div class="sbi-preview-slot-layer" id="sbi-preview-slot-layer" hidden></div>
       </div>
       <canvas id="sbi-canvas"></canvas>
@@ -157,6 +157,6 @@
   </footer>
 
   <script src="/assets/js/auth.js?v=3"></script>
-  <script src="/assets/js/sbi.js?v=62"></script>
+  <script src="/assets/js/sbi.js?v=63"></script>
 </body>
 </html>
