@@ -332,9 +332,9 @@ function buildCropboxRegions(widgetRect) {
     y: widgetRect.y - 27 * unit + region.y * unit,
     w: region.w * unit,
     h: region.h * unit,
-    dividerOffsets: region.dividerOffsets,
-    dividerInsetTop: region.dividerInsetTop,
-    dividerInsetBottom: region.dividerInsetBottom,
+    dividerOffsets: Array.isArray(region.dividerOffsets) ? region.dividerOffsets.map(offset => offset * unit) : null,
+    dividerInsetTop: (region.dividerInsetTop || 0) * unit,
+    dividerInsetBottom: (region.dividerInsetBottom || 0) * unit,
   }));
 }
 
