@@ -119,37 +119,6 @@ const SLOT_STRONG_MATCH_THRESHOLDS = {
   apple_golden: 0.58,
 };
 
-function drawCropboxLines(ctx, cw, ch) {
-  ctx.clearRect(0, 0, cw, ch);
-  function mx(x) { return Math.round(x * cw / CROPBOX_SPRITE_W); }
-  function my(y) { return Math.round(y * ch / CROPBOX_SPRITE_H); }
-
-  function fill(x, y, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(mx(x), my(y), mx(x + 1) - mx(x), my(y + 1) - my(y));
-  }
-
-  function rect1px(x, y, rw, rh, color) {
-    for (let i = 0; i < rw; i++) { fill(x + i, y, color); fill(x + i, y + rh - 1, color); }
-    for (let i = 1; i < rh - 1; i++) { fill(x, y + i, color); fill(x + rw - 1, y + i, color); }
-  }
-
-  function vline(x, y1, y2, color) {
-    for (let y = y1; y <= y2; y++) fill(x, y, color);
-  }
-
-  function hudRow(sx, sy, color) {
-    for (let i = 0; i < 10; i++) rect1px(sx + i * 8, sy, 9, 9, color);
-  }
-
-  hudRow(0, 0, CROPBOX_COLORS.armor);
-  hudRow(0, 10, CROPBOX_COLORS.health);
-  hudRow(101, 10, CROPBOX_COLORS.hunger);
-
-  rect1px(1, 28, 180, 20, CROPBOX_COLORS.hotbar);
-  for (let i = 1; i < 9; i++) vline(1 + i * 20, 29, 46, CROPBOX_COLORS.hotbar);
-}
-
 function clamp01(v) {
   return Math.max(0, Math.min(1, v));
 }
@@ -346,21 +315,6 @@ function applyCropboxPlacement(el, layout, surfaceW, surfaceH) {
   el.style.top = `${pctT}%`;
   el.style.width = `${pctW}%`;
   el.style.height = `${pctH}%`;
-  if (el.tagName === 'CANVAS') {
-    const parent = el.parentElement;
-    const parentW = parent ? parent.clientWidth : surfaceW;
-    const parentH = parent ? parent.clientHeight : surfaceH;
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = parentW * pctW / 100;
-    const cssH = parentH * pctH / 100;
-    const bufW = Math.max(1, Math.round(cssW * dpr));
-    const bufH = Math.max(1, Math.round(cssH * dpr));
-    el.width = bufW;
-    el.height = bufH;
-    el.style.width = (bufW / dpr) + 'px';
-    el.style.height = (bufH / dpr) + 'px';
-    drawCropboxLines(el.getContext('2d'), bufW, bufH);
-  }
 }
 
 function getCropboxLayoutFromWidgetRect(widgetRect) {
@@ -414,7 +368,7 @@ function renderPreviewCropbox(surfaceW, surfaceH, widgetRect, slotTypes) {
     return;
   }
 
-  const maskUrl = overlay.tagName === 'CANVAS' ? `url("${overlay.toDataURL()}")` : '';
+  const maskUrl = overlay.src ? `url("${overlay.src}")` : '';
   slotLayer.innerHTML = '';
   let hasColoredSlots = false;
   for (let i = 0; i < Math.min(CROPBOX_SLOT_COUNT, slotTypes ? slotTypes.length : 0); i++) {
