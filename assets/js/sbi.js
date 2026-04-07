@@ -114,9 +114,9 @@ const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak
 const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
   // Ignore widget for now and make slot matching dominate HUD when rankings disagree.
-  type: { diamond_sword: 7.5, ender_pearl: 7.5, splash_potion: 2.0, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0 },
-  hud: { health: 6.0, hunger: 1.35, armor: 0.95 },
-  mix: { slot: 0.72, hud: 0.28, widget: 0.00, slotNoHud: 1.00, widgetNoHud: 0.00 },
+  type: { diamond_sword: 7.5, ender_pearl: 7.5, splash_potion: 3.4, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0 },
+  hud: { health: 6.0, hunger: 4.8, armor: 4.4 },
+  mix: { slot: 0.50, hud: 0.50, widget: 0.00, slotNoHud: 1.00, widgetNoHud: 0.00 },
 };
 const SLOT_STRONG_MATCH_THRESHOLDS = {
   diamond_sword: 0.56,
@@ -1339,7 +1339,7 @@ function computeFeatures(imageData, w, h, isScreenshot, mode) {
 
   // Lightweight slot signature for robust item-type inference (computed on alpha-only pixels; no BG_THRESHOLD).
   let sig = null;
-  if (mode === 'slot') {
+  if (mode === 'slot' || mode === 'hud') {
     sig = computeItemSignature(effectiveData, w, h);
   }
   const effectiveImage = (effectiveData === imageData.data)
@@ -1450,9 +1450,9 @@ function estimateHudConfidence(hudFeatures, packNames) {
   for (const name of names) {
     const p = fingerprints.packs[name];
     if (!p) continue;
-    const healthSim = compareHudCells(hudFeatures.hearts, [p.health_empty, p.health_half, p.health_full]);
-    const hungerSim = compareHudCells(hudFeatures.hunger, [p.hunger_empty, p.hunger_half, p.hunger_full]);
-    const armorSim = compareHudCells(hudFeatures.armor, [p.armor_empty, p.armor_half, p.armor_full]);
+    const healthSim = compareHudCells(hudFeatures.hearts, [p.health_empty, p.health_half, p.health_full], 'health');
+    const hungerSim = compareHudCells(hudFeatures.hunger, [p.hunger_empty, p.hunger_half, p.hunger_full], 'hunger');
+    const armorSim = compareHudCells(hudFeatures.armor, [p.armor_empty, p.armor_half, p.armor_full], 'armor');
 
     let hudWeighted = 0, hudWeights = 0;
     if (healthSim > 0) { hudWeighted += healthSim * SBI_SCORE_WEIGHTS.hud.health; hudWeights += SBI_SCORE_WEIGHTS.hud.health; }
@@ -2127,14 +2127,33 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   };
 }
 
-function compareHudCells(cells, variants) {
+function compareHudVariant(extracted, tex, hudType) {
+  let sim = compare(extracted, tex);
+  if (hudType === 'health' && extracted && tex && extracted.sig && tex.sig) {
+    const dir = clamp01(meanRgbDirSim(extracted.moments, tex.moments));
+    const gbSim = metricSimilarity(
+      signatureMeanRatio(extracted.sig, 'meanG', 'meanB'),
+      signatureMeanRatio(tex.sig, 'meanG', 'meanB'),
+      0.34
+    );
+    const rbSim = metricSimilarity(
+      signatureMeanRatio(extracted.sig, 'meanR', 'meanB'),
+      signatureMeanRatio(tex.sig, 'meanR', 'meanB'),
+      0.50
+    );
+    sim *= (0.02 + 0.24 * dir + 0.60 * gbSim + 0.14 * rbSim);
+  }
+  return sim;
+}
+
+function compareHudCells(cells, variants, hudType) {
   if (!cells || cells.length === 0) return 0;
   const texList = (variants || []).filter(Boolean);
   if (!texList.length) return 0;
   const sims = [];
   for (const cell of cells) {
     let best = 0;
-    for (const tex of texList) best = Math.max(best, compare(cell, tex));
+    for (const tex of texList) best = Math.max(best, compareHudVariant(cell, tex, hudType));
     sims.push(best);
   }
   sims.sort((a, b) => b - a);
@@ -2175,25 +2194,108 @@ function signatureSimilarity(extractedSig, packSig, targetType) {
   }
   if (targetType === 'ender_pearl') {
     return clamp01(
-      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.30) * 0.45 +
-      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.30) * 0.35 +
-      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.30) * 0.15 +
-      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.35) * 0.05
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.26) * 0.16 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.26) * 0.14 +
+      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.26) * 0.06 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.20) * 0.24 +
+      metricSimilarity(
+        signatureMeanRatio(extractedSig, 'meanR', 'meanB'),
+        signatureMeanRatio(packSig, 'meanR', 'meanB'),
+        0.28
+      ) * 0.24 +
+      metricSimilarity(
+        signatureMeanRatio(extractedSig, 'meanG', 'meanB'),
+        signatureMeanRatio(packSig, 'meanG', 'meanB'),
+        0.28
+      ) * 0.16
+    );
+  }
+  if (targetType === 'splash_potion') {
+    return clamp01(
+      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.16) * 0.18 +
+      metricSimilarity(extractedSig.centerX, packSig.centerX, 0.18) * 0.05 +
+      metricSimilarity(extractedSig.centerY, packSig.centerY, 0.18) * 0.05 +
+      metricSimilarity(extractedSig.lrBias, packSig.lrBias, 0.34) * 0.04 +
+      metricSimilarity(extractedSig.tbBias, packSig.tbBias, 0.42) * 0.08 +
+      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.18) * 0.16 +
+      metricSimilarity(extractedSig.rowSlope, packSig.rowSlope, 0.06) * 0.06 +
+      metricSimilarity(extractedSig.bboxTop, packSig.bboxTop, 0.12) * 0.06 +
+      metricSimilarity(extractedSig.bboxBottom, packSig.bboxBottom, 0.12) * 0.16 +
+      metricSimilarity(extractedSig.bboxLeft, packSig.bboxLeft, 0.22) * 0.04 +
+      metricSimilarity(extractedSig.bboxRight, packSig.bboxRight, 0.18) * 0.04 +
+      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.28) * 0.08
     );
   }
   return 0;
+}
+
+function colorRatio(moments, numeratorIndex, denominatorIndex) {
+  if (!moments) return 0;
+  return moments[numeratorIndex] / Math.max(1e-6, moments[denominatorIndex]);
+}
+
+function signatureMeanRatio(sig, numeratorKey, denominatorKey) {
+  if (!sig) return 0;
+  return (sig[numeratorKey] || 0) / Math.max(1, sig[denominatorKey] || 0);
 }
 
 function compareSlotVariant(extracted, packTex, targetType) {
   let sim = compare(extracted, packTex);
   if (targetType === 'diamond_sword') {
     const dir = meanRgbDirSim(extracted.moments, packTex.moments);
-    sim *= (0.30 + 0.70 * clamp01(dir));
+    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.28);
+    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.28);
+    sim *= (0.42 + 0.30 * clamp01(dir) + 0.16 * rbSim + 0.12 * gbSim);
   }
-  if ((targetType === 'diamond_sword' || targetType === 'ender_pearl') && extracted.sig && packTex.sig) {
+  if (targetType === 'ender_pearl') {
+    const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
+    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.28);
+    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.22);
+    const sigRbSim = extracted.sig && packTex.sig
+      ? metricSimilarity(
+        signatureMeanRatio(extracted.sig, 'meanR', 'meanB'),
+        signatureMeanRatio(packTex.sig, 'meanR', 'meanB'),
+        0.22
+      )
+      : 1;
+    const sigGbSim = extracted.sig && packTex.sig
+      ? metricSimilarity(
+        signatureMeanRatio(extracted.sig, 'meanG', 'meanB'),
+        signatureMeanRatio(packTex.sig, 'meanG', 'meanB'),
+        0.22
+      )
+      : 1;
+    const blueSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.blueFrac, packTex.sig.blueFrac, 0.18)
+      : 1;
+    const darkSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.centerDarkFrac, packTex.sig.centerDarkFrac, 0.35)
+      : 1;
+    sim *= (0.02 + 0.18 * dir + 0.24 * rbSim + 0.16 * gbSim + 0.16 * sigRbSim + 0.12 * sigGbSim + 0.08 * blueSim + 0.04 * darkSim);
+  }
+  if (targetType === 'splash_potion') {
+    const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
+    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.42);
+    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.42);
+    const edgeSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.edgeDarkFrac, packTex.sig.edgeDarkFrac, 0.38)
+      : 1;
+    const mirrorSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.mirrorFrac, packTex.sig.mirrorFrac, 0.18)
+      : 1;
+    const bottomSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.bboxBottom, packTex.sig.bboxBottom, 0.12)
+      : 1;
+    const coverSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.coverage, packTex.sig.coverage, 0.16)
+      : 1;
+    sim *= (0.06 + 0.12 * dir + 0.10 * rbSim + 0.08 * gbSim + 0.10 * edgeSim + 0.20 * mirrorSim + 0.18 * bottomSim + 0.16 * coverSim);
+  }
+  if ((targetType === 'diamond_sword' || targetType === 'ender_pearl' || targetType === 'splash_potion') && extracted.sig && packTex.sig) {
     const sigSim = signatureSimilarity(extracted.sig, packTex.sig, targetType);
     if (targetType === 'diamond_sword') sim = sim * 0.58 + sigSim * 0.42;
-    else sim = sim * 0.55 + sigSim * 0.45;
+    else if (targetType === 'ender_pearl') sim = sim * 0.42 + sigSim * 0.58;
+    else sim = sim * 0.40 + sigSim * 0.60;
   }
   return sim;
 }
@@ -2243,9 +2345,13 @@ function inferMiddleConsumableSlotType(slot, sig, cache) {
   const carrotBest = getBestFingerprintSlotSimilarity(slot, 'golden_carrot', cache);
   const foodBest = Math.max(steakBest, carrotBest);
   const potionLike = sig.redFrac >= 0.055 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+  const latePotionSlot = slot.index >= 5;
+  const potionThreshold = latePotionSlot ? 0.36 : 0.42;
+  const potionMargin = latePotionSlot ? 0.08 : 0.02;
+  const foodMargin = latePotionSlot ? 0.10 : 0.05;
 
-  if (potionBest >= 0.42 && (potionBest >= foodBest - 0.02 || potionLike)) return 'splash_potion';
-  if (foodBest >= 0.46 && foodBest > potionBest + 0.05) return steakBest >= carrotBest ? 'steak' : 'golden_carrot';
+  if (potionBest >= potionThreshold && (potionBest >= foodBest - potionMargin || (potionLike && latePotionSlot))) return 'splash_potion';
+  if (foodBest >= 0.46 && foodBest > potionBest + foodMargin) return steakBest >= carrotBest ? 'steak' : 'golden_carrot';
   return '';
 }
 
@@ -2284,9 +2390,25 @@ function inferCanonicalPvPWeaponSlotType(slot, sig, inferredTypes, cache) {
   return '';
 }
 
+function applyCanonicalMiddlePotionSlots(orderedSlots, inferredTypes, cache) {
+  if (!Array.isArray(orderedSlots) || !Array.isArray(inferredTypes)) return;
+  const hasPearl = inferredTypes[1] === 'ender_pearl';
+  const hasFoodTail = inferredTypes[8] === 'steak' || inferredTypes[8] === 'golden_carrot';
+  if (!hasPearl || !hasFoodTail) return;
+
+  for (const slotIndex of [5, 6, 7]) {
+    const slot = orderedSlots.find(entry => entry && entry.index === slotIndex);
+    const sig = slot && slot.features ? slot.features.sig : null;
+    if (!slot || !sig) continue;
+    const activity = clamp01(slot.activity || 0);
+    if (activity < 0.55 || sig.yellowFrac >= 0.14) continue;
+    inferredTypes[slotIndex] = 'splash_potion';
+  }
+}
+
 function sharpenSimilarityScore(v) {
   const x = clamp01(v);
-  return clamp01(1 / (1 + Math.exp(-12 * (x - 0.58))));
+  return clamp01(1 / (1 + Math.exp(-12 * (x - 0.40))));
 }
 
 function inferDisplaySlotTypes(slots) {
@@ -2367,6 +2489,7 @@ function inferDisplaySlotTypes(slots) {
 
   const slot0 = ordered.find(slot => slot && slot.index === 0);
   const slot0Sig = slot0 && slot0.features ? slot0.features.sig : null;
+  applyCanonicalMiddlePotionSlots(ordered, out, fingerprintScoreCache);
   const canonicalWeaponType = inferCanonicalPvPWeaponSlotType(slot0, slot0Sig, out, fingerprintScoreCache);
   if (canonicalWeaponType) out[0] = canonicalWeaponType;
 
@@ -2463,9 +2586,9 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 
     let hudWeighted = 0, hudWeights = 0;
     if (hudFeatures) {
-      healthSim = compareHudCells(hudFeatures.hearts, [packData.health_empty, packData.health_half, packData.health_full]);
-      hungerSim = compareHudCells(hudFeatures.hunger, [packData.hunger_empty, packData.hunger_half, packData.hunger_full]);
-      armorSim = compareHudCells(hudFeatures.armor, [packData.armor_empty, packData.armor_half, packData.armor_full]);
+      healthSim = compareHudCells(hudFeatures.hearts, [packData.health_empty, packData.health_half, packData.health_full], 'health');
+      hungerSim = compareHudCells(hudFeatures.hunger, [packData.hunger_empty, packData.hunger_half, packData.hunger_full], 'hunger');
+      armorSim = compareHudCells(hudFeatures.armor, [packData.armor_empty, packData.armor_half, packData.armor_full], 'armor');
 
       if (healthSim > 0) { hudWeighted += healthSim * SBI_SCORE_WEIGHTS.hud.health; hudWeights += SBI_SCORE_WEIGHTS.hud.health; }
       if (hungerSim > 0) { hudWeighted += hungerSim * SBI_SCORE_WEIGHTS.hud.hunger; hudWeights += SBI_SCORE_WEIGHTS.hud.hunger; }
