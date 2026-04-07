@@ -113,10 +113,9 @@ const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden'];
 const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
-  // Ignore widget for now and make slot matching dominate HUD when rankings disagree.
-  type: { diamond_sword: 7.5, ender_pearl: 7.5, splash_potion: 3.4, steak: 0.5, golden_carrot: 0.5, apple_golden: 0.0 },
-  hud: { health: 6.0, hunger: 4.8, armor: 4.4 },
-  mix: { slot: 0.50, hud: 0.50, widget: 0.00, slotNoHud: 1.00, widgetNoHud: 0.00 },
+  type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 3.6, steak: 0.45, golden_carrot: 0.45, apple_golden: 0.0 },
+  hud: { health: 5.8, hunger: 5.0, armor: 4.8 },
+  mix: { slot: 0.44, hud: 0.40, widget: 0.16, slotNoHud: 0.84, widgetNoHud: 0.16 },
 };
 const SLOT_STRONG_MATCH_THRESHOLDS = {
   diamond_sword: 0.56,
@@ -151,6 +150,15 @@ function fmtPct(v) {
   return (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + '%';
 }
 
+function lerp(a, b, t) {
+  return a + (b - a) * clamp01(t);
+}
+
+function inverseLerp(a, b, v) {
+  if (!isFinite(a) || !isFinite(b) || Math.abs(b - a) < 1e-6) return v >= b ? 1 : 0;
+  return clamp01((v - a) / (b - a));
+}
+
 function getDisplayedPctOrderValue(v) {
   if (!isFinite(v)) return -1;
   return Math.round(Math.max(0, Math.min(1, v)) * 1000);
@@ -171,6 +179,58 @@ function normalizePackSearchTerm(value) {
 
 function normalizePackSearchPhrase(value) {
   return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function buildDisplayScoreAnchors(results) {
+  const ranked = (results || []).filter(row => row && isFinite(row.score)).slice().sort((a, b) => b.score - a.score);
+  if (!ranked.length) return null;
+  const s1 = clamp01(ranked[0].score);
+  const s2 = clamp01(ranked[1] ? ranked[1].score : Math.max(0, s1 - 0.04));
+  const s3 = clamp01(ranked[2] ? ranked[2].score : Math.max(0, s2 - 0.10));
+  const s10 = clamp01(ranked[Math.min(ranked.length - 1, 9)] ? ranked[Math.min(ranked.length - 1, 9)].score : Math.max(0, s3 - 0.16));
+  const topGap = Math.max(0, s1 - s2);
+  const thirdGap = Math.max(0, s2 - s3);
+  const d1 = clamp01(0.82 + 0.08 * clamp01((s1 - 0.38) / 0.18));
+  const d2 = ranked.length > 1
+    ? clamp01(Math.max(0.76, d1 - (0.02 + Math.min(0.04, 0.005 + topGap * 0.12))))
+    : d1;
+  const d3 = ranked.length > 2
+    ? clamp01(Math.max(0.48, d2 - (0.15 + Math.min(0.12, 0.04 + thirdGap * 1.6))))
+    : clamp01(d2 - 0.16);
+  const d10 = clamp01(Math.max(0.18, d3 - 0.28));
+  return { s1, s2, s3, s10, d1, d2, d3, d10 };
+}
+
+function projectDisplayScore(score, anchors) {
+  const x = clamp01(score);
+  if (!anchors) return x;
+  if (x >= anchors.s2 || anchors.s1 <= anchors.s2 + 1e-6) {
+    return lerp(anchors.d2, anchors.d1, inverseLerp(anchors.s2, anchors.s1, x));
+  }
+  if (x >= anchors.s3 || anchors.s2 <= anchors.s3 + 1e-6) {
+    return lerp(anchors.d3, anchors.d2, inverseLerp(anchors.s3, anchors.s2, x));
+  }
+  return lerp(anchors.d10, anchors.d3, Math.pow(inverseLerp(anchors.s10, anchors.s3, x), 0.8));
+}
+
+function assignDisplayScores(results, details) {
+  const anchors = buildDisplayScoreAnchors(results);
+  for (const row of (results || [])) row.displayScore = projectDisplayScore(row.score, anchors);
+  if (details) {
+    for (const info of Object.values(details)) {
+      if (!info || !isFinite(info.finalScore)) continue;
+      info.displayScore = projectDisplayScore(info.finalScore, anchors);
+    }
+  }
+  return anchors;
+}
+
+function getDisplayScoreValue(row, info) {
+  if (row && isFinite(row.displayScore)) return clamp01(row.displayScore);
+  if (info && isFinite(info.displayScore)) return clamp01(info.displayScore);
+  if (row && isFinite(row.score)) return clamp01(row.score);
+  if (info && isFinite(info.finalScore)) return clamp01(info.finalScore);
+  return 0;
 }
 
 function formatWidgetRect(rect) {
@@ -503,7 +563,7 @@ function renderDebugPanel(results, phase) {
     return `<tr data-pack="${r.name.replace(/"/g, '&quot;')}">
       <td>${i + 1}</td>
       <td title="${r.name}">${r.name}</td>
-      <td>${fmtPct(r.score)}</td>
+      <td>${fmtPct(getDisplayScoreValue(r, info))}</td>
       <td>${fmtPct(info.slotScore)}</td>
       <td>${fmtPct(info.widgetScore)}</td>
       <td>${fmtPct(info.healthScore)}</td>
@@ -564,7 +624,7 @@ function findPackScoreMatches(query) {
     else if (tokens.length && tokens.every(token => loweredName.includes(token) || displayName.toLowerCase().includes(token))) rank = 1;
     if (!rank) return null;
     const info = _lastMatchDetails[name] || {};
-    const totalScore = isFinite(_lastVisibleScores[name]) ? _lastVisibleScores[name] : (isFinite(info.finalScore) ? info.finalScore : 0);
+    const totalScore = isFinite(_lastVisibleScores[name]) ? _lastVisibleScores[name] : getDisplayScoreValue(null, info);
     return {
       name,
       displayName,
@@ -633,7 +693,7 @@ function buildTop10Markdown() {
       ? `${row.displayName} (${row.name})`
       : (row.displayName || row.name);
     lines.push(
-      `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(row.score)} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} |`
+      `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(getDisplayScoreValue(row, info))} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} |`
     );
   });
 
@@ -775,9 +835,10 @@ function handleClipResults(clipScores) {
     else score = 0;
     combined.push({ name, score });
   }
-  _lastVisibleScores = {};
-  for (const row of combined) _lastVisibleScores[row.name] = row.score;
   combined.sort((a, b) => b.score - a.score);
+  assignDisplayScores(combined, _lastMatchDetails);
+  _lastVisibleScores = {};
+  for (const row of combined) _lastVisibleScores[row.name] = getDisplayScoreValue(row, _lastMatchDetails[row.name]);
   _lastRankedResults = combined.slice();
   _lastSearchPhase = 'ai';
   const top10 = combined.slice(0, 10);
@@ -2173,41 +2234,53 @@ function signatureSimilarity(extractedSig, packSig, targetType) {
   if (targetType === 'diamond_sword') {
     const shapeReady = typeof extractedSig.centerX === 'number' && typeof packSig.centerX === 'number';
     const shapeSim = shapeReady ? clamp01(
-      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.12) * 0.16 +
-      metricSimilarity(extractedSig.centerX, packSig.centerX, 0.12) * 0.16 +
-      metricSimilarity(extractedSig.centerY, packSig.centerY, 0.10) * 0.10 +
-      metricSimilarity(extractedSig.lrBias, packSig.lrBias, 0.18) * 0.08 +
-      metricSimilarity(extractedSig.tbBias, packSig.tbBias, 0.20) * 0.06 +
-      metricSimilarity(extractedSig.rowSlope, packSig.rowSlope, 0.10) * 0.18 +
-      metricSimilarity(extractedSig.bboxTop, packSig.bboxTop, 0.10) * 0.12 +
-      metricSimilarity(extractedSig.bboxBottom, packSig.bboxBottom, 0.20) * 0.08 +
-      metricSimilarity(extractedSig.bboxLeft, packSig.bboxLeft, 0.14) * 0.08 +
+      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.12) * 0.18 +
+      metricSimilarity(extractedSig.centerX, packSig.centerX, 0.12) * 0.14 +
+      metricSimilarity(extractedSig.centerY, packSig.centerY, 0.10) * 0.06 +
+      metricSimilarity(extractedSig.lrBias, packSig.lrBias, 0.18) * 0.04 +
+      metricSimilarity(extractedSig.tbBias, packSig.tbBias, 0.20) * 0.04 +
+      metricSimilarity(extractedSig.rowSlope, packSig.rowSlope, 0.08) * 0.20 +
+      metricSimilarity(extractedSig.bboxTop, packSig.bboxTop, 0.10) * 0.14 +
+      metricSimilarity(extractedSig.bboxBottom, packSig.bboxBottom, 0.18) * 0.10 +
+      metricSimilarity(extractedSig.bboxLeft, packSig.bboxLeft, 0.12) * 0.06 +
       metricSimilarity(extractedSig.bboxRight, packSig.bboxRight, 0.12) * 0.04 +
-      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.20) * 0.04
+      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.20) * 0.02
     ) : 0;
     const colorSim = clamp01(
-      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.75) * 0.45 +
-      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.75) * 0.25 +
-      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.80) * 0.30
-    );
-    return shapeReady ? clamp01(shapeSim * 0.75 + colorSim * 0.25) : colorSim;
-  }
-  if (targetType === 'ender_pearl') {
-    return clamp01(
-      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.26) * 0.16 +
-      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.26) * 0.14 +
-      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.26) * 0.06 +
-      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.20) * 0.24 +
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.22) * 0.28 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.22) * 0.18 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.18) * 0.28 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanR', 'meanB'),
         signatureMeanRatio(packSig, 'meanR', 'meanB'),
-        0.28
-      ) * 0.24 +
+        0.16
+      ) * 0.14 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanG', 'meanB'),
         signatureMeanRatio(packSig, 'meanG', 'meanB'),
-        0.28
-      ) * 0.16
+        0.16
+      ) * 0.12
+    );
+    return shapeReady ? clamp01(shapeSim * 0.62 + colorSim * 0.38) : colorSim;
+  }
+  if (targetType === 'ender_pearl') {
+    return clamp01(
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.20) * 0.20 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.18) * 0.22 +
+      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.22) * 0.08 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.14) * 0.18 +
+      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.10) * 0.08 +
+      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.14) * 0.10 +
+      metricSimilarity(
+        signatureMeanRatio(extractedSig, 'meanR', 'meanB'),
+        signatureMeanRatio(packSig, 'meanR', 'meanB'),
+        0.16
+      ) * 0.08 +
+      metricSimilarity(
+        signatureMeanRatio(extractedSig, 'meanG', 'meanB'),
+        signatureMeanRatio(packSig, 'meanG', 'meanB'),
+        0.16
+      ) * 0.06
     );
   }
   if (targetType === 'splash_potion') {
@@ -2242,36 +2315,51 @@ function signatureMeanRatio(sig, numeratorKey, denominatorKey) {
 function compareSlotVariant(extracted, packTex, targetType) {
   let sim = compare(extracted, packTex);
   if (targetType === 'diamond_sword') {
-    const dir = meanRgbDirSim(extracted.moments, packTex.moments);
-    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.28);
-    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.28);
-    sim *= (0.42 + 0.30 * clamp01(dir) + 0.16 * rbSim + 0.12 * gbSim);
+    const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
+    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.22);
+    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.22);
+    const blueSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.blueFrac, packTex.sig.blueFrac, 0.18)
+      : 1;
+    const darkSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.darkFrac, packTex.sig.darkFrac, 0.22)
+      : 1;
+    const coverSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.coverage, packTex.sig.coverage, 0.10)
+      : 1;
+    sim *= (0.08 + 0.24 * dir + 0.14 * rbSim + 0.10 * gbSim + 0.18 * blueSim + 0.14 * darkSim + 0.12 * coverSim);
   }
   if (targetType === 'ender_pearl') {
     const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
-    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.28);
-    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.22);
+    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.18);
+    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.18);
     const sigRbSim = extracted.sig && packTex.sig
       ? metricSimilarity(
         signatureMeanRatio(extracted.sig, 'meanR', 'meanB'),
         signatureMeanRatio(packTex.sig, 'meanR', 'meanB'),
-        0.22
+        0.16
       )
       : 1;
     const sigGbSim = extracted.sig && packTex.sig
       ? metricSimilarity(
         signatureMeanRatio(extracted.sig, 'meanG', 'meanB'),
         signatureMeanRatio(packTex.sig, 'meanG', 'meanB'),
-        0.22
+        0.16
       )
       : 1;
     const blueSim = extracted.sig && packTex.sig
-      ? metricSimilarity(extracted.sig.blueFrac, packTex.sig.blueFrac, 0.18)
+      ? metricSimilarity(extracted.sig.blueFrac, packTex.sig.blueFrac, 0.14)
       : 1;
     const darkSim = extracted.sig && packTex.sig
-      ? metricSimilarity(extracted.sig.centerDarkFrac, packTex.sig.centerDarkFrac, 0.35)
+      ? metricSimilarity(extracted.sig.centerDarkFrac, packTex.sig.centerDarkFrac, 0.18)
       : 1;
-    sim *= (0.02 + 0.18 * dir + 0.24 * rbSim + 0.16 * gbSim + 0.16 * sigRbSim + 0.12 * sigGbSim + 0.08 * blueSim + 0.04 * darkSim);
+    const edgeDarkSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.edgeDarkFrac, packTex.sig.edgeDarkFrac, 0.20)
+      : 1;
+    const coverSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.coverage, packTex.sig.coverage, 0.10)
+      : 1;
+    sim *= (0.04 + 0.14 * dir + 0.18 * rbSim + 0.12 * gbSim + 0.14 * sigRbSim + 0.10 * sigGbSim + 0.10 * blueSim + 0.10 * darkSim + 0.04 * edgeDarkSim + 0.04 * coverSim);
   }
   if (targetType === 'splash_potion') {
     const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
@@ -2293,8 +2381,8 @@ function compareSlotVariant(extracted, packTex, targetType) {
   }
   if ((targetType === 'diamond_sword' || targetType === 'ender_pearl' || targetType === 'splash_potion') && extracted.sig && packTex.sig) {
     const sigSim = signatureSimilarity(extracted.sig, packTex.sig, targetType);
-    if (targetType === 'diamond_sword') sim = sim * 0.58 + sigSim * 0.42;
-    else if (targetType === 'ender_pearl') sim = sim * 0.42 + sigSim * 0.58;
+    if (targetType === 'diamond_sword') sim = sim * 0.46 + sigSim * 0.54;
+    else if (targetType === 'ender_pearl') sim = sim * 0.36 + sigSim * 0.64;
     else sim = sim * 0.40 + sigSim * 0.60;
   }
   return sim;
@@ -2618,13 +2706,14 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       perTypeScores,
       slotBreakdown,
     };
-    if (canRank && finalScore > 0.28) {
+    if (canRank) {
       results.push({ name: packName, score: finalScore });
       if (finalScore > bestScore) bestScore = finalScore;
     }
   }
 
   results.sort((a, b) => b.score - a.score);
+  assignDisplayScores(results, details);
   return { results: results.slice(0, 80), slotTypes: displaySlotTypes, details };
 }
 
@@ -2650,7 +2739,7 @@ function renderResults(results, label) {
   }
   const header = label ? `<div class="sbi-results-label">${label}</div>` : '';
   container.innerHTML = header + results.map((r, i) => {
-    const pct = Math.min(100, Math.round(r.score * 100));
+    const pct = Math.min(100, Math.round(getDisplayScoreValue(r, _lastMatchDetails[r.name]) * 100));
     const color = scoreColor(pct);
     const coverUrl = '/thumbnails/' + encodeURIComponent(r.name) + '/cover.png';
     const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
@@ -2678,7 +2767,7 @@ function saveHistory(imageDataUrl, results) {
     timestamp: new Date().toISOString(),
     imageDataUrl,
     results: results.map(r => ({
-      name: r.name, score: r.score,
+      name: r.name, score: getDisplayScoreValue(r, _lastMatchDetails[r.name]),
       cover: '/thumbnails/' + r.name + '/cover.png',
       packPng: '/thumbnails/' + r.name + '/pack.png'
     }))
@@ -2769,7 +2858,7 @@ async function processImage(file) {
     renderResults(stage1Top10);
     renderDebugPanel(stage1Top10, 'hash');
     _lastVisibleScores = {};
-    for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = isFinite(info.finalScore) ? info.finalScore : 0;
+    for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = getDisplayScoreValue(null, info);
     _lastRankedResults = results.slice();
     _lastSearchPhase = 'hash';
     renderPackScoreSearch();
