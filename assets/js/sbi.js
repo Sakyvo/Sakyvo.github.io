@@ -2418,9 +2418,15 @@ function inferPrimaryWeaponSlotType(slot, sig, cache) {
   if (!fingerprints || !fingerprints.packs) return '';
   const dsBest = getBestFingerprintSlotSimilarity(slot, 'diamond_sword', cache);
   const epBest = getBestFingerprintSlotSimilarity(slot, 'ender_pearl', cache);
+  const activity = clamp01(slot.activity || 0);
+  const quality = slot.quality || 0;
   const swordLike = sig.coverage <= 0.52 && Math.abs(sig.rowSlope) >= 0.045 && sig.bboxTop <= 0.38 && sig.bboxBottom >= 0.50;
+  const wideSwordLike = sig.coverage <= 0.74 && Math.abs(sig.rowSlope) >= 0.028 && sig.bboxTop <= 0.24 && sig.bboxBottom >= 0.68;
+  const blueWeaponLike = sig.blueFrac >= 0.18 || (sig.meanB > sig.meanR + 28 && sig.meanB > sig.meanG + 16);
+  const strongHeldItem = activity >= 0.52 && quality >= 16;
 
   if ((swordLike || sig.blueFrac >= 0.03) && dsBest >= 0.40 && dsBest >= epBest - 0.02) return 'diamond_sword';
+  if (strongHeldItem && (wideSwordLike || blueWeaponLike) && dsBest >= 0.28 && dsBest >= epBest - 0.08 && sig.yellowFrac < 0.12) return 'diamond_sword';
   if (epBest >= 0.56 && epBest > dsBest + 0.04 && sig.meanLum < 92) return 'ender_pearl';
   return '';
 }
@@ -2433,13 +2439,15 @@ function inferMiddleConsumableSlotType(slot, sig, cache) {
   const carrotBest = getBestFingerprintSlotSimilarity(slot, 'golden_carrot', cache);
   const foodBest = Math.max(steakBest, carrotBest);
   const potionLike = sig.redFrac >= 0.055 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+  const strongFoodColor = sig.yellowFrac >= 0.18 && sig.redFrac < 0.10 && sig.meanLum >= 96;
   const latePotionSlot = slot.index >= 5;
-  const potionThreshold = latePotionSlot ? 0.36 : 0.42;
-  const potionMargin = latePotionSlot ? 0.08 : 0.02;
-  const foodMargin = latePotionSlot ? 0.10 : 0.05;
+  const potionThreshold = latePotionSlot ? 0.30 : 0.28;
+  const potionMargin = latePotionSlot ? 0.18 : 0.12;
+  const potionLikeMargin = latePotionSlot ? 0.24 : 0.18;
+  const foodMargin = latePotionSlot ? 0.18 : 0.12;
 
-  if (potionBest >= potionThreshold && (potionBest >= foodBest - potionMargin || (potionLike && latePotionSlot))) return 'splash_potion';
-  if (foodBest >= 0.46 && foodBest > potionBest + foodMargin) return steakBest >= carrotBest ? 'steak' : 'golden_carrot';
+  if (potionBest >= potionThreshold && (potionBest >= foodBest - potionMargin || (potionLike && !strongFoodColor && potionBest >= foodBest - potionLikeMargin))) return 'splash_potion';
+  if (foodBest >= 0.52 && foodBest > potionBest + foodMargin && strongFoodColor) return steakBest >= carrotBest ? 'steak' : 'golden_carrot';
   return '';
 }
 
@@ -2465,7 +2473,7 @@ function inferCanonicalPvPWeaponSlotType(slot, sig, inferredTypes, cache) {
   const hasFoodTail = inferredTypes[8] === 'steak' || inferredTypes[8] === 'golden_carrot';
   const activity = clamp01(slot.activity || 0);
   const variance = slot.variance || 0;
-  if (!hasPearl || middlePotionCount < 5 || !hasFoodTail) return '';
+  if (!hasPearl || middlePotionCount < 4 || !hasFoodTail) return '';
   if (activity < 0.45 || variance < 500 || sig.n <= 0) return '';
   if (sig.yellowFrac >= 0.12 || sig.redFrac >= 0.20) return '';
   const dsBest = getBestFingerprintSlotSimilarity(slot, 'diamond_sword', cache);
@@ -2474,7 +2482,12 @@ function inferCanonicalPvPWeaponSlotType(slot, sig, inferredTypes, cache) {
     && Math.abs(sig.rowSlope) >= 0.012
     && sig.bboxTop <= 0.46
     && sig.bboxBottom >= 0.42;
-  if (dsBest >= 0.24 || dsBest >= epBest - 0.10 || swordLike) return 'diamond_sword';
+  const wideSwordLike = sig.coverage <= 0.76
+    && Math.abs(sig.rowSlope) >= 0.028
+    && sig.bboxTop <= 0.24
+    && sig.bboxBottom >= 0.68;
+  const blueWeaponLike = sig.blueFrac >= 0.18 || (sig.meanB > sig.meanR + 28 && sig.meanB > sig.meanG + 16);
+  if (dsBest >= 0.24 || dsBest >= epBest - 0.10 || swordLike || (activity >= 0.75 && (wideSwordLike || blueWeaponLike))) return 'diamond_sword';
   return '';
 }
 
@@ -2483,14 +2496,27 @@ function applyCanonicalMiddlePotionSlots(orderedSlots, inferredTypes, cache) {
   const hasPearl = inferredTypes[1] === 'ender_pearl';
   const hasFoodTail = inferredTypes[8] === 'steak' || inferredTypes[8] === 'golden_carrot';
   if (!hasPearl || !hasFoodTail) return;
+  const currentPotionCount = inferredTypes.slice(2, 8).filter(type => type === 'splash_potion').length;
+  if (currentPotionCount < 3) return;
 
-  for (const slotIndex of [5, 6, 7]) {
+  for (const slotIndex of [2, 3, 4, 5, 6, 7]) {
     const slot = orderedSlots.find(entry => entry && entry.index === slotIndex);
     const sig = slot && slot.features ? slot.features.sig : null;
     if (!slot || !sig) continue;
     const activity = clamp01(slot.activity || 0);
-    if (activity < 0.55 || sig.yellowFrac >= 0.14) continue;
-    inferredTypes[slotIndex] = 'splash_potion';
+    const potionBest = getBestFingerprintSlotSimilarity(slot, 'splash_potion', cache);
+    const steakBest = getBestFingerprintSlotSimilarity(slot, 'steak', cache);
+    const carrotBest = getBestFingerprintSlotSimilarity(slot, 'golden_carrot', cache);
+    const foodBest = Math.max(steakBest, carrotBest);
+    const strongFoodColor = sig.yellowFrac >= 0.18 && sig.redFrac < 0.10 && sig.meanLum >= 96;
+    const potionLike = sig.redFrac >= 0.05 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+    const minActivity = slotIndex >= 5 ? 0.42 : 0.34;
+    const closeness = slotIndex >= 5 ? 0.26 : 0.18;
+    if (activity < minActivity) continue;
+    if (potionBest < 0.24) continue;
+    if (!strongFoodColor && (potionBest >= foodBest - closeness || (potionLike && potionBest >= foodBest - 0.26))) {
+      inferredTypes[slotIndex] = 'splash_potion';
+    }
   }
 }
 
