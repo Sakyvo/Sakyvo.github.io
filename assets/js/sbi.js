@@ -115,7 +115,7 @@ const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
   type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 3.6, steak: 0.45, golden_carrot: 0.45, apple_golden: 0.0 },
   hud: { health: 5.8, hunger: 5.0, armor: 4.8 },
-  mix: { slot: 0.44, hud: 0.40, widget: 0.16, slotNoHud: 0.84, widgetNoHud: 0.16 },
+  mix: { slot: 0.58, hud: 0.32, widget: 0.10, slotNoHud: 0.90, widgetNoHud: 0.10 },
 };
 const SLOT_STRONG_MATCH_THRESHOLDS = {
   diamond_sword: 0.56,
@@ -248,6 +248,46 @@ function getPerTypeScore(info, key) {
 
 function getStrongMatchThreshold(type) {
   return SLOT_STRONG_MATCH_THRESHOLDS[type] || 0.54;
+}
+
+function countDisplaySlotTypes(slotTypes) {
+  const counts = {};
+  for (const type of (slotTypes || [])) {
+    if (!type || type === 'none') continue;
+    counts[type] = (counts[type] || 0) + 1;
+  }
+  return counts;
+}
+
+function getRepeatedTypeScale(type, typeCounts) {
+  const count = Math.max(1, typeCounts[type] || 1);
+  if (count <= 1) return 1;
+  return Math.pow(count, -(type === 'splash_potion' ? 0.5 : 0.35));
+}
+
+function getCriticalTypeMetrics(perTypeScores, typeCounts) {
+  const ds = perTypeScores.DS || 0;
+  const ep = perTypeScores.EP || 0;
+  const hl = perTypeScores.HL || 0;
+  const food = perTypeScores['SK/GC'] || 0;
+  const wantsSword = !!typeCounts.diamond_sword;
+  const wantsPearl = !!typeCounts.ender_pearl;
+  const wantsPotion = !!typeCounts.splash_potion;
+  const wantsFood = !!(typeCounts.steak || typeCounts.golden_carrot || typeCounts.apple_golden);
+  return {
+    score: clamp01(
+      (wantsSword ? ds * 0.16 : 0) +
+      (wantsPearl ? ep * 0.50 : 0) +
+      (wantsPotion ? hl * 0.14 : 0) +
+      (wantsFood ? food * 0.20 : 0)
+    ),
+    shortfall: clamp01(
+      (wantsSword ? Math.max(0, 0.34 - ds) * 0.75 : 0) +
+      (wantsPearl ? Math.max(0, 0.46 - ep) * 1.7 : 0) +
+      (wantsPotion ? Math.max(0, 0.28 - hl) * 0.25 : 0) +
+      (wantsFood ? Math.max(0, 0.52 - food) * 0.40 : 0)
+    ),
+  };
 }
 
 function renderPerTypeScoreTip(info) {
@@ -2619,6 +2659,7 @@ function inferDisplaySlotTypes(slots) {
 function matchPacks(slots, widgetFeatures, hudFeatures) {
   if (!slots.length) return { results: [], slotTypes: [], details: {} };
   const displaySlotTypes = inferDisplaySlotTypes(slots);
+  const displayTypeCounts = countDisplaySlotTypes(displaySlotTypes);
   const ITEM_TYPES = SLOT_ITEM_TYPES;
   const TYPE_WEIGHT = SBI_SCORE_WEIGHTS.type;
   const results = [];
@@ -2681,7 +2722,8 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
         certainty,
       };
       const qualityNorm = clamp01((slot.quality || 0) / 13);
-      const w = typeW * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
+      const repeatedTypeScale = getRepeatedTypeScale(targetType, displayTypeCounts);
+      const w = typeW * repeatedTypeScale * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
       slotWeighted += sim * w;
       slotWeights += w;
       certaintySum += certainty;
@@ -2717,12 +2759,15 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     if (!canRank && slotWeights && activeSlots >= 2 && slotComposite >= 0.24 && (widgetSim >= 0.22 || hudComposite >= 0.40)) {
       canRank = true;
     }
+    const criticalTypeMetrics = getCriticalTypeMetrics(perTypeScores, displayTypeCounts);
     let rawScore;
     if (hudWeights > 0) rawScore = slotComposite * SBI_SCORE_WEIGHTS.mix.slot + hudComposite * SBI_SCORE_WEIGHTS.mix.hud + widgetSim * SBI_SCORE_WEIGHTS.mix.widget;
     else rawScore = slotComposite * SBI_SCORE_WEIGHTS.mix.slotNoHud + widgetSim * SBI_SCORE_WEIGHTS.mix.widgetNoHud;
 
-    rawScore += (slotCoverage - 0.5) * 0.1;
-    rawScore -= slotPenaltyNorm * 0.22;
+    rawScore += criticalTypeMetrics.score * 0.16;
+    rawScore += slotCoverage * 0.08 + Math.min(0.04, slotCertainty * 0.65);
+    rawScore -= criticalTypeMetrics.shortfall * 0.20;
+    rawScore -= slotPenaltyNorm * 0.18;
     rawScore = clamp01(rawScore);
 
     const finalScore = sharpenSimilarityScore(rawScore);
@@ -2735,6 +2780,8 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       armorScore: armorSim,
       slotCoverage,
       slotCertainty,
+      criticalTypeScore: criticalTypeMetrics.score,
+      criticalTypeShortfall: criticalTypeMetrics.shortfall,
       slotTypes: displaySlotTypes,
       perTypeScores,
       slotBreakdown,
