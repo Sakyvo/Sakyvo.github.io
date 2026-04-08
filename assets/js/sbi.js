@@ -2496,8 +2496,7 @@ function applyCanonicalMiddlePotionSlots(orderedSlots, inferredTypes, cache) {
   const hasPearl = inferredTypes[1] === 'ender_pearl';
   const hasFoodTail = inferredTypes[8] === 'steak' || inferredTypes[8] === 'golden_carrot';
   if (!hasPearl || !hasFoodTail) return;
-  const currentPotionCount = inferredTypes.slice(2, 8).filter(type => type === 'splash_potion').length;
-  if (currentPotionCount < 3) return;
+  const candidates = [];
 
   for (const slotIndex of [2, 3, 4, 5, 6, 7]) {
     const slot = orderedSlots.find(entry => entry && entry.index === slotIndex);
@@ -2513,9 +2512,14 @@ function applyCanonicalMiddlePotionSlots(orderedSlots, inferredTypes, cache) {
     const minActivity = slotIndex >= 5 ? 0.42 : 0.34;
     const closeness = slotIndex >= 5 ? 0.26 : 0.18;
     if (activity < minActivity) continue;
-    if (potionBest < 0.24) continue;
-    if (!strongFoodColor && (potionBest >= foodBest - closeness || (potionLike && potionBest >= foodBest - 0.26))) {
-      inferredTypes[slotIndex] = 'splash_potion';
+    if (strongFoodColor) continue;
+    if (potionBest < 0.20 && !potionLike && sig.redFrac < 0.03) continue;
+    candidates.push({ slotIndex, potionBest, foodBest, potionLike, closeness });
+  }
+  if (candidates.length < 4) return;
+  for (const candidate of candidates) {
+    if (candidate.potionBest >= candidate.foodBest - candidate.closeness || candidate.potionLike) {
+      inferredTypes[candidate.slotIndex] = 'splash_potion';
     }
   }
 }
@@ -2549,9 +2553,10 @@ function inferDisplaySlotTypes(slots) {
 
     const blueStrong = (sig.meanB > sig.meanR + 35) && (sig.meanB > sig.meanG + 25);
     const compactBlue = blueStrong && (sig.n < 70 || sig.coverage < 0.22);
+    const strongFoodColor = sig.yellowFrac >= 0.18 && sig.redFrac < 0.10 && sig.meanLum >= 96;
 
     // Food (GC / gapple both render as GC in the UI summary).
-    if (sig.yellowFrac >= 0.12) {
+    if (strongFoodColor && (slot.index === 8 || sig.yellowFrac >= 0.22)) {
       out[slot.index] = 'golden_carrot';
       continue;
     }
@@ -2684,8 +2689,6 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       if (sim >= strongThreshold) strongSlots++;
       else slotPenalty += (strongThreshold - sim) * (0.8 + activity * 0.7);
     }
-    const canRank = !!slotWeights && activeSlots >= 3;
-
     const slotScore = slotWeights ? (slotWeighted / slotWeights) : 0;
     const slotCoverage = activeSlots ? (strongSlots / activeSlots) : 0;
     const slotPenaltyNorm = activeSlots ? (slotPenalty / activeSlots) : 0;
@@ -2710,6 +2713,10 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     }
 
     const hudComposite = hudWeights ? (hudWeighted / hudWeights) : 0;
+    let canRank = !!slotWeights && activeSlots >= 3;
+    if (!canRank && slotWeights && activeSlots >= 2 && slotComposite >= 0.24 && (widgetSim >= 0.22 || hudComposite >= 0.40)) {
+      canRank = true;
+    }
     let rawScore;
     if (hudWeights > 0) rawScore = slotComposite * SBI_SCORE_WEIGHTS.mix.slot + hudComposite * SBI_SCORE_WEIGHTS.mix.hud + widgetSim * SBI_SCORE_WEIGHTS.mix.widget;
     else rawScore = slotComposite * SBI_SCORE_WEIGHTS.mix.slotNoHud + widgetSim * SBI_SCORE_WEIGHTS.mix.widgetNoHud;
