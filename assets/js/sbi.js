@@ -113,7 +113,7 @@ const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
 const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden'];
 const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
-  type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 3.6, steak: 0.45, golden_carrot: 0.45, apple_golden: 0.0 },
+  type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 4.8, steak: 0.45, golden_carrot: 0.45, apple_golden: 0.0 },
   hud: { health: 5.8, hunger: 5.0, armor: 4.8 },
   mix: { slot: 0.58, hud: 0.32, widget: 0.10, slotNoHud: 0.90, widgetNoHud: 0.10 },
 };
@@ -262,7 +262,7 @@ function countDisplaySlotTypes(slotTypes) {
 function getRepeatedTypeScale(type, typeCounts) {
   const count = Math.max(1, typeCounts[type] || 1);
   if (count <= 1) return 1;
-  return Math.pow(count, -(type === 'splash_potion' ? 0.5 : 0.35));
+  return Math.pow(count, -(type === 'splash_potion' ? 0.32 : 0.35));
 }
 
 function getCriticalTypeMetrics(perTypeScores, typeCounts) {
@@ -278,14 +278,14 @@ function getCriticalTypeMetrics(perTypeScores, typeCounts) {
     score: clamp01(
       (wantsSword ? ds * 0.16 : 0) +
       (wantsPearl ? ep * 0.50 : 0) +
-      (wantsPotion ? hl * 0.14 : 0) +
+      (wantsPotion ? hl * 0.20 : 0) +
       (wantsFood ? food * 0.20 : 0)
     ),
     shortfall: clamp01(
-      (wantsSword ? Math.max(0, 0.34 - ds) * 0.75 : 0) +
-      (wantsPearl ? Math.max(0, 0.46 - ep) * 1.7 : 0) +
-      (wantsPotion ? Math.max(0, 0.28 - hl) * 0.25 : 0) +
-      (wantsFood ? Math.max(0, 0.52 - food) * 0.40 : 0)
+      (wantsSword ? Math.max(0, 0.30 - ds) * 0.65 : 0) +
+      (wantsPearl ? Math.max(0, 0.42 - ep) * 1.20 : 0) +
+      (wantsPotion ? Math.max(0, 0.30 - hl) * 0.34 : 0) +
+      (wantsFood ? Math.max(0, 0.52 - food) * 0.36 : 0)
     ),
   };
 }
@@ -1870,10 +1870,22 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes,
     cctx.fillRect(0, 0, outSize, outSize);
     cctx.drawImage(ctx.canvas, left, top, side, side, 0, 0, outSize, outSize);
   };
+  const renderSolidSlot = (id, outSize, fill) => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    canvas.classList.remove('sbi-crop-hidden');
+    canvas.width = outSize;
+    canvas.height = outSize;
+    const cctx = canvas.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    cctx.fillStyle = fill;
+    cctx.fillRect(0, 0, outSize, outSize);
+  };
   renderSlot('sbi-crop-ds', 0, 96);
   renderSlot('sbi-crop-ep', 1, 96);
   renderSlot('sbi-crop-hl', 5, 96);
-  renderSlot('sbi-crop-food', 8, 96);
+  if (slotTypes && ['steak', 'golden_carrot', 'apple_golden'].includes(slotTypes[8])) renderSlot('sbi-crop-food', 8, 96);
+  else renderSolidSlot('sbi-crop-food', 96, '#000000');
 
   wrap.hidden = false;
 }
@@ -2287,56 +2299,60 @@ function signatureSimilarity(extractedSig, packSig, targetType) {
       metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.20) * 0.02
     ) : 0;
     const colorSim = clamp01(
-      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.22) * 0.28 +
-      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.22) * 0.18 +
-      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.18) * 0.28 +
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.18) * 0.22 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.18) * 0.16 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.12) * 0.24 +
+      metricSimilarity(extractedSig.meanLum, packSig.meanLum, 22) * 0.14 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanR', 'meanB'),
         signatureMeanRatio(packSig, 'meanR', 'meanB'),
-        0.16
+        0.12
       ) * 0.14 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanG', 'meanB'),
         signatureMeanRatio(packSig, 'meanG', 'meanB'),
-        0.16
-      ) * 0.12
+        0.12
+      ) * 0.10
     );
-    return shapeReady ? clamp01(shapeSim * 0.62 + colorSim * 0.38) : colorSim;
+    return shapeReady ? clamp01(shapeSim * 0.52 + colorSim * 0.48) : colorSim;
   }
   if (targetType === 'ender_pearl') {
     return clamp01(
-      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.20) * 0.20 +
-      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.18) * 0.22 +
-      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.22) * 0.08 +
-      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.14) * 0.18 +
-      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.10) * 0.08 +
-      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.14) * 0.10 +
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.16) * 0.18 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.16) * 0.18 +
+      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.18) * 0.08 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.10) * 0.16 +
+      metricSimilarity(extractedSig.meanLum, packSig.meanLum, 18) * 0.16 +
+      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.08) * 0.06 +
+      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.12) * 0.06 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanR', 'meanB'),
         signatureMeanRatio(packSig, 'meanR', 'meanB'),
-        0.16
+        0.12
       ) * 0.08 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanG', 'meanB'),
         signatureMeanRatio(packSig, 'meanG', 'meanB'),
-        0.16
-      ) * 0.06
+        0.12
+      ) * 0.04
     );
   }
   if (targetType === 'splash_potion') {
     return clamp01(
-      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.16) * 0.18 +
-      metricSimilarity(extractedSig.centerX, packSig.centerX, 0.18) * 0.05 +
-      metricSimilarity(extractedSig.centerY, packSig.centerY, 0.18) * 0.05 +
-      metricSimilarity(extractedSig.lrBias, packSig.lrBias, 0.34) * 0.04 +
-      metricSimilarity(extractedSig.tbBias, packSig.tbBias, 0.42) * 0.08 +
-      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.18) * 0.16 +
-      metricSimilarity(extractedSig.rowSlope, packSig.rowSlope, 0.06) * 0.06 +
-      metricSimilarity(extractedSig.bboxTop, packSig.bboxTop, 0.12) * 0.06 +
-      metricSimilarity(extractedSig.bboxBottom, packSig.bboxBottom, 0.12) * 0.16 +
-      metricSimilarity(extractedSig.bboxLeft, packSig.bboxLeft, 0.22) * 0.04 +
-      metricSimilarity(extractedSig.bboxRight, packSig.bboxRight, 0.18) * 0.04 +
-      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.28) * 0.08
+      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.16) * 0.16 +
+      metricSimilarity(extractedSig.centerX, packSig.centerX, 0.18) * 0.04 +
+      metricSimilarity(extractedSig.centerY, packSig.centerY, 0.18) * 0.04 +
+      metricSimilarity(extractedSig.lrBias, packSig.lrBias, 0.34) * 0.03 +
+      metricSimilarity(extractedSig.tbBias, packSig.tbBias, 0.42) * 0.06 +
+      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.16) * 0.14 +
+      metricSimilarity(extractedSig.rowSlope, packSig.rowSlope, 0.06) * 0.05 +
+      metricSimilarity(extractedSig.bboxTop, packSig.bboxTop, 0.12) * 0.05 +
+      metricSimilarity(extractedSig.bboxBottom, packSig.bboxBottom, 0.12) * 0.12 +
+      metricSimilarity(extractedSig.bboxLeft, packSig.bboxLeft, 0.22) * 0.03 +
+      metricSimilarity(extractedSig.bboxRight, packSig.bboxRight, 0.18) * 0.03 +
+      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.22) * 0.10 +
+      metricSimilarity(extractedSig.redFrac, packSig.redFrac, 0.12) * 0.08 +
+      metricSimilarity(extractedSig.meanLum, packSig.meanLum, 20) * 0.07
     );
   }
   return 0;
@@ -2367,7 +2383,10 @@ function compareSlotVariant(extracted, packTex, targetType) {
     const coverSim = extracted.sig && packTex.sig
       ? metricSimilarity(extracted.sig.coverage, packTex.sig.coverage, 0.10)
       : 1;
-    sim *= (0.08 + 0.24 * dir + 0.14 * rbSim + 0.10 * gbSim + 0.18 * blueSim + 0.14 * darkSim + 0.12 * coverSim);
+    const lumSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.meanLum, packTex.sig.meanLum, 24)
+      : 1;
+    sim *= (0.04 + 0.18 * dir + 0.16 * rbSim + 0.12 * gbSim + 0.18 * blueSim + 0.14 * darkSim + 0.10 * coverSim + 0.08 * lumSim);
   }
   if (targetType === 'ender_pearl') {
     const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
@@ -2399,7 +2418,10 @@ function compareSlotVariant(extracted, packTex, targetType) {
     const coverSim = extracted.sig && packTex.sig
       ? metricSimilarity(extracted.sig.coverage, packTex.sig.coverage, 0.10)
       : 1;
-    sim *= (0.04 + 0.14 * dir + 0.18 * rbSim + 0.12 * gbSim + 0.14 * sigRbSim + 0.10 * sigGbSim + 0.10 * blueSim + 0.10 * darkSim + 0.04 * edgeDarkSim + 0.04 * coverSim);
+    const lumSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.meanLum, packTex.sig.meanLum, 18)
+      : 1;
+    sim *= (0.02 + 0.08 * dir + 0.14 * rbSim + 0.10 * gbSim + 0.14 * sigRbSim + 0.08 * sigGbSim + 0.12 * blueSim + 0.10 * darkSim + 0.04 * edgeDarkSim + 0.06 * coverSim + 0.12 * lumSim);
   }
   if (targetType === 'splash_potion') {
     const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
@@ -2417,7 +2439,13 @@ function compareSlotVariant(extracted, packTex, targetType) {
     const coverSim = extracted.sig && packTex.sig
       ? metricSimilarity(extracted.sig.coverage, packTex.sig.coverage, 0.16)
       : 1;
-    sim *= (0.06 + 0.12 * dir + 0.10 * rbSim + 0.08 * gbSim + 0.10 * edgeSim + 0.20 * mirrorSim + 0.18 * bottomSim + 0.16 * coverSim);
+    const redSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.redFrac, packTex.sig.redFrac, 0.14)
+      : 1;
+    const lumSim = extracted.sig && packTex.sig
+      ? metricSimilarity(extracted.sig.meanLum, packTex.sig.meanLum, 20)
+      : 1;
+    sim *= (0.04 + 0.10 * dir + 0.08 * rbSim + 0.06 * gbSim + 0.12 * edgeSim + 0.18 * mirrorSim + 0.16 * bottomSim + 0.12 * coverSim + 0.08 * redSim + 0.06 * lumSim);
   }
   if ((targetType === 'diamond_sword' || targetType === 'ender_pearl' || targetType === 'splash_potion') && extracted.sig && packTex.sig) {
     const sigSim = signatureSimilarity(extracted.sig, packTex.sig, targetType);
@@ -2453,6 +2481,29 @@ function getBestFingerprintSlotSimilarity(slot, targetType, cache) {
   return best;
 }
 
+function isStrongFoodColor(sig) {
+  return !!(sig && sig.yellowFrac >= 0.18 && sig.redFrac < 0.10 && sig.meanLum >= 96);
+}
+
+function isFoodLikeTailSignature(sig) {
+  if (!sig) return false;
+  const warm = sig.meanR >= sig.meanB + 6 && sig.meanG >= sig.meanB - 2;
+  return (
+    (sig.yellowFrac >= 0.14 && sig.redFrac <= 0.16 && sig.meanLum >= 84) ||
+    (sig.yellowFrac >= 0.09 && warm && sig.meanLum >= 82) ||
+    (sig.yellowFrac >= 0.08 && sig.meanLum >= 94) ||
+    (sig.yellowFrac >= 0.05 && sig.meanR >= sig.meanB + 10 && sig.meanLum >= 72)
+  );
+}
+
+function isPotionLikeSignature(sig) {
+  if (!sig) return false;
+  const warmPotion = sig.redFrac >= 0.045 && sig.yellowFrac < 0.14;
+  const coolPotion = sig.blueFrac >= 0.10 && sig.yellowFrac < 0.08 && sig.meanLum <= 108;
+  const bottleShape = sig.coverage <= 0.74 && sig.mirrorFrac >= 0.26 && sig.bboxBottom >= 0.50;
+  return bottleShape && (warmPotion || coolPotion || sig.edgeDarkFrac >= 0.10);
+}
+
 function inferPrimaryWeaponSlotType(slot, sig, cache) {
   if (!slot || slot.index !== 0 || !sig) return '';
   if (!fingerprints || !fingerprints.packs) return '';
@@ -2462,11 +2513,14 @@ function inferPrimaryWeaponSlotType(slot, sig, cache) {
   const quality = slot.quality || 0;
   const swordLike = sig.coverage <= 0.52 && Math.abs(sig.rowSlope) >= 0.045 && sig.bboxTop <= 0.38 && sig.bboxBottom >= 0.50;
   const wideSwordLike = sig.coverage <= 0.74 && Math.abs(sig.rowSlope) >= 0.028 && sig.bboxTop <= 0.24 && sig.bboxBottom >= 0.68;
+  const thinDarkSwordLike = sig.coverage <= 0.46 && Math.abs(sig.rowSlope) >= 0.020 && sig.bboxTop <= 0.46 && sig.bboxBottom >= 0.46 && sig.darkFrac >= 0.18;
   const blueWeaponLike = sig.blueFrac >= 0.18 || (sig.meanB > sig.meanR + 28 && sig.meanB > sig.meanG + 16);
   const strongHeldItem = activity >= 0.52 && quality >= 16;
 
   if ((swordLike || sig.blueFrac >= 0.03) && dsBest >= 0.40 && dsBest >= epBest - 0.02) return 'diamond_sword';
+  if (thinDarkSwordLike && activity >= 0.28 && dsBest >= 0.24 && dsBest >= epBest - 0.12 && sig.yellowFrac < 0.10) return 'diamond_sword';
   if (strongHeldItem && (wideSwordLike || blueWeaponLike) && dsBest >= 0.28 && dsBest >= epBest - 0.08 && sig.yellowFrac < 0.12) return 'diamond_sword';
+  if (activity >= 0.28 && quality >= 8 && blueWeaponLike && sig.darkFrac >= 0.18 && dsBest >= 0.22 && dsBest >= epBest - 0.14 && sig.yellowFrac < 0.10) return 'diamond_sword';
   if (epBest >= 0.56 && epBest > dsBest + 0.04 && sig.meanLum < 92) return 'ender_pearl';
   return '';
 }
@@ -2478,8 +2532,8 @@ function inferMiddleConsumableSlotType(slot, sig, cache) {
   const steakBest = getBestFingerprintSlotSimilarity(slot, 'steak', cache);
   const carrotBest = getBestFingerprintSlotSimilarity(slot, 'golden_carrot', cache);
   const foodBest = Math.max(steakBest, carrotBest);
-  const potionLike = sig.redFrac >= 0.055 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
-  const strongFoodColor = sig.yellowFrac >= 0.18 && sig.redFrac < 0.10 && sig.meanLum >= 96;
+  const potionLike = isPotionLikeSignature(sig) || sig.redFrac >= 0.055 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+  const strongFoodColor = isStrongFoodColor(sig);
   const latePotionSlot = slot.index >= 5;
   const potionThreshold = latePotionSlot ? 0.30 : 0.28;
   const potionMargin = latePotionSlot ? 0.18 : 0.12;
@@ -2487,6 +2541,7 @@ function inferMiddleConsumableSlotType(slot, sig, cache) {
   const foodMargin = latePotionSlot ? 0.18 : 0.12;
 
   if (potionBest >= potionThreshold && (potionBest >= foodBest - potionMargin || (potionLike && !strongFoodColor && potionBest >= foodBest - potionLikeMargin))) return 'splash_potion';
+  if (latePotionSlot && potionLike && !strongFoodColor && !isFoodLikeTailSignature(sig) && potionBest >= 0.24 && potionBest >= foodBest - 0.10) return 'splash_potion';
   if (foodBest >= 0.52 && foodBest > potionBest + foodMargin && strongFoodColor) return steakBest >= carrotBest ? 'steak' : 'golden_carrot';
   return '';
 }
@@ -2499,23 +2554,31 @@ function inferTrailingConsumableSlotType(slot, sig, cache) {
   const potionBest = getBestFingerprintSlotSimilarity(slot, 'splash_potion', cache);
   const foodType = steakBest >= carrotBest ? 'steak' : 'golden_carrot';
   const foodBest = Math.max(steakBest, carrotBest);
-  const looksLikeFood = sig.yellowFrac >= 0.04 || sig.redFrac < 0.11 || sig.meanLum >= 84;
+  const strongFoodColor = isStrongFoodColor(sig);
+  const looksLikeFood = isFoodLikeTailSignature(sig);
+  const potionLike = isPotionLikeSignature(sig) || sig.redFrac >= 0.05 || (sig.meanR > sig.meanB + 6 && sig.meanR > sig.meanG - 2);
+  const weakFoodColor = sig.yellowFrac >= 0.04 && sig.meanR >= sig.meanB + 8 && sig.meanLum >= 70;
 
-  if (foodBest >= 0.40 && (foodBest >= potionBest - 0.02 || looksLikeFood)) return foodType;
-  if (potionBest >= 0.54 && potionBest > foodBest + 0.05) return 'splash_potion';
+  if (!strongFoodColor && potionBest >= 0.34 && (potionBest >= foodBest - 0.06 || (potionLike && potionBest >= foodBest - 0.12))) return 'splash_potion';
+  if (foodBest >= 0.46 && strongFoodColor && (foodBest >= potionBest - 0.03 || looksLikeFood)) return foodType;
+  if (foodBest >= 0.52 && weakFoodColor && foodBest >= potionBest - 0.08) return foodType;
+  if (foodBest >= 0.58 && looksLikeFood && !potionLike) return foodType;
+  if (potionLike && !looksLikeFood && potionBest >= 0.24) return 'splash_potion';
   return '';
 }
 
 function inferCanonicalPvPWeaponSlotType(slot, sig, inferredTypes, cache) {
   if (!slot || slot.index !== 0 || !sig) return '';
   const hasPearl = inferredTypes[1] === 'ender_pearl';
-  const middlePotionCount = inferredTypes.slice(2, 8).filter(type => type === 'splash_potion').length;
-  const hasFoodTail = inferredTypes[8] === 'steak' || inferredTypes[8] === 'golden_carrot';
+  const totalPotionCount = inferredTypes.slice(2, 9).filter(type => type === 'splash_potion').length;
+  const tailType = inferredTypes[8];
+  const hasConsumableTail = tailType === 'steak' || tailType === 'golden_carrot' || tailType === 'splash_potion' || tailType === 'none';
   const activity = clamp01(slot.activity || 0);
   const variance = slot.variance || 0;
-  if (!hasPearl || middlePotionCount < 4 || !hasFoodTail) return '';
-  if (activity < 0.45 || variance < 500 || sig.n <= 0) return '';
-  if (sig.yellowFrac >= 0.12 || sig.redFrac >= 0.20) return '';
+  const strongPotionLayout = totalPotionCount >= 5 || (totalPotionCount >= 3 && tailType !== 'ender_pearl');
+  if (!hasPearl || totalPotionCount < 3 || !hasConsumableTail) return '';
+  if (activity < (strongPotionLayout ? 0.24 : 0.38) || variance < (strongPotionLayout ? 260 : 420) || sig.n <= 0) return '';
+  if (sig.yellowFrac >= 0.16 || sig.redFrac >= 0.24) return '';
   const dsBest = getBestFingerprintSlotSimilarity(slot, 'diamond_sword', cache);
   const epBest = getBestFingerprintSlotSimilarity(slot, 'ender_pearl', cache);
   const swordLike = sig.coverage <= 0.68
@@ -2526,16 +2589,23 @@ function inferCanonicalPvPWeaponSlotType(slot, sig, inferredTypes, cache) {
     && Math.abs(sig.rowSlope) >= 0.028
     && sig.bboxTop <= 0.24
     && sig.bboxBottom >= 0.68;
+  const thinDarkSwordLike = sig.coverage <= 0.50
+    && Math.abs(sig.rowSlope) >= 0.015
+    && sig.bboxTop <= 0.54
+    && sig.bboxBottom >= 0.42
+    && sig.darkFrac >= 0.16;
   const blueWeaponLike = sig.blueFrac >= 0.18 || (sig.meanB > sig.meanR + 28 && sig.meanB > sig.meanG + 16);
-  if (dsBest >= 0.24 || dsBest >= epBest - 0.10 || swordLike || (activity >= 0.75 && (wideSwordLike || blueWeaponLike))) return 'diamond_sword';
+  if (dsBest >= 0.24 || dsBest >= epBest - (strongPotionLayout ? 0.16 : 0.10) || swordLike || thinDarkSwordLike || (activity >= 0.75 && (wideSwordLike || blueWeaponLike))) return 'diamond_sword';
+  if (strongPotionLayout && dsBest >= 0.16 && blueWeaponLike && (swordLike || thinDarkSwordLike || Math.abs(sig.rowSlope) >= 0.012)) return 'diamond_sword';
   return '';
 }
 
 function applyCanonicalMiddlePotionSlots(orderedSlots, inferredTypes, cache) {
   if (!Array.isArray(orderedSlots) || !Array.isArray(inferredTypes)) return;
   const hasPearl = inferredTypes[1] === 'ender_pearl';
-  const hasFoodTail = inferredTypes[8] === 'steak' || inferredTypes[8] === 'golden_carrot';
-  if (!hasPearl || !hasFoodTail) return;
+  const tailType = inferredTypes[8];
+  const hasConsumableTail = tailType === 'steak' || tailType === 'golden_carrot' || tailType === 'splash_potion' || tailType === 'none';
+  if (!hasPearl || !hasConsumableTail) return;
   const candidates = [];
 
   for (const slotIndex of [2, 3, 4, 5, 6, 7]) {
@@ -2547,16 +2617,18 @@ function applyCanonicalMiddlePotionSlots(orderedSlots, inferredTypes, cache) {
     const steakBest = getBestFingerprintSlotSimilarity(slot, 'steak', cache);
     const carrotBest = getBestFingerprintSlotSimilarity(slot, 'golden_carrot', cache);
     const foodBest = Math.max(steakBest, carrotBest);
-    const strongFoodColor = sig.yellowFrac >= 0.18 && sig.redFrac < 0.10 && sig.meanLum >= 96;
-    const potionLike = sig.redFrac >= 0.05 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+    const strongFoodColor = isStrongFoodColor(sig);
+    const looksLikeFood = isFoodLikeTailSignature(sig);
+    const potionLike = isPotionLikeSignature(sig) || sig.redFrac >= 0.05 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
     const minActivity = slotIndex >= 5 ? 0.42 : 0.34;
-    const closeness = slotIndex >= 5 ? 0.26 : 0.18;
+    const closeness = slotIndex >= 5 ? 0.30 : 0.20;
     if (activity < minActivity) continue;
-    if (strongFoodColor) continue;
+    if (strongFoodColor || (looksLikeFood && foodBest > potionBest + 0.08)) continue;
     if (potionBest < 0.20 && !potionLike && sig.redFrac < 0.03) continue;
     candidates.push({ slotIndex, potionBest, foodBest, potionLike, closeness });
   }
-  if (candidates.length < 4) return;
+  const lateCandidateCount = candidates.filter(candidate => candidate.slotIndex >= 5).length;
+  if (candidates.length < 3 || lateCandidateCount < 2) return;
   for (const candidate of candidates) {
     if (candidate.potionBest >= candidate.foodBest - candidate.closeness || candidate.potionLike) {
       inferredTypes[candidate.slotIndex] = 'splash_potion';
@@ -2593,7 +2665,7 @@ function inferDisplaySlotTypes(slots) {
 
     const blueStrong = (sig.meanB > sig.meanR + 35) && (sig.meanB > sig.meanG + 25);
     const compactBlue = blueStrong && (sig.n < 70 || sig.coverage < 0.22);
-    const strongFoodColor = sig.yellowFrac >= 0.18 && sig.redFrac < 0.10 && sig.meanLum >= 96;
+    const strongFoodColor = isStrongFoodColor(sig);
 
     // Food (GC / gapple both render as GC in the UI summary).
     if (strongFoodColor && (slot.index === 8 || sig.yellowFrac >= 0.22)) {
@@ -2736,7 +2808,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     const slotPenaltyNorm = activeSlots ? (slotPenalty / activeSlots) : 0;
     const slotCertainty = activeSlots ? (certaintySum / activeSlots) : 0;
     let slotComposite = slotScore * (0.78 + 0.22 * slotCoverage) + Math.min(0.10, slotCertainty * 0.55);
-    slotComposite -= slotPenaltyNorm * 0.35;
+    slotComposite -= slotPenaltyNorm * 0.30;
     slotComposite = clamp01(slotComposite);
 
     if (widgetFeatures && packData.hotbar_widget) {
@@ -2766,8 +2838,8 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 
     rawScore += criticalTypeMetrics.score * 0.16;
     rawScore += slotCoverage * 0.08 + Math.min(0.04, slotCertainty * 0.65);
-    rawScore -= criticalTypeMetrics.shortfall * 0.20;
-    rawScore -= slotPenaltyNorm * 0.18;
+    rawScore -= criticalTypeMetrics.shortfall * 0.16;
+    rawScore -= slotPenaltyNorm * 0.14;
     rawScore = clamp01(rawScore);
 
     const finalScore = sharpenSimilarityScore(rawScore);
