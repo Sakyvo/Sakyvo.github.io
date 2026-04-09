@@ -2317,24 +2317,30 @@ function signatureSimilarity(extractedSig, packSig, targetType) {
     return shapeReady ? clamp01(shapeSim * 0.52 + colorSim * 0.48) : colorSim;
   }
   if (targetType === 'ender_pearl') {
+    const sigBiasSim = metricSimilarity(
+      signatureBlueGreenBias(extractedSig),
+      signatureBlueGreenBias(packSig),
+      0.26
+    );
     return clamp01(
-      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.16) * 0.18 +
-      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.16) * 0.18 +
-      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.18) * 0.08 +
-      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.10) * 0.16 +
-      metricSimilarity(extractedSig.meanLum, packSig.meanLum, 18) * 0.16 +
-      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.08) * 0.06 +
-      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.12) * 0.06 +
+      metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.16) * 0.14 +
+      metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.16) * 0.14 +
+      metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.18) * 0.05 +
+      metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.10) * 0.10 +
+      metricSimilarity(extractedSig.meanLum, packSig.meanLum, 18) * 0.14 +
+      metricSimilarity(extractedSig.coverage, packSig.coverage, 0.08) * 0.04 +
+      metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.14) * 0.03 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanR', 'meanB'),
         signatureMeanRatio(packSig, 'meanR', 'meanB'),
-        0.12
-      ) * 0.08 +
+        0.14
+      ) * 0.18 +
       metricSimilarity(
         signatureMeanRatio(extractedSig, 'meanG', 'meanB'),
         signatureMeanRatio(packSig, 'meanG', 'meanB'),
-        0.12
-      ) * 0.04
+        0.14
+      ) * 0.06 +
+      sigBiasSim * 0.12
     );
   }
   if (targetType === 'splash_potion') {
@@ -2368,6 +2374,11 @@ function signatureMeanRatio(sig, numeratorKey, denominatorKey) {
   return (sig[numeratorKey] || 0) / Math.max(1, sig[denominatorKey] || 0);
 }
 
+function signatureBlueGreenBias(sig) {
+  if (!sig) return 0;
+  return ((sig.meanG || 0) - (sig.meanR || 0)) / Math.max(1, sig.meanB || 0);
+}
+
 function compareSlotVariant(extracted, packTex, targetType) {
   let sim = compare(extracted, packTex);
   if (targetType === 'diamond_sword') {
@@ -2390,20 +2401,27 @@ function compareSlotVariant(extracted, packTex, targetType) {
   }
   if (targetType === 'ender_pearl') {
     const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));
-    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.18);
-    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.18);
+    const rbSim = metricSimilarity(colorRatio(extracted.moments, 0, 2), colorRatio(packTex.moments, 0, 2), 0.16);
+    const gbSim = metricSimilarity(colorRatio(extracted.moments, 1, 2), colorRatio(packTex.moments, 1, 2), 0.16);
     const sigRbSim = extracted.sig && packTex.sig
       ? metricSimilarity(
         signatureMeanRatio(extracted.sig, 'meanR', 'meanB'),
         signatureMeanRatio(packTex.sig, 'meanR', 'meanB'),
-        0.16
+        0.14
       )
       : 1;
     const sigGbSim = extracted.sig && packTex.sig
       ? metricSimilarity(
         signatureMeanRatio(extracted.sig, 'meanG', 'meanB'),
         signatureMeanRatio(packTex.sig, 'meanG', 'meanB'),
-        0.16
+        0.14
+      )
+      : 1;
+    const sigBiasSim = extracted.sig && packTex.sig
+      ? metricSimilarity(
+        signatureBlueGreenBias(extracted.sig),
+        signatureBlueGreenBias(packTex.sig),
+        0.26
       )
       : 1;
     const blueSim = extracted.sig && packTex.sig
@@ -2419,9 +2437,11 @@ function compareSlotVariant(extracted, packTex, targetType) {
       ? metricSimilarity(extracted.sig.coverage, packTex.sig.coverage, 0.10)
       : 1;
     const lumSim = extracted.sig && packTex.sig
-      ? metricSimilarity(extracted.sig.meanLum, packTex.sig.meanLum, 18)
+      ? metricSimilarity(extracted.sig.meanLum, packTex.sig.meanLum, 16)
       : 1;
-    sim *= (0.02 + 0.08 * dir + 0.14 * rbSim + 0.10 * gbSim + 0.14 * sigRbSim + 0.08 * sigGbSim + 0.12 * blueSim + 0.10 * darkSim + 0.04 * edgeDarkSim + 0.06 * coverSim + 0.12 * lumSim);
+    const colorGate = 0.16 + 0.22 * sigRbSim + 0.12 * sigGbSim + 0.20 * sigBiasSim + 0.10 * darkSim + 0.08 * lumSim + 0.08 * rbSim + 0.04 * gbSim;
+    sim *= (0.02 + 0.08 * dir + 0.10 * rbSim + 0.08 * gbSim + 0.16 * sigRbSim + 0.10 * sigGbSim + 0.16 * sigBiasSim + 0.08 * blueSim + 0.08 * darkSim + 0.03 * edgeDarkSim + 0.04 * coverSim + 0.07 * lumSim);
+    sim *= colorGate;
   }
   if (targetType === 'splash_potion') {
     const dir = clamp01(meanRgbDirSim(extracted.moments, packTex.moments));

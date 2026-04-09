@@ -4,7 +4,7 @@ const sharp = require('sharp');
 
 const THUMB_DIR = path.join(__dirname, '..', 'thumbnails');
 const OUT_FILE = path.join(__dirname, '..', 'data', 'sbi-fingerprints.json');
-const SBI_FINGERPRINT_VERSION = 9;
+const SBI_FINGERPRINT_VERSION = 10;
 
 // Note: crosshair removed — MC renders it via XOR blending, making screenshot comparison meaningless
 const TEXTURES = [
@@ -315,7 +315,12 @@ function suppressWidgetHighlights(pixels, w, h) {
 }
 
 async function processTexture(filePath) {
-  return processSharpImage(sharp(filePath), 16, 16);
+  const img = sharp(filePath);
+  const meta = await img.metadata();
+  const normalized = meta.height > meta.width && meta.height % meta.width === 0
+    ? img.extract({ left: 0, top: 0, width: meta.width, height: meta.width })
+    : img;
+  return processSharpImage(normalized, 16, 16);
 }
 
 function scaleRegion(meta, region) {
