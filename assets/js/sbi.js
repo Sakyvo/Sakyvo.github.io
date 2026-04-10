@@ -2507,6 +2507,8 @@ function isStrongFoodColor(sig) {
 
 function isFoodLikeTailSignature(sig) {
   if (!sig) return false;
+  const coolPotionStack = sig.blueFrac >= 0.22 && sig.coverage <= 0.30 && sig.meanB >= sig.meanG + 18 && sig.meanLum >= 88;
+  if (coolPotionStack) return false;
   const warm = sig.meanR >= sig.meanB + 6 && sig.meanG >= sig.meanB - 2;
   return (
     (sig.yellowFrac >= 0.14 && sig.redFrac <= 0.16 && sig.meanLum >= 84) ||
@@ -2553,6 +2555,7 @@ function inferMiddleConsumableSlotType(slot, sig, cache) {
   const carrotBest = getBestFingerprintSlotSimilarity(slot, 'golden_carrot', cache);
   const foodBest = Math.max(steakBest, carrotBest);
   const potionLike = isPotionLikeSignature(sig) || sig.redFrac >= 0.055 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+  const coolPotionStack = sig.coverage <= 0.30 && sig.blueFrac >= 0.22 && sig.meanB >= sig.meanG + 18 && sig.meanLum >= 88;
   const strongFoodColor = isStrongFoodColor(sig);
   const latePotionSlot = slot.index >= 5;
   const potionThreshold = latePotionSlot ? 0.30 : 0.28;
@@ -2560,6 +2563,7 @@ function inferMiddleConsumableSlotType(slot, sig, cache) {
   const potionLikeMargin = latePotionSlot ? 0.24 : 0.18;
   const foodMargin = latePotionSlot ? 0.18 : 0.12;
 
+  if (coolPotionStack && potionBest >= 0.30 && potionBest >= foodBest - 0.40) return 'splash_potion';
   if (potionBest >= potionThreshold && (potionBest >= foodBest - potionMargin || (potionLike && !strongFoodColor && potionBest >= foodBest - potionLikeMargin))) return 'splash_potion';
   if (latePotionSlot && potionLike && !strongFoodColor && !isFoodLikeTailSignature(sig) && potionBest >= 0.24 && potionBest >= foodBest - 0.10) return 'splash_potion';
   if (foodBest >= 0.52 && foodBest > potionBest + foodMargin && strongFoodColor) return steakBest >= carrotBest ? 'steak' : 'golden_carrot';
@@ -2579,6 +2583,7 @@ function inferTrailingConsumableSlotType(slot, sig, cache) {
   const potionLike = isPotionLikeSignature(sig) || sig.redFrac >= 0.05 || (sig.meanR > sig.meanB + 6 && sig.meanR > sig.meanG - 2);
   const weakFoodColor = sig.yellowFrac >= 0.04 && sig.meanR >= sig.meanB + 8 && sig.meanLum >= 70;
 
+  if (foodBest >= 0.78 && foodBest >= potionBest + 0.16) return foodType;
   if (!strongFoodColor && potionBest >= 0.34 && (potionBest >= foodBest - 0.06 || (potionLike && potionBest >= foodBest - 0.12))) return 'splash_potion';
   if (foodBest >= 0.46 && strongFoodColor && (foodBest >= potionBest - 0.03 || looksLikeFood)) return foodType;
   if (foodBest >= 0.52 && weakFoodColor && foodBest >= potionBest - 0.08) return foodType;
@@ -2640,17 +2645,18 @@ function applyCanonicalMiddlePotionSlots(orderedSlots, inferredTypes, cache) {
     const strongFoodColor = isStrongFoodColor(sig);
     const looksLikeFood = isFoodLikeTailSignature(sig);
     const potionLike = isPotionLikeSignature(sig) || sig.redFrac >= 0.05 || (sig.meanR > sig.meanB + 4 && sig.meanR > sig.meanG - 2);
+    const coolPotionStack = sig.coverage <= 0.30 && sig.blueFrac >= 0.22 && sig.meanB >= sig.meanG + 18 && sig.meanLum >= 88;
     const minActivity = slotIndex >= 5 ? 0.42 : 0.34;
     const closeness = slotIndex >= 5 ? 0.30 : 0.20;
     if (activity < minActivity) continue;
-    if (strongFoodColor || (looksLikeFood && foodBest > potionBest + 0.08)) continue;
-    if (potionBest < 0.20 && !potionLike && sig.redFrac < 0.03) continue;
-    candidates.push({ slotIndex, potionBest, foodBest, potionLike, closeness });
+    if (strongFoodColor || (!coolPotionStack && looksLikeFood && foodBest > potionBest + 0.08)) continue;
+    if (potionBest < 0.20 && !potionLike && !coolPotionStack && sig.redFrac < 0.03) continue;
+    candidates.push({ slotIndex, potionBest, foodBest, potionLike, closeness, coolPotionStack });
   }
   const lateCandidateCount = candidates.filter(candidate => candidate.slotIndex >= 5).length;
   if (candidates.length < 3 || lateCandidateCount < 2) return;
   for (const candidate of candidates) {
-    if (candidate.potionBest >= candidate.foodBest - candidate.closeness || candidate.potionLike) {
+    if (candidate.potionBest >= candidate.foodBest - candidate.closeness || candidate.potionLike || candidate.coolPotionStack) {
       inferredTypes[candidate.slotIndex] = 'splash_potion';
     }
   }
