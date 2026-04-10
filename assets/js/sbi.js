@@ -172,21 +172,28 @@ function normalizePackSearchPhrase(value) {
   return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function calibrateDisplayScore(score) {
+  const x = clamp01(score);
+  return clamp01(1 / (1 + Math.exp(-10 * (x - 0.31))));
+}
+
 function assignDisplayScores(results, details) {
   for (const row of (results || [])) {
     if (!row || !isFinite(row.score)) continue;
-    row.displayScore = clamp01(row.score);
+    row.displayScore = calibrateDisplayScore(row.score);
   }
   if (details) {
     for (const info of Object.values(details)) {
       if (!info || !isFinite(info.finalScore)) continue;
-      info.displayScore = clamp01(info.finalScore);
+      info.displayScore = calibrateDisplayScore(info.finalScore);
     }
   }
   return null;
 }
 
 function getDisplayScoreValue(row, info) {
+  if (row && isFinite(row.displayScore)) return clamp01(row.displayScore);
+  if (info && isFinite(info.displayScore)) return clamp01(info.displayScore);
   if (row && isFinite(row.score)) return clamp01(row.score);
   if (info && isFinite(info.finalScore)) return clamp01(info.finalScore);
   return 0;
