@@ -150,15 +150,6 @@ function fmtPct(v) {
   return (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + '%';
 }
 
-function lerp(a, b, t) {
-  return a + (b - a) * clamp01(t);
-}
-
-function inverseLerp(a, b, v) {
-  if (!isFinite(a) || !isFinite(b) || Math.abs(b - a) < 1e-6) return v >= b ? 1 : 0;
-  return clamp01((v - a) / (b - a));
-}
-
 function getDisplayedPctOrderValue(v) {
   if (!isFinite(v)) return -1;
   return Math.round(Math.max(0, Math.min(1, v)) * 1000);
@@ -181,53 +172,21 @@ function normalizePackSearchPhrase(value) {
   return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-function buildDisplayScoreAnchors(results) {
-  const ranked = (results || []).filter(row => row && isFinite(row.score)).slice().sort((a, b) => b.score - a.score);
-  if (!ranked.length) return null;
-  const s1 = clamp01(ranked[0].score);
-  const s2 = clamp01(ranked[1] ? ranked[1].score : Math.max(0, s1 - 0.04));
-  const s3 = clamp01(ranked[2] ? ranked[2].score : Math.max(0, s2 - 0.10));
-  const s10 = clamp01(ranked[Math.min(ranked.length - 1, 9)] ? ranked[Math.min(ranked.length - 1, 9)].score : Math.max(0, s3 - 0.16));
-  const topGap = Math.max(0, s1 - s2);
-  const thirdGap = Math.max(0, s2 - s3);
-  const d1 = clamp01(0.82 + 0.08 * clamp01((s1 - 0.38) / 0.18));
-  const d2 = ranked.length > 1
-    ? clamp01(Math.max(0.76, d1 - (0.02 + Math.min(0.04, 0.005 + topGap * 0.12))))
-    : d1;
-  const d3 = ranked.length > 2
-    ? clamp01(Math.max(0.48, d2 - (0.15 + Math.min(0.12, 0.04 + thirdGap * 1.6))))
-    : clamp01(d2 - 0.16);
-  const d10 = clamp01(Math.max(0.18, d3 - 0.28));
-  return { s1, s2, s3, s10, d1, d2, d3, d10 };
-}
-
-function projectDisplayScore(score, anchors) {
-  const x = clamp01(score);
-  if (!anchors) return x;
-  if (x >= anchors.s2 || anchors.s1 <= anchors.s2 + 1e-6) {
-    return lerp(anchors.d2, anchors.d1, inverseLerp(anchors.s2, anchors.s1, x));
-  }
-  if (x >= anchors.s3 || anchors.s2 <= anchors.s3 + 1e-6) {
-    return lerp(anchors.d3, anchors.d2, inverseLerp(anchors.s3, anchors.s2, x));
-  }
-  return lerp(anchors.d10, anchors.d3, Math.pow(inverseLerp(anchors.s10, anchors.s3, x), 0.8));
-}
-
 function assignDisplayScores(results, details) {
-  const anchors = buildDisplayScoreAnchors(results);
-  for (const row of (results || [])) row.displayScore = projectDisplayScore(row.score, anchors);
+  for (const row of (results || [])) {
+    if (!row || !isFinite(row.score)) continue;
+    row.displayScore = clamp01(row.score);
+  }
   if (details) {
     for (const info of Object.values(details)) {
       if (!info || !isFinite(info.finalScore)) continue;
-      info.displayScore = projectDisplayScore(info.finalScore, anchors);
+      info.displayScore = clamp01(info.finalScore);
     }
   }
-  return anchors;
+  return null;
 }
 
 function getDisplayScoreValue(row, info) {
-  if (row && isFinite(row.displayScore)) return clamp01(row.displayScore);
-  if (info && isFinite(info.displayScore)) return clamp01(info.displayScore);
   if (row && isFinite(row.score)) return clamp01(row.score);
   if (info && isFinite(info.finalScore)) return clamp01(info.finalScore);
   return 0;
