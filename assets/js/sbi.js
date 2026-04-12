@@ -115,7 +115,7 @@ const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
   type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 4.8, steak: 0.45, golden_carrot: 0.45, apple_golden: 0.0 },
   hud: { health: 5.8, hunger: 5.0, armor: 4.8 },
-  mix: { slot: 0.58, hud: 0.32, widget: 0.10, slotNoHud: 0.90, widgetNoHud: 0.10 },
+  mix: { slot: 0.52, hud: 0.28, widget: 0.20, slotNoHud: 0.82, widgetNoHud: 0.18 },
 };
 const SLOT_STRONG_MATCH_THRESHOLDS = {
   diamond_sword: 0.56,
@@ -242,16 +242,16 @@ function getCriticalTypeMetrics(perTypeScores, typeCounts) {
   const wantsFood = !!(typeCounts.steak || typeCounts.golden_carrot || typeCounts.apple_golden);
   return {
     score: clamp01(
-      (wantsSword ? ds * 0.16 : 0) +
-      (wantsPearl ? ep * 0.50 : 0) +
+      (wantsSword ? ds * 0.26 : 0) +
+      (wantsPearl ? ep * 0.38 : 0) +
       (wantsPotion ? hl * 0.20 : 0) +
-      (wantsFood ? food * 0.20 : 0)
+      (wantsFood ? food * 0.16 : 0)
     ),
     shortfall: clamp01(
-      (wantsSword ? Math.max(0, 0.30 - ds) * 0.65 : 0) +
-      (wantsPearl ? Math.max(0, 0.42 - ep) * 1.20 : 0) +
+      (wantsSword ? Math.max(0, 0.30 - ds) * 0.85 : 0) +
+      (wantsPearl ? Math.max(0, 0.42 - ep) * 0.95 : 0) +
       (wantsPotion ? Math.max(0, 0.30 - hl) * 0.34 : 0) +
-      (wantsFood ? Math.max(0, 0.52 - food) * 0.36 : 0)
+      (wantsFood ? Math.max(0, 0.52 - food) * 0.30 : 0)
     ),
   };
 }
@@ -1911,7 +1911,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   const aspect = imgH / Math.max(1, imgW);
   const isHudCrop = aspect < 0.35;
   const baseUnit = getWide16By9Unit(imgW, imgH);
-  const targetUnit = isHudCrop ? 0 : (preset === 'auto' ? 0 : (preset === 'small' ? Math.max(1, Math.round(baseUnit) - 1) : baseUnit));
+  const targetUnit = isHudCrop ? 0 : (preset === 'auto' ? 0 : (preset === 'small' ? Math.max(1, Math.ceil(baseUnit) - 1) : baseUnit));
   const PRE_K = 80;
   const PER_UNIT_K = 14;
   const preByUnit = new Map();
@@ -2221,6 +2221,17 @@ function compareHudVariant(extracted, tex, hudType) {
       0.50
     );
     sim *= (0.02 + 0.24 * dir + 0.60 * gbSim + 0.14 * rbSim);
+  }
+  if (hudType === 'hunger' && extracted && tex && extracted.sig && tex.sig) {
+    const dir = clamp01(meanRgbDirSim(extracted.moments, tex.moments));
+    const rbSim = metricSimilarity(
+      signatureMeanRatio(extracted.sig, 'meanR', 'meanB'),
+      signatureMeanRatio(tex.sig, 'meanR', 'meanB'),
+      0.30
+    );
+    const yellowSim = metricSimilarity(extracted.sig.yellowFrac, tex.sig.yellowFrac, 0.14);
+    const lumSim = metricSimilarity(extracted.sig.meanLum, tex.sig.meanLum, 28);
+    sim *= (0.04 + 0.26 * dir + 0.30 * rbSim + 0.22 * yellowSim + 0.18 * lumSim);
   }
   return sim;
 }
@@ -2864,7 +2875,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
 function getPresetUnit(imgW, imgH, preset) {
   if (preset === 'auto') return 0;
   const base = getWide16By9Unit(imgW, imgH) || getMaxGuiScale(imgW, imgH);
-  if (preset === 'small') return Math.max(1, Math.round(base) - 1);
+  if (preset === 'small') return Math.max(1, Math.ceil(base) - 1);
   return base;
 }
 
@@ -3223,6 +3234,71 @@ function init() {
   const searchTip = document.getElementById('sbi-search-tip');
   bindScoreTip(searchPanel, searchResults, searchTip, 3);
 }
+
+window.__sbiTest = {
+  handleImageInput,
+  async processImage(file, preset) {
+    if (preset) _currentPreset = preset;
+    // Headless-safe wrapper: core matching without DOM dependency
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+
+    const rawCanvas = document.createElement('canvas');
+    rawCanvas.width = img.width; rawCanvas.height = img.height;
+    const rawCtx = rawCanvas.getContext('2d', { willReadFrequently: true });
+    rawCtx.drawImage(img, 0, 0);
+
+    const canvas = document.getElementById('sbi-canvas') || document.createElement('canvas');
+    canvas.width = img.width; canvas.height = img.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+
+    if (!fingerprints) {
+      const resp = await fetch('/data/sbi-fingerprints.json?v=' + SBI_FINGERPRINT_VERSION);
+      if (!resp.ok) throw new Error('Failed to load fingerprints: ' + resp.status);
+      fingerprints = await resp.json();
+    }
+
+    const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height, _currentPreset);
+    const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
+    _lastMatchDetails = details || {};
+    _lastDetectionMeta = {
+      widgetRect, searchInfo,
+      slotCount: slots.length,
+      heartCount: hudFeatures && hudFeatures.hearts ? hudFeatures.hearts.length : 0,
+      hungerCount: hudFeatures && hudFeatures.hunger ? hudFeatures.hunger.length : 0,
+      armorCount: hudFeatures && hudFeatures.armor ? hudFeatures.armor.length : 0,
+    };
+    _lastVisibleScores = {};
+    for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = getDisplayScoreValue(null, info);
+    _lastRankedResults = results.slice();
+    _lastSearchPhase = 'hash';
+    URL.revokeObjectURL(url);
+  },
+  getSummary() {
+    const meta = _lastDetectionMeta || {};
+    return {
+      ranked: (_lastRankedResults || []).slice(0, 10).map(r => {
+        const info = _lastMatchDetails[r.name] || {};
+        return { name: r.name, score: getDisplayScoreValue(r, info) };
+      }),
+      slotTypes: getCurrentSlotTypesSummary(),
+      resultText: (_lastRankedResults || []).slice(0, 3).map(r => r.name).join(', '),
+      debug: {
+        slotCount: meta.slotCount || 0,
+        widgetRect: meta.widgetRect || null,
+        heartCount: meta.heartCount || 0,
+        hungerCount: meta.hungerCount || 0,
+        armorCount: meta.armorCount || 0,
+        detailCount: Object.keys(_lastMatchDetails || {}).length,
+        rankedCount: (_lastRankedResults || []).length,
+        hasFingerprints: !!fingerprints,
+        fingerprintPackCount: fingerprints ? Object.keys(fingerprints.packs || {}).length : 0,
+      },
+    };
+  },
+};
 
 init();
 })();
