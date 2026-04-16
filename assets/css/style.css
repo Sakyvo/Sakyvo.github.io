@@ -1038,6 +1038,7 @@ footer {
 .sbi-result-name { flex: 1; font-size: 12px; font-weight: bold; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 1px 0 0 rgba(0,0,0,0.55); }
 .sbi-result-cover { width: 88px; height: 44px; object-fit: cover; image-rendering: pixelated; flex-shrink: 0; display: block; }
 .sbi-no-results { text-align: center; color: var(--text-secondary); padding: 40px 0; }
+.sbi-show-more-btn { display: block; width: 100%; margin-top: 6px; padding: 8px 0; text-align: center; font-size: 13px; }
 .sbi-clip-status { text-align: center; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
 .sbi-crops { margin-top: 14px; border: 2px solid var(--border); background: var(--bg-alt); padding: 10px; }
 .sbi-crops-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; color: var(--text-secondary); }

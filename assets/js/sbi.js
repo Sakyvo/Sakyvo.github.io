@@ -2885,21 +2885,13 @@ function scoreColor(pct) {
   return '#ef4444';
 }
 
-function renderResults(results, label) {
-  const container = document.getElementById('sbi-results');
-  if (results.length === 0) {
-    container.innerHTML = '<p class="sbi-no-results">No matching packs found</p>';
-    container.hidden = false;
-    return;
-  }
-  const header = label ? `<div class="sbi-results-label">${label}</div>` : '';
-  container.innerHTML = header + results.map((r, i) => {
-    const pct = Math.min(100, Math.round(getDisplayScoreValue(r, _lastMatchDetails[r.name]) * 100));
-    const color = scoreColor(pct);
-    const coverUrl = '/thumbnails/' + encodeURIComponent(r.name) + '/cover.png';
-    const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
-    const displayName = getPackDisplayName(r.name);
-    return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/" target="_blank" rel="noopener noreferrer">
+function renderResultCard(r, i) {
+  const pct = Math.min(100, Math.round(getDisplayScoreValue(r, _lastMatchDetails[r.name]) * 100));
+  const color = scoreColor(pct);
+  const coverUrl = '/thumbnails/' + encodeURIComponent(r.name) + '/cover.png';
+  const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
+  const displayName = getPackDisplayName(r.name);
+  return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/" target="_blank" rel="noopener noreferrer">
       <span class="sbi-rank">${i + 1}</span>
       <span class="sbi-divider"></span>
       <span class="sbi-score" style="color:${color}">${pct}%</span>
@@ -2909,7 +2901,30 @@ function renderResults(results, label) {
       <span class="sbi-divider"></span>
       <img class="sbi-result-cover" src="${coverUrl}" onerror="this.src='${packPng}'">
     </a>`;
-  }).join('');
+}
+
+const SBI_PAGE_SIZE = 10;
+
+function renderResults(results, label) {
+  const container = document.getElementById('sbi-results');
+  if (results.length === 0) {
+    container.innerHTML = '<p class="sbi-no-results">No matching packs found</p>';
+    container.hidden = false;
+    return;
+  }
+  let visible = SBI_PAGE_SIZE;
+  const header = label ? `<div class="sbi-results-label">${label}</div>` : '';
+
+  function draw() {
+    const shown = results.slice(0, visible);
+    container.innerHTML = header + shown.map((r, i) => renderResultCard(r, i)).join('')
+      + (visible < results.length ? `<button class="sbi-action-btn sbi-show-more-btn" id="sbi-show-more">Show more results</button>` : '');
+    document.getElementById('sbi-show-more')?.addEventListener('click', () => {
+      visible += SBI_PAGE_SIZE;
+      draw();
+    });
+  }
+  draw();
   container.hidden = false;
 }
 
