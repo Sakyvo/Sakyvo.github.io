@@ -848,7 +848,7 @@ function handleClipResults(clipScores) {
   _lastRankedResults = combined.slice();
   _lastSearchPhase = 'ai';
   const top10 = combined.slice(0, 10);
-  renderResults(top10, 'AI Enhanced');
+  renderResults(combined.slice(0, 50), 'AI Enhanced');
   renderDebugPanel(top10, 'ai');
   renderPackScoreSearch();
   updateExportButtonState();
@@ -3001,8 +3001,7 @@ async function processImage(file) {
 
     // Stage 1: Hash-based instant results
     const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
-    const stage1Top10 = results.slice(0, 10);
-    _lastMatchDetails = details || {};
+    const stage1Top10 = results.slice(0, 10);    _lastMatchDetails = details || {};
     _lastClipScores = {};
     _lastDetectionMeta = {
       widgetRect,
@@ -3025,7 +3024,7 @@ async function processImage(file) {
     if (uploadEl && uploadEl.matches(':hover')) setUploadReplaceHover(true);
     if (searchWrap) searchWrap.hidden = false;
     preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    renderResults(stage1Top10);
+    renderResults(results.slice(0, 50));
     renderDebugPanel(stage1Top10, 'hash');
     _lastVisibleScores = {};
     for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = getDisplayScoreValue(null, info);
