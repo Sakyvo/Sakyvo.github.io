@@ -1040,6 +1040,7 @@ footer {
 .sbi-result-cover { width: 112px; height: 56px; object-fit: cover; image-rendering: pixelated; flex-shrink: 0; display: block; }
 .sbi-no-results { text-align: center; color: var(--text-secondary); padding: 40px 0; }
 .sbi-show-more-btn { display: block; width: 100%; margin-top: 6px; padding: 8px 0; text-align: center; font-size: 13px; }
+.sbi-results:not([hidden]) { border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; }
 .sbi-clip-status { text-align: center; font-size: 13px; color: var(--text-secondary); padding: 8px 0; }
 .sbi-crops { margin-top: 14px; border: 2px solid var(--border); background: var(--bg-alt); padding: 10px; }
 .sbi-crops-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; color: var(--text-secondary); }
