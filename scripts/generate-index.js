@@ -57,6 +57,19 @@ function main() {
   let extracted = JSON.parse(fs.readFileSync(extractedPath, 'utf-8'));
   const today = new Date().toISOString().split('T')[0];
 
+  // Load existing per-pack JSON to preserve first-seen uploadDate across rebuilds.
+  // GitHub auto-build runs on every push; without this every rebuild would reset
+  // uploadDate to the current date.
+  function readExistingUploadDate(packId) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(`data/packs/${packId}.json`, 'utf-8'));
+      if (existing && typeof existing.uploadDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(existing.uploadDate)) {
+        return existing.uploadDate;
+      }
+    } catch {}
+    return null;
+  }
+
   // Load pack registry for download URLs
   const registryPath = 'data/pack-registry.json';
   const registry = fs.existsSync(registryPath) ? JSON.parse(fs.readFileSync(registryPath, 'utf-8')) : null;
@@ -104,7 +117,7 @@ function main() {
       icon: fs.existsSync(path.join(e.outputDir, 'icon.png')) ? `/thumbnails/${e.packId}/icon.png` : null,
       file: `resourcepacks/${e.originalName}.zip`,
       fileSize: getFileSize(path.join('resourcepacks', `${e.originalName}.zip`), registry && registry[zipName]),
-      uploadDate: today,
+      uploadDate: readExistingUploadDate(e.packId) || today,
       lists: packToLists[e.packId] || [],
       textures: e.extracted,
       downloads: {
