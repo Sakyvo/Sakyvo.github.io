@@ -66,6 +66,7 @@ let _lastMatchDetails = {};
 let _lastClipScores = {};
 let _lastVisibleScores = {};
 let _lastRankedResults = [];
+let _lastSlotFeatures = [];
 let _lastSearchPhase = 'hash';
 let _lastDetectionMeta = null;
 let _previewImageUrl = '';
@@ -114,8 +115,8 @@ const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak
 const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
   type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 4.8, steak: 0.45, golden_carrot: 0.45, apple_golden: 0.0 },
-  hud: { health: 5.8, hunger: 5.0, armor: 4.8 },
-  mix: { slot: 0.52, hud: 0.28, widget: 0.20, slotNoHud: 0.82, widgetNoHud: 0.18 },
+  hud: { health: 6.4, hunger: 5.4, armor: 5.2 },
+  mix: { slot: 0.44, hud: 0.36, widget: 0.20, slotNoHud: 0.74, widgetNoHud: 0.26 },
 };
 const SLOT_STRONG_MATCH_THRESHOLDS = {
   diamond_sword: 0.56,
@@ -2218,9 +2219,10 @@ function compareHudVariant(extracted, tex, hudType) {
     const rbSim = metricSimilarity(
       signatureMeanRatio(extracted.sig, 'meanR', 'meanB'),
       signatureMeanRatio(tex.sig, 'meanR', 'meanB'),
-      0.50
+      0.40
     );
-    sim *= (0.02 + 0.24 * dir + 0.60 * gbSim + 0.14 * rbSim);
+    // Sharper color discrimination: red vs blue hearts should not look similar
+    sim *= (0.02 + 0.12 * dir + 0.34 * gbSim + 0.52 * rbSim);
   }
   if (hudType === 'hunger' && extracted && tex && extracted.sig && tex.sig) {
     const dir = clamp01(meanRgbDirSim(extracted.moments, tex.moments));
@@ -2231,7 +2233,7 @@ function compareHudVariant(extracted, tex, hudType) {
     );
     const yellowSim = metricSimilarity(extracted.sig.yellowFrac, tex.sig.yellowFrac, 0.14);
     const lumSim = metricSimilarity(extracted.sig.meanLum, tex.sig.meanLum, 28);
-    sim *= (0.04 + 0.26 * dir + 0.30 * rbSim + 0.22 * yellowSim + 0.18 * lumSim);
+    sim *= (0.04 + 0.22 * dir + 0.36 * rbSim + 0.22 * yellowSim + 0.16 * lumSim);
   }
   return sim;
 }
@@ -2491,7 +2493,9 @@ function isFoodLikeTailSignature(sig) {
     (sig.yellowFrac >= 0.14 && sig.redFrac <= 0.16 && sig.meanLum >= 84) ||
     (sig.yellowFrac >= 0.09 && warm && sig.meanLum >= 82) ||
     (sig.yellowFrac >= 0.08 && sig.meanLum >= 94) ||
-    (sig.yellowFrac >= 0.05 && sig.meanR >= sig.meanB + 10 && sig.meanLum >= 72)
+    (sig.yellowFrac >= 0.05 && sig.meanR >= sig.meanB + 10 && sig.meanLum >= 72) ||
+    // Steak: brown-red, warm, low blue, moderate lightness
+    (sig.meanR >= sig.meanB + 28 && sig.meanR >= sig.meanG + 10 && sig.meanLum >= 70 && sig.meanLum <= 160 && sig.blueFrac < 0.06)
   );
 }
 
@@ -2559,13 +2563,17 @@ function inferTrailingConsumableSlotType(slot, sig, cache) {
   const looksLikeFood = isFoodLikeTailSignature(sig);
   const potionLike = isPotionLikeSignature(sig) || sig.redFrac >= 0.05 || (sig.meanR > sig.meanB + 6 && sig.meanR > sig.meanG - 2);
   const weakFoodColor = sig.yellowFrac >= 0.04 && sig.meanR >= sig.meanB + 8 && sig.meanLum >= 70;
+  // Steak-specific: brown-red, low blue, warm tone
+  const steakLike = sig.meanR >= sig.meanB + 28 && sig.meanR >= sig.meanG + 10 && sig.blueFrac < 0.06 && sig.meanLum >= 70 && sig.meanLum <= 160;
 
   if (foodBest >= 0.78 && foodBest >= potionBest + 0.16) return foodType;
-  if (!strongFoodColor && potionBest >= 0.34 && (potionBest >= foodBest - 0.06 || (potionLike && potionBest >= foodBest - 0.12))) return 'splash_potion';
+  // Steak color takes precedence over weak potion match
+  if (steakLike && steakBest >= 0.40 && steakBest >= potionBest - 0.10) return 'steak';
+  if (!strongFoodColor && !steakLike && potionBest >= 0.34 && (potionBest >= foodBest - 0.06 || (potionLike && potionBest >= foodBest - 0.12))) return 'splash_potion';
   if (foodBest >= 0.46 && strongFoodColor && (foodBest >= potionBest - 0.03 || looksLikeFood)) return foodType;
   if (foodBest >= 0.52 && weakFoodColor && foodBest >= potionBest - 0.08) return foodType;
   if (foodBest >= 0.58 && looksLikeFood && !potionLike) return foodType;
-  if (potionLike && !looksLikeFood && potionBest >= 0.24) return 'splash_potion';
+  if (potionLike && !looksLikeFood && !steakLike && potionBest >= 0.24) return 'splash_potion';
   return '';
 }
 
@@ -2655,7 +2663,7 @@ function inferDisplaySlotTypes(slots) {
 
     const activity = clamp01(slot.activity || 0);
     const variance = slot.variance || 0;
-    if (activity < 0.26 || variance < 220) {
+    if (activity < 0.22 || variance < 180) {
       out[slot.index] = 'none';
       continue;
     }
@@ -2706,8 +2714,9 @@ function inferDisplaySlotTypes(slots) {
       continue;
     }
 
-    // Ender pearl: typically dark + low warm colors.
-    if (sig.meanLum < 80 && sig.redFrac < 0.05 && sig.yellowFrac < 0.08 && (sig.n >= 70 || sig.coverage >= 0.22)) {
+    // Ender pearl: dark + low warm colors, OR bright cyan/teal orb
+    if (sig.redFrac < 0.05 && sig.yellowFrac < 0.08 && (sig.n >= 70 || sig.coverage >= 0.22) &&
+        (sig.meanLum < 80 || (sig.meanB > sig.meanR + 40 && sig.meanG > sig.meanR + 20))) {
       out[slot.index] = 'ender_pearl';
       continue;
     }
@@ -3275,6 +3284,7 @@ window.__sbiTest = {
     }
 
     const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height, _currentPreset);
+    _lastSlotFeatures = slots;
     const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
     _lastMatchDetails = details || {};
     _lastDetectionMeta = {
@@ -3293,11 +3303,39 @@ window.__sbiTest = {
   getSummary() {
     const meta = _lastDetectionMeta || {};
     return {
-      ranked: (_lastRankedResults || []).slice(0, 10).map(r => {
+      ranked: (_lastRankedResults || []).slice(0, 30).map(r => {
         const info = _lastMatchDetails[r.name] || {};
-        return { name: r.name, score: getDisplayScoreValue(r, info) };
+        return {
+          name: r.name,
+          score: getDisplayScoreValue(r, info),
+          slotComposite: info.slotScore,
+          hudComposite: (info.healthScore != null || info.hungerScore != null || info.armorScore != null) ? ((info.healthScore||0)+(info.hungerScore||0)+(info.armorScore||0))/3 : null,
+          widgetSim: info.widgetScore,
+          healthSim: info.healthScore,
+          hungerSim: info.hungerScore,
+          armorSim: info.armorScore,
+          coverage: info.slotCoverage,
+          certainty: info.slotCertainty,
+        };
       }),
       slotTypes: getCurrentSlotTypesSummary(),
+      slotFeatures: (_lastSlotFeatures || []).map(s => s ? {
+        index: s.index,
+        activity: s.activity,
+        variance: s.variance,
+        sig: s.features && s.features.sig ? {
+          n: s.features.sig.n,
+          coverage: s.features.sig.coverage,
+          meanLum: s.features.sig.meanLum,
+          meanR: s.features.sig.meanR,
+          meanG: s.features.sig.meanG,
+          meanB: s.features.sig.meanB,
+          redFrac: s.features.sig.redFrac,
+          yellowFrac: s.features.sig.yellowFrac,
+          blueFrac: s.features.sig.blueFrac,
+          darkFrac: s.features.sig.darkFrac,
+        } : null,
+      } : null),
       resultText: (_lastRankedResults || []).slice(0, 3).map(r => r.name).join(', '),
       debug: {
         slotCount: meta.slotCount || 0,

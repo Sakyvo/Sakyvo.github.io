@@ -10,6 +10,14 @@ import time
 import urllib.parse
 import urllib.request
 
+# Force stdout to UTF-8 on Windows
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 PORT = 9876
 DEBUG_PORT = 9333
@@ -22,6 +30,15 @@ PACK_ALIAS = {
 }
 
 
+def normalize_pack_name(raw):
+    # Strip " (2)" style counter suffixes and brackets; keep letters/digits/_
+    s = re.sub(r"\s*\(\d+\)\s*$", "", raw).strip()
+    s = s.replace("[", "").replace("]", "")
+    s = re.sub(r"\s+", "_", s)
+    s = re.sub(r"[^A-Za-z0-9_\-]", "", s)
+    return s
+
+
 def parse_test_images():
     tests = []
     for name in sorted(os.listdir(TEST_DIR)):
@@ -29,8 +46,7 @@ def parse_test_images():
         if not m:
             continue
         scale = m.group(1).lower()
-        pack_name = m.group(2).strip()
-        expected = pack_name.replace(" ", "_")
+        expected = normalize_pack_name(m.group(2))
         low = expected.lower()
         if low in PACK_ALIAS:
             expected = PACK_ALIAS[low]
@@ -75,7 +91,8 @@ async def wait_for(ws, js_expr, timeout=30):
 
 
 def match_name(expected, got):
-    return expected.lower().replace("_", "") == got.lower().replace("_", "")
+    n = lambda s: re.sub(r"[^a-z0-9]", "", s.lower())
+    return n(expected) == n(got)
 
 
 async def main():
@@ -195,14 +212,41 @@ async def main():
                     ok = match_name(expected, top1)
                     status = "PASS" if ok else "FAIL"
                     results.append((img_name, expected, top1, ok))
-                    scores = " | ".join(f"{r['name']}={r['score']:.4f}" for r in ranked[:5])
+                    def fmt_row(r):
+                        parts = [f"{r['name']}={r['score']:.4f}"]
+                        if r.get('slotComposite') is not None:
+                            parts.append(f"slot={r['slotComposite']:.3f}")
+                        if r.get('healthSim') is not None:
+                            parts.append(f"HP={r['healthSim']:.2f}")
+                        if r.get('hungerSim') is not None:
+                            parts.append(f"Hu={r['hungerSim']:.2f}")
+                        if r.get('armorSim') is not None:
+                            parts.append(f"Ar={r['armorSim']:.2f}")
+                        if r.get('widgetSim') is not None:
+                            parts.append(f"wg={r['widgetSim']:.3f}")
+                        if r.get('coverage') is not None:
+                            parts.append(f"cov={r['coverage']:.2f}")
+                        return "[" + " ".join(parts) + "]"
                     print(f"  [{status}] {img_name}")
                     print(f"    Expected: {expected}")
                     print(f"    Got #1:   {top1}")
                     if debug:
-                        print(f"    Debug:    slots={debug.get('slotCount')}, packs={debug.get('fingerprintPackCount')}, ranked={debug.get('rankedCount')}, details={debug.get('detailCount')}")
-                    if scores:
-                        print(f"    Top 5:    {scores}")
+                        print(f"    Debug:    slots={debug.get('slotCount')}, hearts={debug.get('heartCount')}, hunger={debug.get('hungerCount')}, armor={debug.get('armorCount')}, ranked={debug.get('rankedCount')}")
+                    print(f"    SlotTypes: {summary.get('slotTypes', '-')}")
+                    # Print slot features for deep debugging
+                    sfs = summary.get('slotFeatures', [])
+                    for sf in sfs:
+                        if sf is None: continue
+                        sig = sf.get('sig') or {}
+                        print(f"    Slot[{sf['index']}]: act={sf.get('activity',0):.2f} var={sf.get('variance',0):.0f} n={sig.get('n','?')} cov={sig.get('coverage',0):.2f} lum={sig.get('meanLum',0):.0f} R={sig.get('meanR',0):.0f} G={sig.get('meanG',0):.0f} B={sig.get('meanB',0):.0f} redF={sig.get('redFrac',0):.3f} yF={sig.get('yellowFrac',0):.3f} blueF={sig.get('blueFrac',0):.3f}")
+                    for r in ranked[:10]:
+                        print(f"    #  {fmt_row(r)}")
+                    if not ok:
+                        # find expected pack info
+                        for idx, r in enumerate(ranked):
+                            if match_name(expected, r['name']):
+                                print(f"    Expected@#{idx+1}: {fmt_row(r)}")
+                                break
                     print()
                 except Exception as e:
                     results.append((img_name, expected, f"ERROR: {e}", False))
