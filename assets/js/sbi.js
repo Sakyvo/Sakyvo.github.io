@@ -229,7 +229,11 @@ function countDisplaySlotTypes(slotTypes) {
 function getRepeatedTypeScale(type, typeCounts) {
   const count = Math.max(1, typeCounts[type] || 1);
   if (count <= 1) return 1;
-  return Math.pow(count, -(type === 'splash_potion' ? 0.32 : 0.35));
+  // splash_potion texture is often a white bottle + color overlay rendered at
+  // runtime; packs that ship a pre-composited "of_healing" PNG end up with a
+  // fingerprint that doesn't match fire-resistance / speed potions in the
+  // screenshot. Down-weight harder so repeated potion slots don't dominate.
+  return Math.pow(count, -(type === 'splash_potion' ? 0.55 : 0.35));
 }
 
 function getCriticalTypeMetrics(perTypeScores, typeCounts) {
@@ -2252,7 +2256,11 @@ function compareHudCells(cells, variants, hudType) {
   const take = Math.max(4, Math.min(sims.length, Math.ceil(sims.length * 0.7)));
   let sum = 0;
   for (let i = 0; i < take; i++) sum += sims[i];
-  return take ? sum / take : 0;
+  const avgTop = take ? sum / take : 0;
+  // Blend avgTop with peak cell. Peak rewards packs that have at least one
+  // clearly-matching HUD cell even when others are noisy / empty / occluded.
+  const peak = sims[0] || 0;
+  return avgTop * 0.40 + peak * 0.60;
 }
 
 function metricSimilarity(a, b, spread) {
@@ -2757,6 +2765,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0;
     const perTypeScores = {};
     const slotBreakdown = new Array(9).fill(null);
+    const slotContribs = [];
 
     for (const slot of slots) {
       const activity = clamp01(slot.activity || 0);
@@ -2807,19 +2816,38 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       };
       const qualityNorm = clamp01((slot.quality || 0) / 13);
       const repeatedTypeScale = getRepeatedTypeScale(targetType, displayTypeCounts);
-      const w = typeW * repeatedTypeScale * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
+      // Slot 0 (diamond sword) and slot 1 (ender pearl) are the standout
+      // per-pack signals in PvP screenshots — most customization lives there.
+      // The middle/trailing slots are often near-identical across packs
+      // (shared potion / steak art), so give 0/1 a position bonus.
+      const positionBonus = (slot.index === 0 || slot.index === 1) ? 1.5 : 1.0;
+      const w = typeW * repeatedTypeScale * positionBonus * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
       slotWeighted += sim * w;
       slotWeights += w;
+      slotContribs.push({ sim, w });
       certaintySum += certainty;
       const strongThreshold = getStrongMatchThreshold(targetType);
       if (sim >= strongThreshold) strongSlots++;
       else slotPenalty += (strongThreshold - sim) * (0.8 + activity * 0.7);
     }
     const slotScore = slotWeights ? (slotWeighted / slotWeights) : 0;
+    // Top-K slot average: resilient to packs where half the slots share generic
+    // potion / steak art. Keeps the pack's best-matching slots as the primary
+    // signal when the rest are noisy.
+    let topSlotScore = 0;
+    if (slotContribs.length) {
+      const sorted = slotContribs.slice().sort((a, b) => (b.sim * b.w) - (a.sim * a.w));
+      const k = Math.min(3, sorted.length);
+      let tw = 0, tsum = 0;
+      for (let i = 0; i < k; i++) { tsum += sorted[i].sim * sorted[i].w; tw += sorted[i].w; }
+      topSlotScore = tw ? (tsum / tw) : 0;
+    }
     const slotCoverage = activeSlots ? (strongSlots / activeSlots) : 0;
     const slotPenaltyNorm = activeSlots ? (slotPenalty / activeSlots) : 0;
     const slotCertainty = activeSlots ? (certaintySum / activeSlots) : 0;
-    let slotComposite = slotScore * (0.78 + 0.22 * slotCoverage) + Math.min(0.10, slotCertainty * 0.55);
+    // Blend full-average slot score with top-3 slot score.
+    const blendedSlot = slotScore * 0.55 + topSlotScore * 0.45;
+    let slotComposite = blendedSlot * (0.78 + 0.22 * slotCoverage) + Math.min(0.10, slotCertainty * 0.55);
     slotComposite -= slotPenaltyNorm * 0.30;
     slotComposite = clamp01(slotComposite);
 
