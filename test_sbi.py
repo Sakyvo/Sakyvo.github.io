@@ -19,8 +19,8 @@ if sys.platform == "win32":
         pass
 
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-PORT = 9876
-DEBUG_PORT = 9333
+PORT = 9880
+DEBUG_PORT = 9337
 BASE = f"http://127.0.0.1:{PORT}"
 SBI_URL = f"{BASE}/sbi/"
 TEST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_img")

@@ -55,7 +55,7 @@ function initClipWorker() {
 }
 
 let _lastHashResults = [], _lastAllScores = {};
-const SBI_FINGERPRINT_VERSION = 10;
+const SBI_FINGERPRINT_VERSION = 11;
 // AI (CLIP) is used as a rerank signal. We normalize CLIP scores per-query and
 // apply it as a multiplicative factor on top of the hash score, so a weak CLIP
 // match won't incorrectly drag down a strong hash match when the crop is correct.
@@ -2758,6 +2758,18 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   const details = {};
   let bestScore = -Infinity;
 
+  // Quick pre-scan: if some packs nail the widget (custom hotbar), penalize
+  // packs with near-default widgets to avoid default edits dominating via
+  // generic slot textures.
+  let maxWidgetSim = 0;
+  if (widgetFeatures) {
+    for (const [, packData] of Object.entries(fingerprints.packs)) {
+      if (packData.hotbar_widget) {
+        maxWidgetSim = Math.max(maxWidgetSim, compareWidget(widgetFeatures, packData.hotbar_widget));
+      }
+    }
+  }
+
   for (const [packName, packData] of Object.entries(fingerprints.packs)) {
     let slotWeighted = 0, slotWeights = 0;
     let slotPenalty = 0, certaintySum = 0;
@@ -2783,20 +2795,37 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       slotBreakdown[slot.index] = baseEntry;
 
       if (activity < 0.18) continue;
-      if (targetType === 'none') continue;
-      const typeW = TYPE_WEIGHT[targetType] || 0;
+      // For slots the classifier couldn't type (custom art), scan all item
+      // types the pack has. A good dHash+color match still carries signal.
+      let forceType = null, forceTypeW = 0;
+      let forceSim = 0;
+      if (targetType === 'none' && activity >= 0.60) {
+        let best = 0;
+        for (const t of ITEM_TYPES) {
+          const tw = TYPE_WEIGHT[t] || 0;
+          if (tw <= 0 || !packData[t]) continue;
+          const s = compareSlotToType(slot, packData[t], t);
+          const score = s * tw;
+          if (score > best) { best = score; forceType = t; forceTypeW = tw; forceSim = s; }
+        }
+        if (best < 0.02 || forceSim < 0.08) { forceType = null; forceTypeW = 0; forceSim = 0; }
+      }
+      const effectiveType = targetType !== 'none' ? targetType : forceType;
+      if (!effectiveType) continue;
+      const isFallback = !!(forceType && targetType === 'none');
+      const typeW = isFallback ? forceTypeW * 0.75 : (TYPE_WEIGHT[effectiveType] || 0);
       if (typeW <= 0) continue;
-      const targetTex = packData[targetType];
+      const targetTex = packData[effectiveType];
       if (!targetTex) continue;
 
-      const sim = compareSlotToType(slot, targetTex, targetType);
-      const shortKey = targetType === 'steak' || targetType === 'golden_carrot' ? 'SK/GC' :
-        targetType === 'diamond_sword' ? 'DS' : targetType === 'ender_pearl' ? 'EP' :
-        targetType === 'splash_potion' ? 'HL' : null;
+      const sim = compareSlotToType(slot, targetTex, effectiveType);
+      const shortKey = effectiveType === 'steak' || effectiveType === 'golden_carrot' ? 'SK/GC' :
+        effectiveType === 'diamond_sword' ? 'DS' : effectiveType === 'ender_pearl' ? 'EP' :
+        effectiveType === 'splash_potion' ? 'HL' : null;
       if (shortKey && (!perTypeScores[shortKey] || sim > perTypeScores[shortKey])) perTypeScores[shortKey] = sim;
       let altBest = 0;
       for (const type of ITEM_TYPES) {
-        if (type === targetType) continue;
+        if (type === effectiveType) continue;
         if ((TYPE_WEIGHT[type] || 0) <= 0) continue;
         if (!packData[type]) continue;
         altBest = Math.max(altBest, compareSlotToType(slot, packData[type], type));
@@ -2806,7 +2835,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       const certainty = Math.max(0, sim - altBest);
       slotBreakdown[slot.index] = {
         index: slot.index,
-        inferredType: targetType,
+        inferredType: effectiveType,
         activity,
         quality: slot.quality || 0,
         variance: slot.variance || 0,
@@ -2815,18 +2844,18 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
         certainty,
       };
       const qualityNorm = clamp01((slot.quality || 0) / 13);
-      const repeatedTypeScale = getRepeatedTypeScale(targetType, displayTypeCounts);
+      const repeatedTypeScale = getRepeatedTypeScale(effectiveType, displayTypeCounts);
       // Slot 0 (diamond sword) and slot 1 (ender pearl) are the standout
       // per-pack signals in PvP screenshots — most customization lives there.
       // The middle/trailing slots are often near-identical across packs
       // (shared potion / steak art), so give 0/1 a position bonus.
-      const positionBonus = (slot.index === 0 || slot.index === 1) ? 1.5 : 1.0;
+      const positionBonus = (slot.index === 0 || slot.index === 1) ? 1.8 : 1.0;
       const w = typeW * repeatedTypeScale * positionBonus * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
       slotWeighted += sim * w;
       slotWeights += w;
       slotContribs.push({ sim, w });
       certaintySum += certainty;
-      const strongThreshold = getStrongMatchThreshold(targetType);
+      const strongThreshold = getStrongMatchThreshold(effectiveType);
       if (sim >= strongThreshold) strongSlots++;
       else slotPenalty += (strongThreshold - sim) * (0.8 + activity * 0.7);
     }
@@ -2850,6 +2879,11 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     let slotComposite = blendedSlot * (0.78 + 0.22 * slotCoverage) + Math.min(0.10, slotCertainty * 0.55);
     slotComposite -= slotPenaltyNorm * 0.30;
     slotComposite = clamp01(slotComposite);
+    // When slot matching is unreliable (custom logos, NN slots), blend toward neutral
+    if (slotComposite < 0.15) {
+      const reliability = clamp01(slotComposite / 0.20);
+      slotComposite = slotComposite * reliability + 0.20 * (1 - reliability);
+    }
 
     if (widgetFeatures && packData.hotbar_widget) {
       widgetSim = compareWidget(widgetFeatures, packData.hotbar_widget);
@@ -2880,6 +2914,14 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     rawScore += slotCoverage * 0.08 + Math.min(0.04, slotCertainty * 0.65);
     rawScore -= criticalTypeMetrics.shortfall * 0.16;
     rawScore -= slotPenaltyNorm * 0.14;
+    rawScore = clamp01(rawScore);
+
+    // Default-edit packs can have high slot scores (generic textures match
+    // many screenshots) but near-vanilla widgets. When custom-widget packs
+    // exist, penalize default-looking widgets so they don't win on slot alone.
+    if (maxWidgetSim > 0.75 && widgetSim < 0.55) {
+      rawScore -= 0.075;
+    }
     rawScore = clamp01(rawScore);
 
     const finalScore = sharpenSimilarityScore(rawScore);
