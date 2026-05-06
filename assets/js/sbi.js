@@ -2964,12 +2964,32 @@ function scoreColor(pct) {
   return '#ef4444';
 }
 
-function renderResultCard(r, i) {
+const SBI_MODE_KEY = 'vale-sbi-display-mode';
+function getSbiDisplayMode() {
+  try { return localStorage.getItem(SBI_MODE_KEY) || 'lite'; } catch { return 'lite'; }
+}
+function setSbiDisplayMode(mode) {
+  try { localStorage.setItem(SBI_MODE_KEY, mode); } catch {}
+  updateModeToggleUI(mode);
+  if (_lastRankedResults.length > 0) renderResults(_lastRankedResults.slice(0, 50));
+}
+function updateModeToggleUI(mode) {
+  const toggle = document.getElementById('sbi-mode-toggle');
+  if (!toggle) return;
+  toggle.querySelectorAll('.sbi-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+}
+
+function renderResultCard(r, i, mode) {
   const pct = Math.min(100, Math.round(getDisplayScoreValue(r, _lastMatchDetails[r.name]) * 100));
   const color = scoreColor(pct);
   const coverUrl = '/thumbnails/' + encodeURIComponent(r.name) + '/cover.png';
   const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
   const displayName = getPackDisplayName(r.name);
+  const rightContent = mode === 'lite'
+    ? `<span class="sbi-lite-items"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/diamond_sword.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/ender_pearl.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/splash_potion_of_healing.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/steak.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/golden_carrot.png" onerror="this.style.display='none'"></span>`
+    : `<span class="sbi-divider"></span><img class="sbi-result-cover" src="${coverUrl}" onerror="this.src='${packPng}'">`;
   return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/" target="_blank" rel="noopener noreferrer">
       <span class="sbi-rank">${i + 1}</span>
       <span class="sbi-divider"></span>
@@ -2977,8 +2997,7 @@ function renderResultCard(r, i) {
       <span class="sbi-divider"></span>
       <img class="sbi-pack-icon" src="${packPng}" onerror="this.style.display='none'">
       <span class="sbi-result-name">${displayName}</span>
-      <span class="sbi-divider"></span>
-      <img class="sbi-result-cover" src="${coverUrl}" onerror="this.src='${packPng}'">
+      ${rightContent}
     </a>`;
 }
 
@@ -2986,17 +3005,20 @@ const SBI_PAGE_SIZE = 10;
 
 function renderResults(results, label) {
   const container = document.getElementById('sbi-results');
+  const modeToggle = document.getElementById('sbi-mode-toggle');
   if (results.length === 0) {
     container.innerHTML = '<p class="sbi-no-results">No matching packs found</p>';
     container.hidden = false;
+    if (modeToggle) modeToggle.hidden = true;
     return;
   }
   let visible = SBI_PAGE_SIZE;
   const header = label ? `<div class="sbi-results-label">${label}</div>` : '';
+  const mode = getSbiDisplayMode();
 
   function draw() {
     const shown = results.slice(0, visible);
-    container.innerHTML = header + shown.map((r, i) => renderResultCard(r, i)).join('')
+    container.innerHTML = header + shown.map((r, i) => renderResultCard(r, i, mode)).join('')
       + (visible < results.length ? `<button class="sbi-action-btn sbi-show-more-btn" id="sbi-show-more">Show more results</button>` : '');
     document.getElementById('sbi-show-more')?.addEventListener('click', () => {
       visible += SBI_PAGE_SIZE;
@@ -3005,6 +3027,7 @@ function renderResults(results, label) {
   }
   draw();
   container.hidden = false;
+  if (modeToggle) { modeToggle.hidden = false; updateModeToggleUI(mode); }
 }
 
 function saveHistory(imageDataUrl, results) {
@@ -3035,6 +3058,7 @@ async function processImage(file) {
   const debugMeta = document.getElementById('sbi-debug-meta');
   const uploadEl = document.getElementById('sbi-upload');
   const searchWrap = document.getElementById('sbi-search-wrap');
+  const modeToggle = document.getElementById('sbi-mode-toggle');
   resultsEl.hidden = true;
   progress.hidden = false;
   preview.hidden = true;
@@ -3043,6 +3067,7 @@ async function processImage(file) {
   if (debugBody) debugBody.innerHTML = '';
   if (debugMeta) debugMeta.textContent = '';
   if (searchWrap) searchWrap.hidden = true;
+  if (modeToggle) modeToggle.hidden = true;
   if (uploadEl) uploadEl.classList.add('analyzing');
   setUploadReplaceHover(false);
   clearPreviewCacheImage();
@@ -3103,11 +3128,11 @@ async function processImage(file) {
     if (uploadEl && uploadEl.matches(':hover')) setUploadReplaceHover(true);
     if (searchWrap) searchWrap.hidden = false;
     preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    _lastRankedResults = results.slice();
     renderResults(results.slice(0, 50));
     renderDebugPanel(stage1Top10, 'hash');
     _lastVisibleScores = {};
     for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = getDisplayScoreValue(null, info);
-    _lastRankedResults = results.slice();
     _lastSearchPhase = 'hash';
     renderPackScoreSearch();
     updateExportButtonState();
@@ -3314,6 +3339,15 @@ function init() {
   renderScoreBreakdown();
   renderPackScoreSearch();
   updateExportButtonState();
+
+  // Mode toggle
+  const modeToggle = document.getElementById('sbi-mode-toggle');
+  if (modeToggle) {
+    updateModeToggleUI(getSbiDisplayMode());
+    modeToggle.querySelectorAll('.sbi-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => setSbiDisplayMode(btn.dataset.mode));
+    });
+  }
   if (ENABLE_CLIP) initClipWorker();
 
   // Debug table tooltip: hover (desktop) / tap (mobile)
