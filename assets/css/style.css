@@ -1016,7 +1016,7 @@ footer {
 .sbi-cropbox-overlay { z-index: 2; }
 .sbi-upload.replace-hover .sbi-cropbox-image,
 .sbi-upload.dragover .sbi-cropbox-image { filter: blur(4px) saturate(0.75); opacity: 0.30; transform: scale(1.015); }
-.sbi-preview { margin: 24px 0; }
+.sbi-preview { margin: 20px 0 12px; }
 .sbi-preview-stack { position: relative; display: inline-block; max-width: 100%; border: 2px solid var(--border); overflow: hidden; line-height: 0; }
 .sbi-preview-image { max-width: 100%; display: block; }
 .sbi-preview-overlay { z-index: 1; }
@@ -1026,7 +1026,7 @@ footer {
 .sbi-progress { text-align: center; padding: 24px; }
 .sbi-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: transparent; animation: sbi-spin .8s linear infinite; margin: 0 auto 12px; }
 @keyframes sbi-spin { to { transform: rotate(360deg); } }
-.sbi-results { margin-top: 24px; }
+.sbi-results { margin-top: 10px; }
 .sbi-results-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
 .sbi-result-card { display: flex; align-items: center; padding: 0; border: 2px solid var(--border); margin-bottom: 6px; text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; overflow: hidden; height: 48px; }
 .sbi-result-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -1036,9 +1036,9 @@ footer {
 .sbi-pack-icon { width: 48px; height: 48px; image-rendering: pixelated; flex-shrink: 0; margin: 0 4px 0 0; object-fit: contain; }
 .sbi-result-name { flex: 1; font-size: 13px; font-weight: bold; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbi-result-cover { width: 96px; height: 48px; object-fit: cover; image-rendering: pixelated; flex-shrink: 0; display: block; }
-.sbi-mode-toggle { display: flex; border: 2px solid var(--border); width: fit-content; margin-bottom: 8px; }
+.sbi-mode-toggle { display: flex; border: 2px solid var(--border); width: fit-content; margin: 0 0 4px; }
 .sbi-mode-btn { padding: 3px 14px; font-size: 11px; font-weight: 700; letter-spacing: .06em; background: transparent; color: var(--text-secondary); border: none; cursor: pointer; text-transform: uppercase; }
-.sbi-mode-btn.active { background: var(--text); color: var(--bg); }
+.sbi-mode-btn.active { background: var(--accent); color: #fff; }
 .sbi-mode-btn:not(.active):hover { color: var(--text); }
 .sbi-lite-items { display: flex; align-items: center; gap: 2px; padding: 0 6px; flex-shrink: 0; }
 .sbi-lite-item,
