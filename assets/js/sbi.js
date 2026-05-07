@@ -857,6 +857,7 @@ function handleClipResults(clipScores) {
   renderDebugPanel(top10, 'ai');
   renderPackScoreSearch();
   updateExportButtonState();
+  applyDebugVisibility();
   if (statusEl) { statusEl.hidden = true; statusEl.textContent = ''; statusEl.dataset.state = 'ready'; }
 
   const thumbCanvas = document.createElement('canvas');
@@ -2981,6 +2982,31 @@ function updateModeToggleUI(mode) {
   });
 }
 
+const SBI_DEBUG_KEY = 'vale-sbi-debug-mode';
+function getSbiDebugMode() {
+  try { return localStorage.getItem(SBI_DEBUG_KEY) === 'true'; } catch { return false; }
+}
+function setSbiDebugMode(on) {
+  try { localStorage.setItem(SBI_DEBUG_KEY, on ? 'true' : 'false'); } catch {}
+  updateDebugModeUI();
+  applyDebugVisibility();
+}
+function updateDebugModeUI() {
+  const btn = document.getElementById('sbi-debug-toggle-btn');
+  if (!btn) return;
+  const on = getSbiDebugMode();
+  btn.textContent = on ? 'Debug Mode: ON' : 'Debug Mode: OFF';
+  btn.classList.toggle('active', on);
+}
+function applyDebugVisibility() {
+  const on = getSbiDebugMode();
+  const ids = ['sbi-crops', 'sbi-debug', 'sbi-breakdown'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('sbi-debug-only-hidden', !on);
+  });
+}
+
 function renderResultCard(r, i, mode) {
   const pct = Math.min(100, Math.round(getDisplayScoreValue(r, _lastMatchDetails[r.name]) * 100));
   const color = scoreColor(pct);
@@ -3127,7 +3153,6 @@ async function processImage(file) {
     syncUploadPreviewState();
     if (uploadEl && uploadEl.matches(':hover')) setUploadReplaceHover(true);
     if (searchWrap) searchWrap.hidden = false;
-    preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
     _lastRankedResults = results.slice();
     renderResults(results.slice(0, 50));
     renderDebugPanel(stage1Top10, 'hash');
@@ -3136,6 +3161,7 @@ async function processImage(file) {
     _lastSearchPhase = 'hash';
     renderPackScoreSearch();
     updateExportButtonState();
+    applyDebugVisibility();
 
     // Cache hash scores for later CLIP combination
     _lastHashResults = results.slice(0, 40);
@@ -3333,6 +3359,13 @@ function init() {
   if (searchBtn) searchBtn.addEventListener('click', () => { if (_pendingFile) processImage(_pendingFile); });
   if (clearBtn) clearBtn.addEventListener('click', () => clearImagePreview());
   if (exportBtn) exportBtn.addEventListener('click', () => exportCurrentAnalysis());
+
+  const debugToggleBtn = document.getElementById('sbi-debug-toggle-btn');
+  if (debugToggleBtn) {
+    updateDebugModeUI();
+    applyDebugVisibility();
+    debugToggleBtn.addEventListener('click', () => setSbiDebugMode(!getSbiDebugMode()));
+  }
 
   const searchInput = document.getElementById('sbi-search-input');
   if (searchInput) searchInput.addEventListener('input', () => renderPackScoreSearch());

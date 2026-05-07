@@ -60,8 +60,15 @@
       <canvas id="sbi-canvas"></canvas>
     </div>
 
-    <div class="sbi-crops" id="sbi-crops" hidden>
-      <div class="sbi-crops-title">Cropped Regions</div>
+    <div class="sbi-mode-toggle" id="sbi-mode-toggle" hidden>
+      <button class="sbi-mode-btn active" data-mode="lite">LITE</button>
+      <button class="sbi-mode-btn" data-mode="full">FULL</button>
+    </div>
+
+    <div class="sbi-results" id="sbi-results" hidden></div>
+
+    <details class="sbi-crops" id="sbi-crops" hidden>
+      <summary>Cropped Regions</summary>
 
       <div class="sbi-crops-section">
         <div class="sbi-crops-section-title">I. GUI</div>
@@ -106,14 +113,7 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="sbi-mode-toggle" id="sbi-mode-toggle" hidden>
-      <button class="sbi-mode-btn active" data-mode="lite">LITE</button>
-      <button class="sbi-mode-btn" data-mode="full">FULL</button>
-    </div>
-
-    <div class="sbi-results" id="sbi-results" hidden></div>
+    </details>
 
     <details class="sbi-debug" id="sbi-debug" hidden>
       <summary>Diagnostics</summary>
@@ -153,6 +153,7 @@
       <div class="sbi-search-results" id="sbi-search-results" hidden></div>
       <div class="sbi-search-actions">
         <button class="sbi-action-btn sbi-search-export-btn" id="sbi-export-md-btn" disabled>Export Top 10 Markdown</button>
+        <button class="sbi-action-btn sbi-debug-toggle-btn" id="sbi-debug-toggle-btn">Debug Mode: OFF</button>
       </div>
     </div>
   </div>

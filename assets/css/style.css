@@ -1092,6 +1092,9 @@ footer {
 .sbi-search-results { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; overflow-x: auto; }
 .sbi-search-actions { margin-top: 10px; display: flex; justify-content: flex-start; }
 .sbi-search-export-btn { min-width: 220px; }
+.sbi-debug-toggle-btn { margin-left: auto; }
+.sbi-debug-toggle-btn.active { border-color: #22c55e; background: rgba(34,197,94,.15); }
+.sbi-debug-only-hidden { display: none !important; }
 .sbi-search-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
 .sbi-search-table th, .sbi-search-table td { border-bottom: 1px solid var(--border); padding: 5px 4px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbi-search-table th { background: rgba(0,0,0,0.06); font-weight: 700; }
