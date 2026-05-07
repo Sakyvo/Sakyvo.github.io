@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VALE - Search by Image</title>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=24">
+  <link rel="stylesheet" href="/assets/css/style.css?v=25">
 </head>
 <body class="sbi-page">
   <header class="sbi-header">
@@ -69,47 +69,48 @@
 
     <details class="sbi-crops" id="sbi-crops" hidden>
       <summary>Cropped Regions</summary>
-
-      <div class="sbi-crops-section">
-        <div class="sbi-crops-section-title">I. GUI</div>
-        <div class="sbi-crops-grid">
-          <div class="sbi-crop-card">
-            <div class="sbi-crop-label">Armor</div>
-            <canvas id="sbi-crop-armor"></canvas>
-          </div>
-          <div class="sbi-crop-card">
-            <div class="sbi-crop-label">Health</div>
-            <canvas id="sbi-crop-health"></canvas>
-          </div>
-          <div class="sbi-crop-card">
-            <div class="sbi-crop-label">Hunger</div>
-            <canvas id="sbi-crop-hunger"></canvas>
-          </div>
-          <div class="sbi-crop-card">
-            <div class="sbi-crop-label">Hotbar</div>
-            <canvas id="sbi-crop-hotbar"></canvas>
+      <div class="sbi-crops-body">
+        <div class="sbi-crops-section">
+          <div class="sbi-crops-section-title">I. GUI</div>
+          <div class="sbi-crops-grid">
+            <div class="sbi-crop-card">
+              <div class="sbi-crop-label">Armor</div>
+              <canvas id="sbi-crop-armor"></canvas>
+            </div>
+            <div class="sbi-crop-card">
+              <div class="sbi-crop-label">Health</div>
+              <canvas id="sbi-crop-health"></canvas>
+            </div>
+            <div class="sbi-crop-card">
+              <div class="sbi-crop-label">Hunger</div>
+              <canvas id="sbi-crop-hunger"></canvas>
+            </div>
+            <div class="sbi-crop-card">
+              <div class="sbi-crop-label">Hotbar</div>
+              <canvas id="sbi-crop-hotbar"></canvas>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="sbi-crops-section">
-        <div class="sbi-crops-section-title">II. Items</div>
-        <div class="sbi-crops-grid">
-          <div class="sbi-crop-card sbi-crop-square">
-            <div class="sbi-crop-label">Diamond Sword</div>
-            <canvas id="sbi-crop-ds"></canvas>
-          </div>
-          <div class="sbi-crop-card sbi-crop-square">
-            <div class="sbi-crop-label">Ender Pearl</div>
-            <canvas id="sbi-crop-ep"></canvas>
-          </div>
-          <div class="sbi-crop-card sbi-crop-square">
-            <div class="sbi-crop-label">Splash Healing Potion</div>
-            <canvas id="sbi-crop-hl"></canvas>
-          </div>
-          <div class="sbi-crop-card sbi-crop-square">
-            <div class="sbi-crop-label">Food</div>
-            <canvas id="sbi-crop-food"></canvas>
+        <div class="sbi-crops-section">
+          <div class="sbi-crops-section-title">II. Items</div>
+          <div class="sbi-crops-grid">
+            <div class="sbi-crop-card sbi-crop-square">
+              <div class="sbi-crop-label">Diamond Sword</div>
+              <canvas id="sbi-crop-ds"></canvas>
+            </div>
+            <div class="sbi-crop-card sbi-crop-square">
+              <div class="sbi-crop-label">Ender Pearl</div>
+              <canvas id="sbi-crop-ep"></canvas>
+            </div>
+            <div class="sbi-crop-card sbi-crop-square">
+              <div class="sbi-crop-label">Splash Healing Potion</div>
+              <canvas id="sbi-crop-hl"></canvas>
+            </div>
+            <div class="sbi-crop-card sbi-crop-square">
+              <div class="sbi-crop-label">Food</div>
+              <canvas id="sbi-crop-food"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -151,7 +152,11 @@
       <div class="sbi-slot-types-line" id="sbi-search-slot-types" hidden></div>
       <div id="sbi-search-tip" class="sbi-debug-tip sbi-search-tip" hidden></div>
       <div class="sbi-search-results" id="sbi-search-results" hidden></div>
-      <div class="sbi-search-actions">
+    </div>
+
+    <div class="sbi-tools-card">
+      <div class="sbi-tools-title">Actions</div>
+      <div class="sbi-tools-actions">
         <button class="sbi-action-btn sbi-search-export-btn" id="sbi-export-md-btn" disabled>Export Top 10 Markdown</button>
         <button class="sbi-action-btn sbi-debug-toggle-btn" id="sbi-debug-toggle-btn">Debug Mode: OFF</button>
       </div>
@@ -163,6 +168,6 @@
   </footer>
 
   <script src="/assets/js/auth.js?v=3"></script>
-  <script src="/assets/js/sbi.js?v=77"></script>
+  <script src="/assets/js/sbi.js?v=78"></script>
 </body>
 </html>

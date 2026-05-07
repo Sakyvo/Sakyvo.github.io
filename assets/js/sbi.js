@@ -3000,10 +3000,74 @@ function updateDebugModeUI() {
 }
 function applyDebugVisibility() {
   const on = getSbiDebugMode();
-  const ids = ['sbi-crops', 'sbi-debug', 'sbi-breakdown'];
+  const ids = ['sbi-crops', 'sbi-debug', 'sbi-breakdown', 'sbi-search-wrap'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('sbi-debug-only-hidden', !on);
+  });
+}
+
+function getTextureThumbUrl(packName, fileName) {
+  return `/thumbnails/${encodeURIComponent(packName)}/${fileName}`;
+}
+
+function renderLiteTextureThumb(packName, fileName) {
+  const src = getTextureThumbUrl(packName, fileName);
+  return `<img class="sbi-lite-item" data-sbi-animated-texture src="${src}" alt="" onerror="this.style.display='none'">`;
+}
+
+function activateAnimatedTextureThumb(img) {
+  if (!img || img.dataset.sbiAnimatedReady === 'true') return;
+  img.dataset.sbiAnimatedReady = 'true';
+  const width = img.naturalWidth || 0;
+  const height = img.naturalHeight || 0;
+  if (!width || height <= width || height % width !== 0) {
+    img.style.visibility = 'visible';
+    return;
+  }
+  const frames = height / width;
+  if (!Number.isInteger(frames) || frames <= 1) {
+    img.style.visibility = 'visible';
+    return;
+  }
+  const wrapper = document.createElement('div');
+  wrapper.className = 'sbi-lite-item-anim';
+  wrapper.style.backgroundImage = `url(${img.currentSrc || img.src})`;
+  wrapper.style.backgroundSize = `100% ${frames * 100}%`;
+  let frameTime = 2;
+  fetch(`${img.currentSrc || img.src}.mcmeta`)
+    .then(r => r.ok ? r.json() : null)
+    .then(mcmeta => {
+      if (mcmeta && mcmeta.animation && Number.isFinite(mcmeta.animation.frametime) && mcmeta.animation.frametime > 0) {
+        frameTime = mcmeta.animation.frametime;
+      }
+    })
+    .catch(() => null)
+    .finally(() => {
+      let currentFrame = 0;
+      const updateFrame = () => {
+        wrapper.style.backgroundPosition = `0 ${(currentFrame / Math.max(1, frames - 1)) * 100}%`;
+      };
+      updateFrame();
+      const intervalId = window.setInterval(() => {
+        if (!wrapper.isConnected) {
+          window.clearInterval(intervalId);
+          return;
+        }
+        currentFrame = (currentFrame + 1) % frames;
+        updateFrame();
+      }, frameTime * 50);
+    });
+  img.replaceWith(wrapper);
+}
+
+function bindAnimatedTextureThumbs(scope) {
+  (scope || document).querySelectorAll('img[data-sbi-animated-texture]').forEach(img => {
+    if (img.complete) activateAnimatedTextureThumb(img);
+    else {
+      img.style.visibility = 'hidden';
+      img.addEventListener('load', () => activateAnimatedTextureThumb(img), { once: true });
+    }
   });
 }
 
@@ -3014,7 +3078,13 @@ function renderResultCard(r, i, mode) {
   const packPng = '/thumbnails/' + encodeURIComponent(r.name) + '/pack.png';
   const displayName = getPackDisplayName(r.name);
   const rightContent = mode === 'lite'
-    ? `<span class="sbi-lite-items"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/diamond_sword.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/ender_pearl.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/splash_potion_of_healing.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/steak.png" onerror="this.style.display='none'"><img class="sbi-lite-item" src="/thumbnails/${encodeURIComponent(r.name)}/golden_carrot.png" onerror="this.style.display='none'"></span>`
+    ? `<span class="sbi-lite-items">${[
+        'diamond_sword.png',
+        'ender_pearl.png',
+        'splash_potion_of_healing.png',
+        'steak.png',
+        'golden_carrot.png',
+      ].map(fileName => renderLiteTextureThumb(r.name, fileName)).join('')}</span>`
     : `<span class="sbi-divider"></span><img class="sbi-result-cover" src="${coverUrl}" onerror="this.src='${packPng}'">`;
   return `<a class="sbi-result-card" href="/p/${encodeURIComponent(r.name)}/" target="_blank" rel="noopener noreferrer">
       <span class="sbi-rank">${i + 1}</span>
@@ -3046,6 +3116,7 @@ function renderResults(results, label) {
     const shown = results.slice(0, visible);
     container.innerHTML = header + shown.map((r, i) => renderResultCard(r, i, mode)).join('')
       + (visible < results.length ? `<button class="sbi-action-btn sbi-show-more-btn" id="sbi-show-more">Show more results</button>` : '');
+    bindAnimatedTextureThumbs(container);
     document.getElementById('sbi-show-more')?.addEventListener('click', () => {
       visible += SBI_PAGE_SIZE;
       draw();
@@ -3080,6 +3151,7 @@ async function processImage(file) {
   const resultsEl = document.getElementById('sbi-results');
   const cropsEl = document.getElementById('sbi-crops');
   const debugPanel = document.getElementById('sbi-debug');
+  const breakdownPanel = document.getElementById('sbi-breakdown');
   const debugBody = document.getElementById('sbi-debug-body');
   const debugMeta = document.getElementById('sbi-debug-meta');
   const uploadEl = document.getElementById('sbi-upload');
@@ -3090,6 +3162,7 @@ async function processImage(file) {
   preview.hidden = true;
   if (cropsEl) cropsEl.hidden = true;
   if (debugPanel) debugPanel.hidden = true;
+  if (breakdownPanel) breakdownPanel.hidden = true;
   if (debugBody) debugBody.innerHTML = '';
   if (debugMeta) debugMeta.textContent = '';
   if (searchWrap) searchWrap.hidden = true;
@@ -3153,6 +3226,7 @@ async function processImage(file) {
     syncUploadPreviewState();
     if (uploadEl && uploadEl.matches(':hover')) setUploadReplaceHover(true);
     if (searchWrap) searchWrap.hidden = false;
+    if (breakdownPanel) breakdownPanel.hidden = false;
     _lastRankedResults = results.slice();
     renderResults(results.slice(0, 50));
     renderDebugPanel(stage1Top10, 'hash');
@@ -3314,6 +3388,8 @@ function init() {
   // Hide search wrap until analysis completes
   const searchWrap = document.getElementById('sbi-search-wrap');
   if (searchWrap) searchWrap.hidden = true;
+  const breakdownPanel = document.getElementById('sbi-breakdown');
+  if (breakdownPanel) breakdownPanel.hidden = !getSbiDebugMode();
 
   // Restore auto-search from localStorage
   const autoSearchCb = document.getElementById('sbi-auto-search');
