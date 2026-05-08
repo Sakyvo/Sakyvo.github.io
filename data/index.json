@@ -1,5 +1,5 @@
 {
-  "total": 196,
+  "total": 195,
   "pageSize": 50,
   "pages": 4,
   "items": [
@@ -110,18 +110,6 @@
       ],
       "cover": "/thumbnails/32Blue_v2_-_Original_Resolution/cover.png",
       "packPng": "/thumbnails/32Blue_v2_-_Original_Resolution/pack.png"
-    },
-    {
-      "id": "4RedBlur",
-      "name": "4RedBlur",
-      "displayName": "4RedBlur",
-      "coloredName": "4RedBlur",
-      "description": "Pack by Cyndeh",
-      "lists": [
-        "Jewdah pf"
-      ],
-      "cover": "/thumbnails/4RedBlur/cover.png",
-      "packPng": "/thumbnails/4RedBlur/pack.png"
     },
     {
       "id": "50dollars",
@@ -1452,16 +1440,6 @@
       "packPng": "/thumbnails/Pax10_Revamp/pack.png"
     },
     {
-      "id": "pax10(2)",
-      "name": "pax10(2)",
-      "displayName": "pax10(2)",
-      "coloredName": "pax10(2)",
-      "description": "",
-      "lists": [],
-      "cover": "/thumbnails/pax10(2)/cover.png",
-      "packPng": "/thumbnails/pax10(2)/pack.png"
-    },
-    {
       "id": "§4§lPlast §6§lPack§0",
       "name": "Plast_Pack",
       "displayName": "Plast Pack",
@@ -1568,6 +1546,18 @@
       ],
       "cover": "/thumbnails/red_xetha_edit/cover.png",
       "packPng": "/thumbnails/red_xetha_edit/pack.png"
+    },
+    {
+      "id": "! §4RedBlur",
+      "name": "RedBlur",
+      "displayName": "RedBlur",
+      "coloredName": "<span style=\"color:#AA0000\">R</span><span style=\"color:#AA0000\">e</span><span style=\"color:#AA0000\">d</span><span style=\"color:#AA0000\">B</span><span style=\"color:#AA0000\">l</span><span style=\"color:#AA0000\">u</span><span style=\"color:#AA0000\">r</span>",
+      "description": "Pack by Cyndeh",
+      "lists": [
+        "Jewdah pf"
+      ],
+      "cover": "/thumbnails/RedBlur/cover.png",
+      "packPng": "/thumbnails/RedBlur/pack.png"
     },
     {
       "id": "!     §4RedDust §8[§464x§8]",

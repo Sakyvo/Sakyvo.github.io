@@ -4140,8 +4140,8 @@
     "description": "Eum3's PvP Faithful 32x Edit"
   },
   {
-    "packId": "4RedBlur",
-    "originalName": "4RedBlur",
+    "packId": "RedBlur",
+    "originalName": "! §4RedBlur",
     "extracted": {
       "items": [
         "diamond_sword.png",
@@ -4182,7 +4182,7 @@
         "particles.png"
       ]
     },
-    "outputDir": "thumbnails\\4RedBlur",
+    "outputDir": "thumbnails\\RedBlur",
     "description": "Pack by Cyndeh"
   },
   {
@@ -6253,52 +6253,6 @@
       ]
     },
     "outputDir": "thumbnails\\OTB_RED_FPS",
-    "description": ""
-  },
-  {
-    "packId": "pax10(2)",
-    "originalName": "pax10(2)",
-    "extracted": {
-      "items": [
-        "diamond_sword.png",
-        "ender_pearl.png",
-        "splash_potion_of_healing.png",
-        "steak.png",
-        "iron_sword.png",
-        "fishing_rod_uncast.png",
-        "apple_golden.png",
-        "golden_carrot.png"
-      ],
-      "blocks": [
-        "grass_side.png",
-        "stone.png",
-        "cobblestone.png",
-        "wool_colored_white.png",
-        "dirt.png",
-        "planks_oak.png",
-        "log_oak.png",
-        "diamond_ore.png"
-      ],
-      "armor": [
-        "diamond_layer_1.png",
-        "diamond_layer_2.png"
-      ],
-      "gui": [
-        "icons.png",
-        "widgets.png",
-        "inventory.png"
-      ],
-      "font": [
-        "ascii.png"
-      ],
-      "skin": [
-        "steve.png"
-      ],
-      "particle": [
-        "particles.png"
-      ]
-    },
-    "outputDir": "thumbnails\\pax10(2)",
     "description": ""
   },
   {
