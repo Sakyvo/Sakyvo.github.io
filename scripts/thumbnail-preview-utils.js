@@ -114,22 +114,56 @@ async function sanitizeTextureFileInPlace(filePath) {
   return changed;
 }
 
+async function getResized64Frames(inputPath) {
+  if (!fs.existsSync(inputPath)) return null;
+  const buffer = await fs.promises.readFile(inputPath);
+  const meta = await sharp(buffer).metadata();
+  const animated = meta.height > meta.width && meta.height % meta.width === 0;
+  const frameCount = animated ? meta.height / meta.width : 1;
+  const out = [];
+  for (let f = 0; f < frameCount; f++) {
+    const slice = animated
+      ? await sharp(buffer)
+          .extract({ left: 0, top: f * meta.width, width: meta.width, height: meta.width })
+          .png()
+          .toBuffer()
+      : await ensurePngBuffer(buffer);
+    const { buffer: cleaned } = await sanitizePreviewPngBuffer(slice);
+    const resized = await sharp(cleaned).resize(64, 64, { kernel: 'nearest' }).png().toBuffer();
+    out.push(resized);
+  }
+  return out;
+}
+
 async function generateCoverFromOutputDir(outputDir) {
-  const composites = [];
+  const perTexture = [];
+  let maxFrames = 1;
   for (let i = 0; i < ITEM_COVER_TEXTURES.length; i++) {
     const inputPath = path.join(outputDir, ITEM_COVER_TEXTURES[i]);
-    if (!fs.existsSync(inputPath)) continue;
-    const frameBuf = await sanitizeFirstFrameBuffer(inputPath);
-    const resized = await sharp(frameBuf).resize(64, 64, { kernel: 'nearest' }).png().toBuffer();
-    composites.push({ input: resized, left: (i % 4) * 64, top: Math.floor(i / 4) * 64 });
+    const frames = await getResized64Frames(inputPath);
+    perTexture.push(frames);
+    if (frames && frames.length > maxFrames) maxFrames = frames.length;
   }
 
-  if (!composites.length) return false;
+  if (!perTexture.some(t => t && t.length)) return false;
+
+  const composites = [];
+  for (let f = 0; f < maxFrames; f++) {
+    for (let i = 0; i < ITEM_COVER_TEXTURES.length; i++) {
+      const tf = perTexture[i];
+      if (!tf || !tf.length) continue;
+      composites.push({
+        input: tf[f % tf.length],
+        left: (i % 4) * 64,
+        top: Math.floor(i / 4) * 64 + f * 128,
+      });
+    }
+  }
 
   const coverBuffer = await sharp({
     create: {
       width: 256,
-      height: 128,
+      height: 128 * maxFrames,
       channels: 4,
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     },
