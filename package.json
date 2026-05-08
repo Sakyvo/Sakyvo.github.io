@@ -4,7 +4,9 @@
   "scripts": {
     "build": "node scripts/extract-textures.js && node scripts/generate-index.js && node scripts/build.js",
     "extract": "node scripts/extract-textures.js",
-    "index": "node scripts/generate-index.js"
+    "index": "node scripts/generate-index.js",
+    "fix:preview-alpha": "node scripts/fix-thumbnail-preview-alpha.js",
+    "sbi:data": "node scripts/generate-sbi-data.js"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",

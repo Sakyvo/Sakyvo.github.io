@@ -3,6 +3,11 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const {
+  shouldSanitizePreviewTexture,
+  sanitizePreviewPngBuffer,
+  generateCoverFromOutputDir,
+} = require('./thumbnail-preview-utils');
 
 // 粒子图集裁剪映射 (16x16 网格, index = x + y * 16)
 const PARTICLE_TILES = {
@@ -56,9 +61,9 @@ const KEY_TEXTURES = {
 async function getFirstFrame(buffer) {
   const meta = await sharp(buffer).metadata();
   if (meta.height > meta.width && meta.height % meta.width === 0) {
-    return sharp(buffer).extract({ left: 0, top: 0, width: meta.width, height: meta.width }).toBuffer();
+    return sharp(buffer).extract({ left: 0, top: 0, width: meta.width, height: meta.width }).png().toBuffer();
   }
-  return buffer;
+  return sharp(buffer).png().toBuffer();
 }
 
 function cleanMinecraftText(text) {
@@ -349,7 +354,7 @@ async function extractPack(zipPath) {
 
           // 正确的合成顺序：透明画布 + 染色液体 + 瓶子
           const overlayMeta = await sharp(tintedOverlay).metadata();
-          await sharp({
+          const composited = await sharp({
             create: {
               width: overlayMeta.width,
               height: overlayMeta.height,
@@ -362,11 +367,16 @@ async function extractPack(zipPath) {
               { input: bottleBuffer, blend: 'over' }
             ])
             .png()
-            .toFile(path.join(outputDir, filename));
+            .toBuffer();
+
+          const sanitizedPotion = await sanitizePreviewPngBuffer(composited);
+          await fs.promises.writeFile(path.join(outputDir, filename), sanitizedPotion.buffer);
 
           // 同时保存原始 overlay 和 bottle 供前端动态渲染使用
-          fs.writeFileSync(path.join(outputDir, 'potion_overlay.png'), overlayBuffer);
-          fs.writeFileSync(path.join(outputDir, 'potion_bottle_splash.png'), bottleBuffer);
+          const sanitizedOverlay = await sanitizePreviewPngBuffer(overlayBuffer);
+          const sanitizedBottle = await sanitizePreviewPngBuffer(bottleBuffer);
+          fs.writeFileSync(path.join(outputDir, 'potion_overlay.png'), sanitizedOverlay.buffer);
+          fs.writeFileSync(path.join(outputDir, 'potion_bottle_splash.png'), sanitizedBottle.buffer);
 
           extracted[category].push(filename);
         }
@@ -380,7 +390,11 @@ async function extractPack(zipPath) {
         if (entry) break;
       }
       if (entry) {
-        fs.writeFileSync(path.join(outputDir, filename), entry.getData());
+        let outBuffer = entry.getData();
+        if (shouldSanitizePreviewTexture(filename)) {
+          outBuffer = (await sanitizePreviewPngBuffer(outBuffer)).buffer;
+        }
+        fs.writeFileSync(path.join(outputDir, filename), outBuffer);
         // Also extract .mcmeta if exists
         const mcmetaEntry = zip.getEntry(alternatives[0] + '.mcmeta');
         if (mcmetaEntry) {
@@ -391,7 +405,11 @@ async function extractPack(zipPath) {
         for (const alt of alternatives) {
           const defaultPath = path.join('Default_Texture', alt);
           if (fs.existsSync(defaultPath)) {
-            fs.copyFileSync(defaultPath, path.join(outputDir, filename));
+            let outBuffer = fs.readFileSync(defaultPath);
+            if (shouldSanitizePreviewTexture(filename)) {
+              outBuffer = (await sanitizePreviewPngBuffer(outBuffer)).buffer;
+            }
+            fs.writeFileSync(path.join(outputDir, filename), outBuffer);
             break;
           }
         }
@@ -681,39 +699,7 @@ async function extractBuffIcons(inventoryPath, outputDir) {
 }
 
 async function generateCover(packId, textures, outputDir) {
-  const itemTextures = textures.items.slice(0, 8);
-  if (itemTextures.length === 0) return;
-
-  const texData = [];
-  for (const tex of itemTextures) {
-    const inputPath = path.join(outputDir, tex);
-    if (fs.existsSync(inputPath)) {
-      const buf = fs.readFileSync(inputPath);
-      const meta = await sharp(buf).metadata();
-      texData.push({ buf, animated: meta.height > meta.width && meta.height % meta.width === 0, size: meta.width });
-    } else {
-      texData.push(null);
-    }
-  }
-
-  const composites = [];
-  for (let i = 0; i < texData.length; i++) {
-    const td = texData[i];
-    if (!td) continue;
-    const frameBuf = td.animated
-      ? await sharp(td.buf)
-        .extract({ left: 0, top: 0, width: td.size, height: td.size })
-        .resize(64, 64, { kernel: 'nearest' }).toBuffer()
-      : await sharp(td.buf).resize(64, 64, { kernel: 'nearest' }).toBuffer();
-    composites.push({ input: frameBuf, left: (i % 4) * 64, top: Math.floor(i / 4) * 64 });
-  }
-
-  if (composites.length > 0) {
-    await sharp({
-      create: { width: 256, height: 128, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
-    }).composite(composites)
-      .png().toFile(path.join(outputDir, 'cover.png'));
-  }
+  await generateCoverFromOutputDir(outputDir);
 }
 
 async function main() {

@@ -1,10 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const { sanitizePreviewPngBuffer } = require('./thumbnail-preview-utils');
 
 const THUMB_DIR = path.join(__dirname, '..', 'thumbnails');
 const OUT_FILE = path.join(__dirname, '..', 'data', 'sbi-fingerprints.json');
-const SBI_FINGERPRINT_VERSION = 11;
+const SBI_FINGERPRINT_VERSION = 12;
 
 // Note: crosshair removed — MC renders it via XOR blending, making screenshot comparison meaningless
 const TEXTURES = [
@@ -336,7 +337,8 @@ function suppressWidgetHighlights(pixels, w, h) {
 }
 
 async function processTexture(filePath) {
-  const img = sharp(filePath);
+  const sanitized = await sanitizePreviewPngBuffer(await fs.promises.readFile(filePath));
+  const img = sharp(sanitized.buffer);
   const meta = await img.metadata();
   const normalized = meta.height > meta.width && meta.height % meta.width === 0
     ? img.extract({ left: 0, top: 0, width: meta.width, height: meta.width })
@@ -346,15 +348,17 @@ async function processTexture(filePath) {
 
 // Composite pack's bottle + tinted overlay into one potion image, then process.
 async function processPotionVariant(bottlePath, overlayPath, color) {
-  const bottleMeta = await sharp(bottlePath).metadata();
-  const overlayMeta = await sharp(overlayPath).metadata();
+  const bottleSanitized = await sanitizePreviewPngBuffer(await fs.promises.readFile(bottlePath));
+  const overlaySanitized = await sanitizePreviewPngBuffer(await fs.promises.readFile(overlayPath));
+  const bottleMeta = await sharp(bottleSanitized.buffer).metadata();
+  const overlayMeta = await sharp(overlaySanitized.buffer).metadata();
   // Use first frame if animated
   const bottleExtract = bottleMeta.height > bottleMeta.width && bottleMeta.height % bottleMeta.width === 0
-    ? sharp(bottlePath).extract({ left: 0, top: 0, width: bottleMeta.width, height: bottleMeta.width })
-    : sharp(bottlePath);
+    ? sharp(bottleSanitized.buffer).extract({ left: 0, top: 0, width: bottleMeta.width, height: bottleMeta.width })
+    : sharp(bottleSanitized.buffer);
   const overlayExtract = overlayMeta.height > overlayMeta.width && overlayMeta.height % overlayMeta.width === 0
-    ? sharp(overlayPath).extract({ left: 0, top: 0, width: overlayMeta.width, height: overlayMeta.width })
-    : sharp(overlayPath);
+    ? sharp(overlaySanitized.buffer).extract({ left: 0, top: 0, width: overlayMeta.width, height: overlayMeta.width })
+    : sharp(overlaySanitized.buffer);
 
   const bottleFirstMeta = await bottleExtract.clone().metadata();
   const overlayFirstMeta = await overlayExtract.clone().metadata();
