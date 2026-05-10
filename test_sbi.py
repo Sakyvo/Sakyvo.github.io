@@ -216,6 +216,17 @@ async def main():
                         parts = [f"{r['name']}={r['score']:.4f}"]
                         if r.get('slotComposite') is not None:
                             parts.append(f"slot={r['slotComposite']:.3f}")
+                        pts = r.get('perTypeScores') or {}
+                        if pts:
+                            tparts = []
+                            for k in ('DS', 'EP', 'HL', 'SK/GC'):
+                                v = pts.get(k)
+                                if v is not None:
+                                    tparts.append(f"{k}={v:.2f}")
+                            if tparts:
+                                parts.append("(" + " ".join(tparts) + ")")
+                        if r.get('criticalTypeScore') is not None:
+                            parts.append(f"crit={r['criticalTypeScore']:.2f}")
                         if r.get('healthSim') is not None:
                             parts.append(f"HP={r['healthSim']:.2f}")
                         if r.get('hungerSim') is not None:

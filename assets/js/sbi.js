@@ -2310,6 +2310,28 @@ function signatureSimilarity(extractedSig, packSig, targetType) {
       signatureBlueGreenBias(packSig),
       0.26
     );
+    // Pack-vs-slot dark asymmetry: very heavy dark interior (darkFrac > 0.80)
+    // in pack texture but runtime slot suppression has masked the dark center
+    // (orb-style EP textures). Brightness/dark-fraction and R/B metrics become
+    // meaningless when meanR ≈ 0; lean on G/B hue direction and bias instead.
+    const darkAsym = (packSig.darkFrac || 0) > 0.80 && (extractedSig.darkFrac || 0) < 0.20;
+    if (darkAsym) {
+      return clamp01(
+        metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.40) * 0.02 +
+        metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.40) * 0.02 +
+        metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac, 0.40) * 0.01 +
+        metricSimilarity(extractedSig.blueFrac, packSig.blueFrac, 0.20) * 0.02 +
+        metricSimilarity(extractedSig.meanLum, packSig.meanLum, 80) * 0.02 +
+        metricSimilarity(extractedSig.coverage, packSig.coverage, 0.30) * 0.02 +
+        metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.18) * 0.04 +
+        metricSimilarity(
+          signatureMeanRatio(extractedSig, 'meanG', 'meanB'),
+          signatureMeanRatio(packSig, 'meanG', 'meanB'),
+          0.50
+        ) * 0.75 +
+        sigBiasSim * 0.10
+      );
+    }
     return clamp01(
       metricSimilarity(extractedSig.darkFrac, packSig.darkFrac, 0.16) * 0.14 +
       metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac, 0.16) * 0.14 +
@@ -2458,7 +2480,22 @@ function compareSlotVariant(extracted, packTex, targetType) {
   if ((targetType === 'diamond_sword' || targetType === 'ender_pearl' || targetType === 'splash_potion') && extracted.sig && packTex.sig) {
     const sigSim = signatureSimilarity(extracted.sig, packTex.sig, targetType);
     if (targetType === 'diamond_sword') sim = sim * 0.46 + sigSim * 0.54;
-    else if (targetType === 'ender_pearl') sim = sim * 0.36 + sigSim * 0.64;
+    else if (targetType === 'ender_pearl') {
+      sim = sim * 0.36 + sigSim * 0.64;
+      // Cyan EP match bonus: screenshot EP was classified via the cyan/teal
+      // bypass and pack EP is a super-dark orb with pure cyan rim (R≈0,
+      // G/B≈1.0). Only genuine cyan/teal EP pearls with near-zero red and
+      // balanced green-blue qualify — filters out dark-blue and dark-green.
+      if (extracted.sig.n < 70 && extracted.sig.coverage < 0.22 &&
+          extracted.sig.meanG > 100 && extracted.sig.meanB > 100 &&
+          (packTex.sig.darkFrac || 0) > 0.80 &&
+          packTex.sig.meanG > 20 && packTex.sig.meanB > 20 &&
+          packTex.sig.meanG >= packTex.sig.meanB &&
+          packTex.sig.meanR < 5 &&
+          Math.abs(packTex.sig.meanG / Math.max(1, packTex.sig.meanB) - 1) < 0.03) {
+        sim = Math.min(1, sim + 0.18);
+      }
+    }
     else sim = sim * 0.40 + sigSim * 0.60;
   }
   return sim;
@@ -2720,6 +2757,17 @@ function inferDisplaySlotTypes(slots) {
     // Small blue silhouettes are swords far more often than pearls.
     if (compactBlue) {
       out[slot.index] = 'diamond_sword';
+      continue;
+    }
+
+    // Bright cyan/teal ender pearls with a small footprint (custom packs like
+    // Tory v1 Revamp): R clearly below G and B, G ≈ B, both bright. Colour
+    // signal alone is strong enough — no n/coverage gate.
+    if (sig.redFrac < 0.05 && sig.yellowFrac < 0.08 && sig.n >= 24 &&
+        sig.meanB > sig.meanR + 60 && sig.meanG > sig.meanR + 60 &&
+        Math.abs(sig.meanG - sig.meanB) <= 40 &&
+        sig.meanG >= 110 && sig.meanB >= 110) {
+      out[slot.index] = 'ender_pearl';
       continue;
     }
 
@@ -3529,6 +3577,9 @@ window.__sbiTest = {
           armorSim: info.armorScore,
           coverage: info.slotCoverage,
           certainty: info.slotCertainty,
+          perTypeScores: info.perTypeScores || {},
+          criticalTypeScore: info.criticalTypeScore,
+          criticalTypeShortfall: info.criticalTypeShortfall,
         };
       }),
       slotTypes: getCurrentSlotTypesSummary(),
