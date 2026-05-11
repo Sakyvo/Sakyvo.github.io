@@ -69,6 +69,7 @@ const CLIP_ONLY_SCALE = 0.72;
 let _lastMatchDetails = {};
 let _lastClipScores = {};
 let _lastVisibleScores = {};
+let _lastTestTimings = {};
 let _lastRankedResults = [];
 let _lastSlotFeatures = [];
 let _lastSearchPhase = 'hash';
@@ -3665,11 +3666,16 @@ window.__sbiTest = {
   handleImageInput,
   async processImage(file, preset) {
     if (preset) _currentPreset = preset;
+    const timings = {};
+    const mark = () => performance.now();
     // Headless-safe wrapper: core matching without DOM dependency
+    let t = mark();
     const img = new Image();
     const url = URL.createObjectURL(file);
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    timings.decode = mark() - t;
 
+    t = mark();
     const rawCanvas = document.createElement('canvas');
     rawCanvas.width = img.width; rawCanvas.height = img.height;
     const rawCtx = rawCanvas.getContext('2d', { willReadFrequently: true });
@@ -3679,13 +3685,22 @@ window.__sbiTest = {
     canvas.width = img.width; canvas.height = img.height;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0);
+    timings.canvas = mark() - t;
 
+    t = mark();
     await ensureFingerprints(SBI_BASE_FINGERPRINT_SHARDS);
+    timings.fingerprints = mark() - t;
 
+    t = mark();
     const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height, _currentPreset);
+    timings.extract = mark() - t;
     _lastSlotFeatures = slots;
+    t = mark();
     await ensureFingerprintsForSlots(slots);
+    timings.food = mark() - t;
+    t = mark();
     const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
+    timings.match = mark() - t;
     _lastMatchDetails = details || {};
     _lastDetectionMeta = {
       widgetRect, searchInfo,
@@ -3698,12 +3713,15 @@ window.__sbiTest = {
     for (const [name, info] of Object.entries(details)) _lastVisibleScores[name] = getDisplayScoreValue(null, info);
     _lastRankedResults = results.slice();
     _lastSearchPhase = 'hash';
+    _lastTestTimings = timings;
     URL.revokeObjectURL(url);
   },
-  getSummary() {
+  getSummary(options = {}) {
+    const detail = options && options.detail === 'compact' ? 'compact' : 'verbose';
     const meta = _lastDetectionMeta || {};
-    return {
-      ranked: (_lastRankedResults || []).slice(0, 30).map(r => {
+    const rankedLimit = detail === 'compact' ? 10 : 30;
+    const summary = {
+      ranked: (_lastRankedResults || []).slice(0, rankedLimit).map(r => {
         const info = _lastMatchDetails[r.name] || {};
         return {
           name: r.name,
@@ -3722,7 +3740,22 @@ window.__sbiTest = {
         };
       }),
       slotTypes: getCurrentSlotTypesSummary(),
-      slotFeatures: (_lastSlotFeatures || []).map(s => s ? {
+      resultText: (_lastRankedResults || []).slice(0, 3).map(r => r.name).join(', '),
+      timings: _lastTestTimings || {},
+      debug: {
+        slotCount: meta.slotCount || 0,
+        widgetRect: meta.widgetRect || null,
+        heartCount: meta.heartCount || 0,
+        hungerCount: meta.hungerCount || 0,
+        armorCount: meta.armorCount || 0,
+        detailCount: Object.keys(_lastMatchDetails || {}).length,
+        rankedCount: (_lastRankedResults || []).length,
+        hasFingerprints: !!fingerprints,
+        fingerprintPackCount: fingerprints ? Object.keys(fingerprints.packs || {}).length : 0,
+      },
+    };
+    if (detail !== 'compact') {
+      summary.slotFeatures = (_lastSlotFeatures || []).map(s => s ? {
         index: s.index,
         activity: s.activity,
         variance: s.variance,
@@ -3738,20 +3771,9 @@ window.__sbiTest = {
           blueFrac: s.features.sig.blueFrac,
           darkFrac: s.features.sig.darkFrac,
         } : null,
-      } : null),
-      resultText: (_lastRankedResults || []).slice(0, 3).map(r => r.name).join(', '),
-      debug: {
-        slotCount: meta.slotCount || 0,
-        widgetRect: meta.widgetRect || null,
-        heartCount: meta.heartCount || 0,
-        hungerCount: meta.hungerCount || 0,
-        armorCount: meta.armorCount || 0,
-        detailCount: Object.keys(_lastMatchDetails || {}).length,
-        rankedCount: (_lastRankedResults || []).length,
-        hasFingerprints: !!fingerprints,
-        fingerprintPackCount: fingerprints ? Object.keys(fingerprints.packs || {}).length : 0,
-      },
-    };
+      } : null);
+    }
+    return summary;
   },
 };
 
