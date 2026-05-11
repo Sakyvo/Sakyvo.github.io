@@ -5,7 +5,8 @@ const { sanitizePreviewPngBuffer } = require('./thumbnail-preview-utils');
 
 const THUMB_DIR = path.join(__dirname, '..', 'thumbnails');
 const OUT_FILE = path.join(__dirname, '..', 'data', 'sbi-fingerprints.json');
-const SBI_FINGERPRINT_VERSION = 12;
+const SHARD_DIR = path.join(__dirname, '..', 'data', 'sbi-fp');
+const SBI_FINGERPRINT_VERSION = 13;
 
 // Note: crosshair removed — MC renders it via XOR blending, making screenshot comparison meaningless
 const TEXTURES = [
@@ -14,30 +15,7 @@ const TEXTURES = [
   { key: 'splash_potion', files: ['splash_potion_of_healing.png', 'potion_bottle_splash.png'] },
   { key: 'steak', file: 'steak.png' },
   { key: 'golden_carrot', file: 'golden_carrot.png' },
-  { key: 'apple_golden', files: ['apple_golden.png', 'golden_apple.png'] },
-  { key: 'iron_sword', file: 'iron_sword.png' },
 ];
-
-// Splash potion overlay colors from Minecraft (MobEffects.POTION_COLOR).
-// Fingerprinting only a single pre-composited "of_healing" PNG means a pack
-// matches screenshots that contain red healing potions and misses images with
-// fire-resistance, speed, strength etc. — but the slot visually IS a potion of
-// that pack. Generate one fingerprint per common PvP potion color so the
-// matcher can take max across variants at runtime.
-const POTION_COLORS = {
-  healing: [248, 36, 35],
-  fire_resistance: [228, 154, 58],
-  speed: [124, 175, 198],
-  strength: [147, 36, 35],
-  regeneration: [205, 92, 171],
-  poison: [78, 147, 49],
-  weakness: [72, 77, 72],
-  slowness: [90, 108, 129],
-  instant_damage: [67, 10, 9],
-  invisibility: [127, 131, 146],
-  night_vision: [31, 31, 161],
-  water_breathing: [46, 82, 153],
-};
 
 // Hotbar widget region in vanilla widgets.png (256x256 base)
 const HOTBAR_REGION = { x: 0, y: 0, w: 182, h: 22 };
@@ -51,9 +29,22 @@ const HUD_ICON_REGIONS = {
   armor_empty: { x: 16, y: 9, w: 9, h: 9 },
   armor_half: { x: 25, y: 9, w: 9, h: 9 },
   armor_full: { x: 34, y: 9, w: 9, h: 9 },
-  xp_bar_bg: { x: 0, y: 64, w: 182, h: 5, fw: 64, fh: 16 },
-  xp_bar_fill: { x: 0, y: 69, w: 182, h: 5, fw: 64, fh: 16 },
 };
+
+const SHARDS = [
+  { name: 'diamond_sword', keys: ['diamond_sword'] },
+  { name: 'ender_pearl', keys: ['ender_pearl'] },
+  { name: 'splash_potion', keys: ['splash_potion'] },
+  { name: 'food', keys: ['steak', 'golden_carrot'] },
+  { name: 'widget', keys: ['hotbar_widget'] },
+  { name: 'health', keys: ['health_empty', 'health_half', 'health_full'] },
+  { name: 'hunger', keys: ['hunger_empty', 'hunger_half', 'hunger_full'] },
+  { name: 'armor', keys: ['armor_empty', 'armor_half', 'armor_full'] },
+];
+
+function clamp01(v) {
+  return Math.max(0, Math.min(1, v));
+}
 
 // dHash per RGB channel: 24 bytes (192 bits), color-aware
 function computeDHash(pixels) {
@@ -94,7 +85,7 @@ function computeHistogram(pixels, count) {
     }
   }
   if (total > 0) for (let i = 0; i < 72; i++) hist[i] /= total;
-  return Array.from(hist).map(v => Math.round(v * 10000) / 10000);
+  return Array.from(hist, v => Math.round(clamp01(v) * 255));
 }
 
 // Color moments: mean + std per channel (non-transparent pixels only)
@@ -346,66 +337,6 @@ async function processTexture(filePath) {
   return processSharpImage(normalized, 16, 16);
 }
 
-// Composite pack's bottle + tinted overlay into one potion image, then process.
-async function processPotionVariant(bottlePath, overlayPath, color) {
-  const bottleSanitized = await sanitizePreviewPngBuffer(await fs.promises.readFile(bottlePath));
-  const overlaySanitized = await sanitizePreviewPngBuffer(await fs.promises.readFile(overlayPath));
-  const bottleMeta = await sharp(bottleSanitized.buffer).metadata();
-  const overlayMeta = await sharp(overlaySanitized.buffer).metadata();
-  // Use first frame if animated
-  const bottleExtract = bottleMeta.height > bottleMeta.width && bottleMeta.height % bottleMeta.width === 0
-    ? sharp(bottleSanitized.buffer).extract({ left: 0, top: 0, width: bottleMeta.width, height: bottleMeta.width })
-    : sharp(bottleSanitized.buffer);
-  const overlayExtract = overlayMeta.height > overlayMeta.width && overlayMeta.height % overlayMeta.width === 0
-    ? sharp(overlaySanitized.buffer).extract({ left: 0, top: 0, width: overlayMeta.width, height: overlayMeta.width })
-    : sharp(overlaySanitized.buffer);
-
-  const bottleFirstMeta = await bottleExtract.clone().metadata();
-  const overlayFirstMeta = await overlayExtract.clone().metadata();
-  const target = Math.max(bottleFirstMeta.width, overlayFirstMeta.width);
-
-  const bottleBuf = await bottleExtract.resize(target, target, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
-  const overlayBuf = await overlayExtract.resize(target, target, { fit: 'fill', kernel: 'nearest' }).raw().ensureAlpha().toBuffer();
-
-  const [r, g, b] = color;
-  const tinted = Buffer.from(overlayBuf);
-  for (let i = 0; i < tinted.length; i += 4) {
-    if (tinted[i + 3] > 0) {
-      tinted[i] = Math.round(tinted[i] * r / 255);
-      tinted[i + 1] = Math.round(tinted[i + 1] * g / 255);
-      tinted[i + 2] = Math.round(tinted[i + 2] * b / 255);
-    }
-  }
-  const tintedPng = await sharp(tinted, { raw: { width: target, height: target, channels: 4 } }).png().toBuffer();
-  const bottlePng = await sharp(bottleBuf, { raw: { width: target, height: target, channels: 4 } }).png().toBuffer();
-  // Correct MC composite: transparent canvas, tinted overlay first (bottom),
-  // bottle on top. Matches extract-textures.js line 352-365 exactly.
-  const composited = await sharp({
-    create: { width: target, height: target, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-  })
-    .composite([
-      { input: tintedPng, blend: 'over' },
-      { input: bottlePng, blend: 'over' },
-    ])
-    .png()
-    .toBuffer();
-
-  return processSharpImage(sharp(composited), 16, 16);
-}
-
-async function processPotionVariants(packDir) {
-  const bottlePath = path.join(packDir, 'potion_bottle_splash.png');
-  const overlayPath = path.join(packDir, 'potion_overlay.png');
-  if (!fs.existsSync(bottlePath) || !fs.existsSync(overlayPath)) return null;
-  const variants = {};
-  for (const [key, color] of Object.entries(POTION_COLORS)) {
-    try {
-      variants[key] = await processPotionVariant(bottlePath, overlayPath, color);
-    } catch { /* skip broken variant */ }
-  }
-  return Object.keys(variants).length ? variants : null;
-}
-
 function scaleRegion(meta, region) {
   const scale = meta.width / 256;
   const left = Math.max(0, Math.round(region.x * scale));
@@ -451,6 +382,61 @@ async function processHotbarWidget(widgetsPath) {
     moments: computeColorMoments(clean, count),
     edge: computeEdgeDensity(clean, 16, 16),
   };
+}
+
+function bucketIndex(value, edges) {
+  for (let i = 0; i < edges.length; i++) {
+    if (value < edges[i]) return i;
+  }
+  return edges.length;
+}
+
+function getBucketKey(sig) {
+  if (!sig) return '';
+  const gbRatio = (sig.meanG || 0) / Math.max(1, sig.meanB || 0);
+  return [
+    bucketIndex(sig.darkFrac || 0, [0.25, 0.50, 0.75]),
+    bucketIndex(sig.meanLum || 0, [64, 128, 192]),
+    bucketIndex(sig.blueFrac || 0, [0.25, 0.50, 0.75]),
+    bucketIndex(gbRatio, [0.5, 1.0, 1.5]),
+  ].join('.');
+}
+
+function addIndexEntry(index, key, bucketKey, packName) {
+  if (!bucketKey) return;
+  if (!index[key]) index[key] = {};
+  if (!index[key][bucketKey]) index[key][bucketKey] = [];
+  index[key][bucketKey].push(packName);
+}
+
+function buildShardPacks(packs, keys) {
+  const shardPacks = {};
+  const index = {};
+  for (const [packName, packData] of Object.entries(packs)) {
+    const entry = {};
+    for (const key of keys) {
+      if (!packData[key]) continue;
+      entry[key] = packData[key];
+      addIndexEntry(index, key, getBucketKey(packData[key].sig), packName);
+    }
+    if (Object.keys(entry).length) shardPacks[packName] = entry;
+  }
+  return { shardPacks, index };
+}
+
+function writeShards(packs) {
+  fs.mkdirSync(SHARD_DIR, { recursive: true });
+  for (const shard of SHARDS) {
+    const { shardPacks, index } = buildShardPacks(packs, shard.keys);
+    const payload = {
+      version: SBI_FINGERPRINT_VERSION,
+      type: shard.name,
+      keys: shard.keys,
+      packs: shardPacks,
+      _index: index,
+    };
+    fs.writeFileSync(path.join(SHARD_DIR, `${shard.name}.json`), JSON.stringify(payload));
+  }
 }
 
 async function processHudIcons(iconsPath) {
@@ -501,13 +487,6 @@ async function main() {
         Object.assign(packData, await processHudIcons(iconsPath));
       } catch { /* skip broken */ }
     }
-    // Splash potion color variants — lets the matcher find a match for any
-    // potion color (healing/fire_resistance/speed/etc.) that the screenshot
-    // actually shows, instead of only the pre-composited healing PNG.
-    try {
-      const variants = await processPotionVariants(packDir);
-      if (variants) packData.splash_potion_variants = variants;
-    } catch { /* skip broken */ }
     if (Object.keys(packData).length > 0) packs[dir] = packData;
     done++;
     if (done % 20 === 0) console.log(`  ${done}/${dirs.length}`);
@@ -515,6 +494,7 @@ async function main() {
   const result = { version: SBI_FINGERPRINT_VERSION, packs };
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, JSON.stringify(result));
+  writeShards(packs);
   console.log(`Done. ${Object.keys(packs).length} packs → ${OUT_FILE}`);
 }
 

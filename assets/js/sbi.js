@@ -55,7 +55,11 @@ function initClipWorker() {
 }
 
 let _lastHashResults = [], _lastAllScores = {};
-const SBI_FINGERPRINT_VERSION = 12;
+const SBI_FINGERPRINT_VERSION = 13;
+const SBI_BASE_FINGERPRINT_SHARDS = ['widget', 'health', 'hunger', 'armor', 'diamond_sword', 'ender_pearl', 'splash_potion'];
+const SBI_FOOD_FINGERPRINT_SHARD = 'food';
+const SBI_FINGERPRINT_SHARD_PATH = '/data/sbi-fp/';
+const _fingerprintShardPromises = {};
 // AI (CLIP) is used as a rerank signal. We normalize CLIP scores per-query and
 // apply it as a multiplicative factor on top of the hash score, so a weak CLIP
 // match won't incorrectly drag down a strong hash match when the crop is correct.
@@ -78,12 +82,10 @@ let _autoSearch = false;
 let _uploadPreviewResizeObserver = null;
 const SLOT_COLOR_MAP = {
   diamond_sword: '#38bdf8',
-  iron_sword: '#38bdf8',
   ender_pearl: '#c084fc',
   splash_potion: '#7f1d1d',
   steak: '#8b5a2b',
   golden_carrot: '#d4af37',
-  apple_golden: '#d4af37',
   none: '#000000',
 };
 const CROPBOX_COLORS = {
@@ -111,10 +113,10 @@ const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
 const STRICT_BOTTOM_OFFSET_UNIT_STEPS = [0, 1, 2, 3, 4, 6, 8];
-const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot', 'apple_golden'];
+const SLOT_ITEM_TYPES = ['diamond_sword', 'ender_pearl', 'splash_potion', 'steak', 'golden_carrot'];
 const PER_TYPE_SCORE_ORDER = ['DS', 'EP', 'HL', 'SK/GC'];
 const SBI_SCORE_WEIGHTS = {
-  type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 4.8, steak: 0.45, golden_carrot: 0.45, apple_golden: 0.0 },
+  type: { diamond_sword: 8.0, ender_pearl: 8.2, splash_potion: 4.8, steak: 0.45, golden_carrot: 0.45 },
   hud: { health: 6.4, hunger: 5.4, armor: 5.2 },
   mix: { slot: 0.44, hud: 0.36, widget: 0.20, slotNoHud: 0.74, widgetNoHud: 0.26 },
 };
@@ -124,8 +126,139 @@ const SLOT_STRONG_MATCH_THRESHOLDS = {
   splash_potion: 0.50,
   steak: 0.58,
   golden_carrot: 0.58,
-  apple_golden: 0.58,
 };
+
+function createFingerprintStore() {
+  return { version: SBI_FINGERPRINT_VERSION, packs: {}, _loadedShards: {}, _shardIndexes: {} };
+}
+
+function mergeFingerprintShard(shardName, shard) {
+  if (!fingerprints) fingerprints = createFingerprintStore();
+  const packs = shard && shard.packs ? shard.packs : {};
+  for (const [packName, packData] of Object.entries(packs)) {
+    if (!fingerprints.packs[packName]) fingerprints.packs[packName] = {};
+    Object.assign(fingerprints.packs[packName], packData);
+  }
+  fingerprints._loadedShards[shardName] = true;
+  if (shard && shard._index) fingerprints._shardIndexes[shardName] = shard._index;
+}
+
+async function loadFingerprintShard(shardName) {
+  if (!fingerprints) fingerprints = createFingerprintStore();
+  if (fingerprints._loadedShards[shardName]) return;
+  if (!_fingerprintShardPromises[shardName]) {
+    _fingerprintShardPromises[shardName] = (async () => {
+      const resp = await fetch(`${SBI_FINGERPRINT_SHARD_PATH}${shardName}.json?v=${SBI_FINGERPRINT_VERSION}`);
+      if (!resp.ok) throw new Error('Failed to load fingerprint shard: ' + shardName + ' (' + resp.status + ')');
+      mergeFingerprintShard(shardName, await resp.json());
+    })();
+  }
+  await _fingerprintShardPromises[shardName];
+}
+
+async function ensureFingerprints(shardNames) {
+  const names = shardNames && shardNames.length ? shardNames : SBI_BASE_FINGERPRINT_SHARDS;
+  await Promise.all(names.map(loadFingerprintShard));
+}
+
+function shouldLoadFoodFingerprintShard(slots, slotTypes) {
+  if (slotTypes && slotTypes.some(type => type === 'steak' || type === 'golden_carrot')) return true;
+  for (const slot of (slots || [])) {
+    if (!slot || slot.index < 2) continue;
+    const sig = slot.features && slot.features.sig;
+    if (!sig) continue;
+    const steakLike = sig.meanR >= sig.meanB + 28 && sig.meanR >= sig.meanG + 10 && sig.blueFrac < 0.06 && sig.meanLum >= 70 && sig.meanLum <= 160;
+    if (isStrongFoodColor(sig) || isFoodLikeTailSignature(sig) || steakLike) return true;
+  }
+  return false;
+}
+
+async function ensureFingerprintsForSlots(slots, slotTypes) {
+  if (shouldLoadFoodFingerprintShard(slots, slotTypes)) await ensureFingerprints([SBI_FOOD_FINGERPRINT_SHARD]);
+}
+
+function bucketIndex(value, edges) {
+  for (let i = 0; i < edges.length; i++) {
+    if (value < edges[i]) return i;
+  }
+  return edges.length;
+}
+
+function getBucketKey(sig) {
+  if (!sig) return '';
+  const gbRatio = (sig.meanG || 0) / Math.max(1, sig.meanB || 0);
+  return [
+    bucketIndex(sig.darkFrac || 0, [0.25, 0.50, 0.75]),
+    bucketIndex(sig.meanLum || 0, [64, 128, 192]),
+    bucketIndex(sig.blueFrac || 0, [0.25, 0.50, 0.75]),
+    bucketIndex(gbRatio, [0.5, 1.0, 1.5]),
+  ].join('.');
+}
+
+function getAdjacentBucketKeys(bucketKey) {
+  const parts = String(bucketKey || '').split('.').map(Number);
+  if (parts.length !== 4 || parts.some(v => !Number.isInteger(v))) return [];
+  const out = [];
+  const walk = (idx, acc) => {
+    if (idx === parts.length) {
+      out.push(acc.join('.'));
+      return;
+    }
+    for (let v = Math.max(0, parts[idx] - 1); v <= Math.min(3, parts[idx] + 1); v++) {
+      acc.push(v);
+      walk(idx + 1, acc);
+      acc.pop();
+    }
+  };
+  walk(0, []);
+  return out;
+}
+
+function getShardNameForType(type) {
+  if (type === 'steak' || type === 'golden_carrot') return SBI_FOOD_FINGERPRINT_SHARD;
+  return type;
+}
+
+function getIndexCandidateNames(type, sig) {
+  const shardName = getShardNameForType(type);
+  const index = fingerprints && fingerprints._shardIndexes && fingerprints._shardIndexes[shardName];
+  const typeIndex = index && index[type];
+  if (!typeIndex) return null;
+  const names = new Set();
+  for (const key of getAdjacentBucketKeys(getBucketKey(sig))) {
+    const bucketNames = typeIndex[key];
+    if (!bucketNames) continue;
+    for (const name of bucketNames) names.add(name);
+  }
+  return names;
+}
+
+function getSignaturePrefilterCandidates(slots, slotTypes) {
+  if (!fingerprints || !fingerprints.packs || !fingerprints._shardIndexes) return null;
+  const byType = {};
+  for (const slot of (slots || [])) {
+    const type = slotTypes && slotTypes[slot.index];
+    if (!type || type === 'none' || !SLOT_ITEM_TYPES.includes(type)) continue;
+    const sig = slot.features && slot.features.sig;
+    if (!sig || !sig.n) continue;
+    const current = byType[type];
+    if (!current || (slot.activity || 0) > (current.activity || 0)) byType[type] = slot;
+  }
+
+  const votes = {};
+  let signalCount = 0;
+  for (const [type, slot] of Object.entries(byType)) {
+    const names = getIndexCandidateNames(type, slot.features && slot.features.sig);
+    if (!names || names.size < 5) continue;
+    signalCount++;
+    for (const name of names) votes[name] = (votes[name] || 0) + 1;
+  }
+  if (!signalCount) return null;
+
+  const threshold = signalCount >= 3 ? 2 : 1;
+  const candidates = Object.keys(votes).filter(name => votes[name] >= threshold);
+  return candidates.length >= 5 ? new Set(candidates) : null;
+}
 
 function clamp01(v) {
   return Math.max(0, Math.min(1, v));
@@ -244,7 +377,7 @@ function getCriticalTypeMetrics(perTypeScores, typeCounts) {
   const wantsSword = !!typeCounts.diamond_sword;
   const wantsPearl = !!typeCounts.ender_pearl;
   const wantsPotion = !!typeCounts.splash_potion;
-  const wantsFood = !!(typeCounts.steak || typeCounts.golden_carrot || typeCounts.apple_golden);
+  const wantsFood = !!(typeCounts.steak || typeCounts.golden_carrot);
   return {
     score: clamp01(
       (wantsSword ? ds * 0.26 : 0) +
@@ -506,12 +639,10 @@ function summarizeSlotTypes(types) {
   if (!types || !types.length) return '-';
   const map = {
     diamond_sword: 'DS',
-    iron_sword: 'IS',
     ender_pearl: 'EP',
     splash_potion: 'HL',
     steak: 'SK',
     golden_carrot: 'GC',
-    apple_golden: 'AG',
     none: 'NN',
   };
   return types.map(t => map[t] || '?').join(' ');
@@ -1001,18 +1132,30 @@ function colorMomentSim(a, b) {
   return 1 - Math.sqrt(d / 6);
 }
 
+function normalizePackHist(hist) {
+  if (!hist || !hist.length) return hist;
+  if (hist.__sbiNormalized) return hist;
+  let max = 0;
+  for (let i = 0; i < hist.length; i++) if (hist[i] > max) max = hist[i];
+  if (max <= 1) return hist;
+  const out = new Array(hist.length);
+  for (let i = 0; i < hist.length; i++) out[i] = hist[i] / 255;
+  out.__sbiNormalized = true;
+  return out;
+}
+
 function compare(extracted, packTex) {
   const dhashA = extracted.dhash;
   const dhashB = packTex.__dhashBytes || (packTex.__dhashBytes = base64ToBytes(packTex.dhash));
   const hammingSim = 1 - hammingDistance(dhashA, dhashB) / 192;
-  const histSim = cosineSimilarity(extracted.hist, packTex.hist);
+  const histSim = cosineSimilarity(extracted.hist, packTex.__histFloat || (packTex.__histFloat = normalizePackHist(packTex.hist)));
   const momentSim = colorMomentSim(extracted.moments, packTex.moments);
   const edgeSim = 1 - Math.abs(extracted.edge - packTex.edge);
   return 0.30 * hammingSim + 0.35 * histSim + 0.20 * momentSim + 0.15 * edgeSim;
 }
 
 function compareWidget(extracted, packWidget) {
-  const histSim = cosineSimilarity(extracted.hist, packWidget.hist);
+  const histSim = cosineSimilarity(extracted.hist, packWidget.__histFloat || (packWidget.__histFloat = normalizePackHist(packWidget.hist)));
   const momentSim = colorMomentSim(extracted.moments, packWidget.moments);
   const edgeA = typeof extracted.edge === 'number' ? extracted.edge : 0;
   const edgeB = typeof packWidget.edge === 'number' ? packWidget.edge : 0;
@@ -1856,7 +1999,7 @@ function renderCrops(ctx, imgW, imgH, widgetRect, hudFeatures, slots, slotTypes,
   renderSlot('sbi-crop-ds', 0, 96);
   renderSlot('sbi-crop-ep', 1, 96);
   renderSlot('sbi-crop-hl', 5, 96);
-  if (slotTypes && ['steak', 'golden_carrot', 'apple_golden'].includes(slotTypes[8])) renderSlot('sbi-crop-food', 8, 96);
+  if (slotTypes && ['steak', 'golden_carrot'].includes(slotTypes[8])) renderSlot('sbi-crop-food', 8, 96);
   else renderSolidSlot('sbi-crop-food', 96, '#000000');
 
   wrap.hidden = false;
@@ -2806,6 +2949,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   const results = [];
   const details = {};
   let bestScore = -Infinity;
+  const candidateNames = getSignaturePrefilterCandidates(slots, displaySlotTypes);
 
   // Quick pre-scan: if some packs nail the widget (custom hotbar), penalize
   // packs with near-default widgets to avoid default edits dominating via
@@ -2820,6 +2964,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   }
 
   for (const [packName, packData] of Object.entries(fingerprints.packs)) {
+    if (candidateNames && !candidateNames.has(packName)) continue;
     let slotWeighted = 0, slotWeights = 0;
     let slotPenalty = 0, certaintySum = 0;
     let activeSlots = 0, strongSlots = 0;
@@ -3242,13 +3387,10 @@ async function processImage(file) {
   ctx.drawImage(img, 0, 0);
 
   try {
-    if (!fingerprints) {
-      const resp = await fetch('/data/sbi-fingerprints.json?v=' + SBI_FINGERPRINT_VERSION);
-      if (!resp.ok) throw new Error('Failed to load fingerprints: ' + resp.status);
-      fingerprints = await resp.json();
-    }
+    await ensureFingerprints(SBI_BASE_FINGERPRINT_SHARDS);
 
     const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height, _currentPreset);
+    await ensureFingerprintsForSlots(slots);
 
     // Stage 1: Hash-based instant results
     const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
@@ -3538,14 +3680,11 @@ window.__sbiTest = {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0);
 
-    if (!fingerprints) {
-      const resp = await fetch('/data/sbi-fingerprints.json?v=' + SBI_FINGERPRINT_VERSION);
-      if (!resp.ok) throw new Error('Failed to load fingerprints: ' + resp.status);
-      fingerprints = await resp.json();
-    }
+    await ensureFingerprints(SBI_BASE_FINGERPRINT_SHARDS);
 
     const { slots, widgetFeatures, widgetRect, hudFeatures, searchInfo } = extractHotbarSlots(rawCtx, img.width, img.height, _currentPreset);
     _lastSlotFeatures = slots;
+    await ensureFingerprintsForSlots(slots);
     const { results, slotTypes, details } = matchPacks(slots, widgetFeatures, hudFeatures);
     _lastMatchDetails = details || {};
     _lastDetectionMeta = {
