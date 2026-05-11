@@ -54,7 +54,9 @@
       "mcp__tavily-remote-mcp__tavily_search",
       "mcp__fetch__fetch",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "mcp__exa-pool__exa_search"
+      "mcp__exa-pool__exa_search",
+      "mcp__exa-pool__exa_answer",
+      "mcp__ace-tool__enhance_prompt"
     ]
   }
 }
