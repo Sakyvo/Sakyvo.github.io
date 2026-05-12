@@ -1587,8 +1587,8 @@ function tryExtractFeature(ctx, x, y, w, h, imgW, imgH, targetW, targetH) {
   return computeFeatures(region, targetW, targetH, true, 'hud');
 }
 
-function buildWidgetFeatures(widgetStrip) {
-  const widgetMasked = new ImageData(maskWidgetItems(widgetStrip.data, 182, 22), 182, 22);
+function buildWidgetFeatures(widgetStrip, maskedData) {
+  const widgetMasked = new ImageData(maskedData || maskWidgetItems(widgetStrip.data, 182, 22), 182, 22);
   const widgetRegion = resizeImageDataNearest(widgetMasked, 182, 22, 16, 16);
   const widgetClean = suppressWidgetHighlights(widgetRegion.data, 16, 16);
   return {
@@ -2062,8 +2062,8 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
   const isHudCrop = aspect < 0.35;
   const baseUnit = getWide16By9Unit(imgW, imgH);
   const targetUnit = isHudCrop ? 0 : (preset === 'auto' ? 0 : (preset === 'small' ? Math.max(1, Math.ceil(baseUnit) - 1) : baseUnit));
-  const PRE_K = 80;
-  const PER_UNIT_K = 14;
+  const PRE_K = isHudCrop ? 80 : (preset === 'auto' ? 56 : 42);
+  const PER_UNIT_K = isHudCrop ? 14 : 9;
   const preByUnit = new Map();
   const mustByUnit = new Map();
   const all = [];
@@ -2143,7 +2143,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     const unitPrefTarget = targetUnit >= 1 ? targetUnit : unitRounded;
     const unitPref = clamp01(1 - Math.abs(c.unit - unitPrefTarget) / (targetUnit >= 1 ? 0.08 : 0.18));
     const score = (0.70 * gridScore + 0.30 * bottomPref) * (0.90 + 0.10 * unitPref);
-    const entry = { c, wx, wy, ww, wh, widgetStrip, gridScore, bottomPref, unitPref, unitPrefTarget, score, unitRounded };
+    const entry = { c, wx, wy, ww, wh, widgetStrip, maskedStrip, gridScore, bottomPref, unitPref, unitPrefTarget, score, unitRounded };
     all.push(entry);
 
     const list = preByUnit.get(unitRounded) || [];
@@ -2220,7 +2220,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     }
     if (slots.length !== 9) continue;
 
-    const widgetFeatures = buildWidgetFeatures(cand.widgetStrip);
+    const widgetFeatures = buildWidgetFeatures(cand.widgetStrip, cand.maskedStrip);
     const widgetRect = { x: cand.wx, y: cand.wy, w: cand.ww, h: cand.wh };
     const hudFeatures = extractHudFeatures(ctx, widgetRect, imgW, imgH);
 
@@ -2947,6 +2947,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   const displayTypeCounts = countDisplaySlotTypes(displaySlotTypes);
   const ITEM_TYPES = SLOT_ITEM_TYPES;
   const TYPE_WEIGHT = SBI_SCORE_WEIGHTS.type;
+  const packEntries = Object.entries(fingerprints.packs);
   const results = [];
   const details = {};
   let bestScore = -Infinity;
@@ -2956,15 +2957,17 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   // packs with near-default widgets to avoid default edits dominating via
   // generic slot textures.
   let maxWidgetSim = 0;
+  const widgetSimCache = {};
   if (widgetFeatures) {
-    for (const [, packData] of Object.entries(fingerprints.packs)) {
-      if (packData.hotbar_widget) {
-        maxWidgetSim = Math.max(maxWidgetSim, compareWidget(widgetFeatures, packData.hotbar_widget));
-      }
+    for (const [packName, packData] of packEntries) {
+      if (!packData.hotbar_widget) continue;
+      const sim = compareWidget(widgetFeatures, packData.hotbar_widget);
+      widgetSimCache[packName] = sim;
+      if (sim > maxWidgetSim) maxWidgetSim = sim;
     }
   }
 
-  for (const [packName, packData] of Object.entries(fingerprints.packs)) {
+  for (const [packName, packData] of packEntries) {
     if (candidateNames && !candidateNames.has(packName)) continue;
     let slotWeighted = 0, slotWeights = 0;
     let slotPenalty = 0, certaintySum = 0;
@@ -2972,7 +2975,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     let widgetSim = 0, healthSim = 0, hungerSim = 0, armorSim = 0;
     const perTypeScores = {};
     const slotBreakdown = new Array(9).fill(null);
-    const slotContribs = [];
+    const topSlotContribs = [];
 
     for (const slot of slots) {
       const activity = clamp01(slot.activity || 0);
@@ -3048,7 +3051,13 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       const w = typeW * repeatedTypeScale * positionBonus * (0.45 + 0.9 * activity) * (0.6 + 0.6 * qualityNorm);
       slotWeighted += sim * w;
       slotWeights += w;
-      slotContribs.push({ sim, w });
+      const contrib = { sim, w, value: sim * w };
+      let insertAt = topSlotContribs.length;
+      while (insertAt > 0 && contrib.value > topSlotContribs[insertAt - 1].value) insertAt--;
+      if (insertAt < 3) {
+        topSlotContribs.splice(insertAt, 0, contrib);
+        if (topSlotContribs.length > 3) topSlotContribs.length = 3;
+      }
       certaintySum += certainty;
       const strongThreshold = getStrongMatchThreshold(effectiveType);
       if (sim >= strongThreshold) strongSlots++;
@@ -3059,11 +3068,10 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     // potion / steak art. Keeps the pack's best-matching slots as the primary
     // signal when the rest are noisy.
     let topSlotScore = 0;
-    if (slotContribs.length) {
-      const sorted = slotContribs.slice().sort((a, b) => (b.sim * b.w) - (a.sim * a.w));
-      const k = Math.min(3, sorted.length);
+    if (topSlotContribs.length) {
+      const k = topSlotContribs.length;
       let tw = 0, tsum = 0;
-      for (let i = 0; i < k; i++) { tsum += sorted[i].sim * sorted[i].w; tw += sorted[i].w; }
+      for (let i = 0; i < k; i++) { tsum += topSlotContribs[i].sim * topSlotContribs[i].w; tw += topSlotContribs[i].w; }
       topSlotScore = tw ? (tsum / tw) : 0;
     }
     const slotCoverage = activeSlots ? (strongSlots / activeSlots) : 0;
@@ -3081,7 +3089,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     }
 
     if (widgetFeatures && packData.hotbar_widget) {
-      widgetSim = compareWidget(widgetFeatures, packData.hotbar_widget);
+      widgetSim = widgetSimCache[packName] || 0;
     }
 
     let hudWeighted = 0, hudWeights = 0;
