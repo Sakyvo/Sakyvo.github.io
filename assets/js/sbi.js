@@ -110,6 +110,7 @@ const CROPBOX_REGIONS = [
   { color: CROPBOX_COLORS.hunger, x: 101, y: 10, w: 81, h: 9, dividerOffsets: CROPBOX_HUD_DIVIDERS, dividerInsetTop: 0, dividerInsetBottom: 0 },
   { color: CROPBOX_COLORS.hotbar, x: 1, y: 28, w: 180, h: 20, dividerOffsets: CROPBOX_HOTBAR_DIVIDERS, dividerInsetTop: 1, dividerInsetBottom: 1 },
 ];
+const _scratchCanvases = {};
 const MAX_GUI_SCALE = 18;
 const STRICT_WIDGET_WIDTH_RATIOS = [0.21, 0.235, 0.26, 0.285, 0.31, 0.335];
 const STRICT_WIDGET_HEIGHT_RATIOS = [0.044, 0.052, 0.06, 0.068, 0.076];
@@ -1171,24 +1172,33 @@ function compareWidget(extracted, packWidget) {
 }
 
 // --- Region extraction helpers ---
+function getScratchContext(key, w, h, options) {
+  let entry = _scratchCanvases[key];
+  if (!entry) {
+    const canvas = document.createElement('canvas');
+    entry = { canvas, ctx: canvas.getContext('2d', options || undefined) };
+    _scratchCanvases[key] = entry;
+  }
+  if (entry.canvas.width !== w) entry.canvas.width = w;
+  if (entry.canvas.height !== h) entry.canvas.height = h;
+  return entry.ctx;
+}
+
 function extractRegion(ctx, x, y, w, h, targetW, targetH) {
-  const tmp = document.createElement('canvas');
-  tmp.width = targetW; tmp.height = targetH;
-  const tctx = tmp.getContext('2d');
+  const tctx = getScratchContext(`extract:${targetW}x${targetH}`, targetW, targetH);
   tctx.imageSmoothingEnabled = false;
+  tctx.clearRect(0, 0, targetW, targetH);
   tctx.drawImage(ctx.canvas, x, y, w, h, 0, 0, targetW, targetH);
   return tctx.getImageData(0, 0, targetW, targetH);
 }
 
 function resizeImageDataNearest(imageData, srcW, srcH, dstW, dstH) {
-  const src = document.createElement('canvas');
-  src.width = srcW; src.height = srcH;
-  src.getContext('2d').putImageData(imageData, 0, 0);
-  const dst = document.createElement('canvas');
-  dst.width = dstW; dst.height = dstH;
-  const dctx = dst.getContext('2d');
+  const sctx = getScratchContext(`resize-src:${srcW}x${srcH}`, srcW, srcH);
+  sctx.putImageData(imageData, 0, 0);
+  const dctx = getScratchContext(`resize-dst:${dstW}x${dstH}`, dstW, dstH);
   dctx.imageSmoothingEnabled = false;
-  dctx.drawImage(src, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
+  dctx.clearRect(0, 0, dstW, dstH);
+  dctx.drawImage(sctx.canvas, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
   return dctx.getImageData(0, 0, dstW, dstH);
 }
 
@@ -1564,14 +1574,12 @@ function computeFeatures(imageData, w, h, isScreenshot, mode) {
     : new ImageData(effectiveData, w, h);
 
   // Resize source to 9x8 for dHash
-  const src = document.createElement('canvas');
-  src.width = w; src.height = h;
-  src.getContext('2d').putImageData(effectiveImage, 0, 0);
-  const tmp = document.createElement('canvas');
-  tmp.width = 9; tmp.height = 8;
-  const tctx = tmp.getContext('2d');
+  const sctx = getScratchContext(`feature-src:${w}x${h}`, w, h);
+  sctx.putImageData(effectiveImage, 0, 0);
+  const tctx = getScratchContext('feature-dhash:9x8', 9, 8);
   tctx.imageSmoothingEnabled = true;
-  tctx.drawImage(src, 0, 0, 9, 8);
+  tctx.clearRect(0, 0, 9, 8);
+  tctx.drawImage(sctx.canvas, 0, 0, 9, 8);
   const dhash = computeDHash(tctx.getImageData(0, 0, 9, 8).data);
   const hist = computeHistogram(effectiveData, w * h, BG_THRESHOLD);
   const moments = computeColorMoments(effectiveData, w * h, BG_THRESHOLD);
@@ -1787,7 +1795,7 @@ function buildStrictCropCandidates(imgW, imgH) {
   return out;
 }
 
-function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index) {
+function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index, options = {}) {
   const sx = Math.round(x);
   const sy = Math.round(y);
   const ss = Math.round(sz);
@@ -1808,8 +1816,8 @@ function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index) {
   const mean = lumSum / 256;
   const variance = lumSqSum / 256 - mean * mean;
   const features = computeFeatures(region, 16, 16, true, 'slot');
-  const variants = buildSlotVariants(ctx, sx, sy, ss, imgW, imgH);
-  if (!variants.length) variants.push(features);
+  const variants = options.withVariants === false ? null : buildSlotVariants(ctx, sx, sy, ss, imgW, imgH);
+  if (variants && !variants.length) variants.push(features);
 
   // Variance on empty slots can be deceptively high due to gradients; gate against that.
   const varScore = clamp01((variance - 220) / 1500);
@@ -1821,6 +1829,15 @@ function extractSlotFeatures(ctx, x, y, sz, imgW, imgH, index) {
   const fullSz = Math.max(ss + 2, Math.round(ss * 1.25));
   const displayRect = { x: sx - pad, y: sy - pad, sz: fullSz };
   return { index, features, variants, x: sx, y: sy, sz: ss, displayRect, quality, activity, variance };
+}
+
+function hydrateSlotVariants(ctx, slots, imgW, imgH) {
+  for (const slot of (slots || [])) {
+    if (!slot || slot.variants) continue;
+    slot.variants = buildSlotVariants(ctx, slot.x, slot.y, slot.sz, imgW, imgH);
+    if (!slot.variants.length && slot.features) slot.variants.push(slot.features);
+  }
+  return slots;
 }
 
 function pickSlotForClip(slots, slotTypes, wantedType, fallbackIndex) {
@@ -2206,7 +2223,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
     let totalQuality = 0;
     for (let i = 0; i < 9; i++) {
       const x = cand.wx + itemOffX + i * slotStep;
-      const slot = extractSlotFeatures(ctx, x, itemY, itemW, imgW, imgH, i);
+      const slot = extractSlotFeatures(ctx, x, itemY, itemW, imgW, imgH, i, { withVariants: false });
       if (!slot) continue;
       slot.displayRect = {
         x: cand.wx + (1 + i * 20) * unit,
@@ -2346,6 +2363,7 @@ function extractHotbarSlots(ctx, imgW, imgH, preset) {
       }
     }
   }
+  hydrateSlotVariants(ctx, bestSlots, imgW, imgH);
 
   return {
     slots: bestSlots,
