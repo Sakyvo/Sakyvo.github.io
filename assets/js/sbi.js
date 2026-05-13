@@ -309,8 +309,7 @@ function normalizePackSearchPhrase(value) {
 }
 
 function calibrateDisplayScore(score) {
-  const x = clamp01(score);
-  return clamp01(1 / (1 + Math.exp(-10 * (x - 0.31))));
+  return clamp01(score);
 }
 
 function assignDisplayScores(results, details) {
@@ -2968,7 +2967,8 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   const packEntries = Object.entries(fingerprints.packs);
   const results = [];
   const details = {};
-  let bestScore = -Infinity;
+  const scoredRows = [];
+  const hasPearlAnchor = !!displayTypeCounts.ender_pearl;
   const candidateNames = getSignaturePrefilterCandidates(slots, displaySlotTypes);
 
   // Quick pre-scan: if some packs nail the widget (custom hotbar), penalize
@@ -3145,9 +3145,9 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     }
     rawScore = clamp01(rawScore);
 
-    const finalScore = sharpenSimilarityScore(rawScore);
-    details[packName] = {
-      finalScore,
+    const info = {
+      finalScore: 0,
+      rawScore,
       slotScore: slotComposite,
       widgetScore: widgetSim,
       healthScore: healthSim,
@@ -3161,10 +3161,30 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       perTypeScores,
       slotBreakdown,
     };
-    if (canRank) {
-      results.push({ name: packName, score: finalScore });
-      if (finalScore > bestScore) bestScore = finalScore;
+    details[packName] = info;
+    if (canRank) scoredRows.push({ name: packName, info });
+  }
+
+  const bestEP = hasPearlAnchor
+    ? scoredRows.reduce((best, row) => Math.max(best, (row.info.perTypeScores && row.info.perTypeScores.EP) || 0), 0)
+    : 0;
+  const enableEPGate = bestEP >= 0.58;
+  for (const row of scoredRows) {
+    const info = row.info;
+    let gatedRawScore = info.rawScore;
+    if (enableEPGate) {
+      const ep = (info.perTypeScores && info.perTypeScores.EP) || 0;
+      let cap = null;
+      if (ep < bestEP - 0.14) cap = 0.38;
+      else if (ep < bestEP - 0.08) cap = 0.46;
+      if (cap != null && gatedRawScore > cap) {
+        gatedRawScore = cap;
+        info.epGate = { bestEP, ep, cap };
+      }
     }
+    info.rawScore = gatedRawScore;
+    info.finalScore = gatedRawScore;
+    results.push({ name: row.name, score: gatedRawScore });
   }
 
   results.sort((a, b) => b.score - a.score);
