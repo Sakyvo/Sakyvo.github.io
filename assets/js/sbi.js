@@ -3168,7 +3168,11 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   const bestEP = hasPearlAnchor
     ? scoredRows.reduce((best, row) => Math.max(best, (row.info.perTypeScores && row.info.perTypeScores.EP) || 0), 0)
     : 0;
+  const bestDS = displayTypeCounts.diamond_sword
+    ? scoredRows.reduce((best, row) => Math.max(best, (row.info.perTypeScores && row.info.perTypeScores.DS) || 0), 0)
+    : 0;
   const enableEPGate = bestEP >= 0.58;
+  const enableDSGate = bestDS >= 0.50;
   for (const row of scoredRows) {
     const info = row.info;
     let gatedRawScore = info.rawScore;
@@ -3180,6 +3184,16 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       if (cap != null && gatedRawScore > cap) {
         gatedRawScore = cap;
         info.epGate = { bestEP, ep, cap };
+      }
+    }
+    if (enableDSGate) {
+      const ds = (info.perTypeScores && info.perTypeScores.DS) || 0;
+      let cap = null;
+      if (ds < bestDS - 0.14) cap = 0.38;
+      else if (ds < bestDS - 0.10) cap = 0.41;
+      if (cap != null && gatedRawScore > cap) {
+        gatedRawScore = cap;
+        info.dsGate = { bestDS, ds, cap };
       }
     }
     info.rawScore = gatedRawScore;
