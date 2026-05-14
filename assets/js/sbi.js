@@ -2471,6 +2471,25 @@ function signatureSimilarity(extractedSig, packSig, targetType) {
       signatureBlueGreenBias(packSig),
       0.26
     );
+    const extractedNeutral = Math.abs(extractedSig.meanR - extractedSig.meanG) <= 24 && Math.abs(extractedSig.meanG - extractedSig.meanB) <= 24;
+    const packNeutral = Math.abs(packSig.meanR - packSig.meanG) <= 10 && Math.abs(packSig.meanG - packSig.meanB) <= 10;
+    const logoLike = extractedNeutral && packNeutral &&
+      (extractedSig.coverage || 0) >= 0.40 && (packSig.coverage || 0) >= 0.42 &&
+      (packSig.darkFrac || 0) >= 0.74 && (packSig.edgeDarkFrac || 0) >= 0.84 &&
+      (packSig.mirrorFrac || 0) < 0.94;
+    if (logoLike) {
+      return clamp01(
+        metricSimilarity(extractedSig.coverage, packSig.coverage, 0.20) * 0.22 +
+        metricSimilarity(extractedSig.meanLum, packSig.meanLum + 34, 42) * 0.18 +
+        metricSimilarity(extractedSig.darkFrac, packSig.darkFrac - 0.28, 0.34) * 0.14 +
+        metricSimilarity(extractedSig.centerDarkFrac, packSig.centerDarkFrac - 0.22, 0.34) * 0.12 +
+        metricSimilarity(extractedSig.edgeDarkFrac, packSig.edgeDarkFrac - 0.28, 0.34) * 0.08 +
+        metricSimilarity(extractedSig.centerX, packSig.centerX, 0.18) * 0.08 +
+        metricSimilarity(extractedSig.centerY, packSig.centerY, 0.18) * 0.08 +
+        metricSimilarity(extractedSig.mirrorFrac, packSig.mirrorFrac, 0.16) * 0.06 +
+        metricSimilarity(extractedSig.rowSlope, packSig.rowSlope, 0.06) * 0.04
+      );
+    }
     // Pack-vs-slot dark asymmetry: very heavy dark interior (darkFrac > 0.80)
     // in pack texture but runtime slot suppression has masked the dark center
     // (orb-style EP textures). Brightness/dark-fraction and R/B metrics become
@@ -2784,6 +2803,24 @@ function inferTrailingConsumableSlotType(slot, sig, cache) {
   return '';
 }
 
+function inferLogoPearlSlotType(slot, sig, cache) {
+  if (!slot || slot.index !== 1 || !sig) return '';
+  if (!fingerprints || !fingerprints.packs) return '';
+  const activity = clamp01(slot.activity || 0);
+  if (activity < 0.60) return '';
+  if (sig.redFrac >= 0.06 || sig.yellowFrac >= 0.08) return '';
+  if (sig.coverage < 0.40 || sig.coverage > 0.82) return '';
+  if (sig.meanLum < 70 || sig.meanLum > 125) return '';
+  const maxRgb = Math.max(sig.meanR, sig.meanG, sig.meanB);
+  const minRgb = Math.min(sig.meanR, sig.meanG, sig.meanB);
+  const neutralLogo = Math.abs(sig.meanR - sig.meanG) <= 20 && sig.meanB >= sig.meanR - 5;
+  if (!neutralLogo && maxRgb - minRgb > 38) return '';
+  const epBest = getBestFingerprintSlotSimilarity(slot, 'ender_pearl', cache);
+  const dsBest = getBestFingerprintSlotSimilarity(slot, 'diamond_sword', cache);
+  if (epBest >= 0.28 || epBest >= dsBest - 0.06) return 'ender_pearl';
+  return '';
+}
+
 function inferCanonicalPvPWeaponSlotType(slot, sig, inferredTypes, cache) {
   if (!slot || slot.index !== 0 || !sig) return '';
   const hasPearl = inferredTypes[1] === 'ender_pearl';
@@ -2906,6 +2943,12 @@ function inferDisplaySlotTypes(slots) {
     const middleConsumableType = inferMiddleConsumableSlotType(slot, sig, fingerprintScoreCache);
     if (middleConsumableType) {
       out[slot.index] = middleConsumableType;
+      continue;
+    }
+
+    const logoPearlType = inferLogoPearlSlotType(slot, sig, fingerprintScoreCache);
+    if (logoPearlType) {
+      out[slot.index] = logoPearlType;
       continue;
     }
 
