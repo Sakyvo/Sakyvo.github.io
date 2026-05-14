@@ -3216,6 +3216,7 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
     : 0;
   const enableEPGate = bestEP >= 0.58;
   const enableDSGate = bestDS >= 0.50;
+  const enableWeakDSDiscriminator = displayTypeCounts.diamond_sword && bestDS >= 0.30 && bestDS < 0.50 && maxWidgetSim >= 0.75;
   for (const row of scoredRows) {
     const info = row.info;
     let gatedRawScore = info.rawScore;
@@ -3237,6 +3238,16 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
       if (cap != null && gatedRawScore > cap) {
         gatedRawScore = cap;
         info.dsGate = { bestDS, ds, cap };
+      }
+    }
+    if (enableWeakDSDiscriminator) {
+      const ds = (info.perTypeScores && info.perTypeScores.DS) || 0;
+      const dsGap = bestDS - ds;
+      const widgetGap = maxWidgetSim - (info.widgetScore || 0);
+      if (dsGap > 0.045 && widgetGap > 0.10) {
+        const penalty = Math.min(0.025, 0.012 + Math.min(0.013, (dsGap - 0.045) * 0.12 + (widgetGap - 0.10) * 0.05));
+        gatedRawScore = Math.max(0, gatedRawScore - penalty);
+        info.weakDsPenalty = { bestDS, ds, maxWidgetSim, widget: info.widgetScore || 0, penalty };
       }
     }
     info.rawScore = gatedRawScore;
