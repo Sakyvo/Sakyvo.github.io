@@ -343,6 +343,9 @@ async def main():
                     debug = summary.get("debug", {})
                     timings = summary.get("timings", {})
                     top1 = ranked[0]["name"] if ranked else "(none)"
+                    margin = None
+                    if len(ranked) >= 2:
+                        margin = ranked[0].get("score", 0) - ranked[1].get("score", 0)
                     ok = match_name(expected, top1)
                     status = "PASS" if ok else "FAIL"
                     elapsed = time.monotonic() - test_t0
@@ -372,6 +375,21 @@ async def main():
                             parts.append(f"wg={r['widgetSim']:.3f}")
                         if r.get('coverage') is not None:
                             parts.append(f"cov={r['coverage']:.2f}")
+                        if r.get('distinguishability') is not None:
+                            parts.append(f"dist={r['distinguishability']:.2f}")
+                        if r.get('sharedness') is not None:
+                            parts.append(f"shared={r['sharedness']:.2f}")
+                        if r.get('anchorPenalty') is not None:
+                            parts.append(f"apen={r['anchorPenalty']:.3f}")
+                        gaps = r.get('anchorGaps') or {}
+                        if gaps:
+                            gap_parts = []
+                            for key in ('ds', 'ep', 'widget', 'hp'):
+                                v = gaps.get(key)
+                                if isinstance(v, (int, float)) and v > 0.001:
+                                    gap_parts.append(f"{key}={v:.2f}")
+                            if gap_parts:
+                                parts.append("gap(" + " ".join(gap_parts) + ")")
                         return "[" + " ".join(parts) + "]"
                     timing_parts = []
                     if not args.no_timings:
@@ -382,7 +400,8 @@ async def main():
                         timing_parts.append(f"total={fmt_seconds(elapsed)}")
                     timing_text = (" | " + ", ".join(timing_parts)) if timing_parts else ""
 
-                    print(f"  [{status}] {img_name} -> {top1}{timing_text}")
+                    margin_text = f" | margin={margin:.4f}" if isinstance(margin, (int, float)) else ""
+                    print(f"  [{status}] {img_name} -> {top1}{margin_text}{timing_text}")
                     if not args.quiet:
                         print(f"    Expected: {expected}")
                         if debug:

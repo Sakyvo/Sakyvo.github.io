@@ -395,6 +395,54 @@ function getCriticalTypeMetrics(perTypeScores, typeCounts) {
   };
 }
 
+function getScoreValue(info, key) {
+  const pts = info && info.perTypeScores;
+  const v = pts ? pts[key] : 0;
+  return isFinite(v) ? v : 0;
+}
+
+function scoreGap(best, current) {
+  return Math.max(0, (isFinite(best) ? best : 0) - (isFinite(current) ? current : 0));
+}
+
+function buildAnchorDiagnostics(info, bestAnchors) {
+  const ds = getScoreValue(info, 'DS');
+  const ep = getScoreValue(info, 'EP');
+  const hp = isFinite(info.healthScore) ? info.healthScore : 0;
+  const widget = isFinite(info.widgetScore) ? info.widgetScore : 0;
+  const anchorGaps = {
+    ds: scoreGap(bestAnchors.ds, ds),
+    ep: scoreGap(bestAnchors.ep, ep),
+    hp: scoreGap(bestAnchors.hp, hp),
+    widget: scoreGap(bestAnchors.widget, widget),
+  };
+  const strongCount = (ds >= 0.50 ? 1 : 0) + (ep >= 0.58 ? 1 : 0) + (widget >= 0.82 ? 1 : 0) + (hp >= 0.52 ? 1 : 0);
+  const weakShared =
+    (getScoreValue(info, 'SK/GC') >= 0.72 ? 0.22 : 0) +
+    (widget >= 0.82 && anchorGaps.widget <= 0.03 ? 0.18 : 0) +
+    (info.slotCoverage <= 0.12 ? 0.16 : 0) +
+    (info.slotCertainty <= 0.03 ? 0.16 : 0);
+  const sharedness = clamp01(weakShared - strongCount * 0.08);
+  const dsPenaltyGap = (bestAnchors.ds >= 0.50 || anchorGaps.widget > 0.10) ? Math.max(0, anchorGaps.ds - 0.045) : 0;
+  const epPenaltyGap = bestAnchors.ep >= 0.58 ? Math.max(0, anchorGaps.ep - 0.08) : Math.max(0, anchorGaps.ep - 0.16) * 0.5;
+  const hpPenaltyGap = bestAnchors.hp >= 0.52 ? Math.max(0, anchorGaps.hp - 0.12) : 0;
+  const anchorPenalty = Math.min(0.045,
+    dsPenaltyGap * 0.12 +
+    epPenaltyGap * 0.08 +
+    Math.max(0, anchorGaps.widget - 0.10) * 0.07 +
+    hpPenaltyGap * 0.04
+  );
+  const distinguishability = clamp01(
+    0.46 +
+    Math.min(0.24, (1 - sharedness) * 0.24) +
+    Math.min(0.14, (info.slotCertainty || 0) * 1.8) +
+    Math.min(0.12, (info.slotCoverage || 0) * 0.45) +
+    strongCount * 0.035 -
+    anchorPenalty * 1.8
+  );
+  return { anchorGaps, sharedness, strongAnchorCount: strongCount, anchorPenalty, distinguishability };
+}
+
 function renderPerTypeScoreTip(info) {
   if (!info || !info.perTypeScores) return '';
   const pts = info.perTypeScores;
@@ -809,6 +857,8 @@ function buildTop10Markdown() {
   const s = d.searchInfo || null;
   const searchInput = document.getElementById('sbi-search-input');
   const query = searchInput ? searchInput.value.trim() : '';
+  const top1Score = rows[0] ? getDisplayScoreValue(rows[0], _lastMatchDetails[rows[0].name] || {}) : 0;
+  const top2Score = rows[1] ? getDisplayScoreValue(rows[1], _lastMatchDetails[rows[1].name] || {}) : 0;
   const lines = [
     '# Search by Image Analysis',
     '',
@@ -823,11 +873,12 @@ function buildTop10Markdown() {
     `- Type Weights: DS=${SBI_SCORE_WEIGHTS.type.diamond_sword.toFixed(2)}, EP=${SBI_SCORE_WEIGHTS.type.ender_pearl.toFixed(2)}, HL=${SBI_SCORE_WEIGHTS.type.splash_potion.toFixed(2)}, SK=${SBI_SCORE_WEIGHTS.type.steak.toFixed(2)}, GC=${SBI_SCORE_WEIGHTS.type.golden_carrot.toFixed(2)}`,
     `- HUD Weights: HP=${SBI_SCORE_WEIGHTS.hud.health.toFixed(2)}, Hun=${SBI_SCORE_WEIGHTS.hud.hunger.toFixed(2)}, Arm=${SBI_SCORE_WEIGHTS.hud.armor.toFixed(2)}`,
     `- Mix Weights: withHUD=${SBI_SCORE_WEIGHTS.mix.slot.toFixed(2)}/${SBI_SCORE_WEIGHTS.mix.hud.toFixed(2)}/${SBI_SCORE_WEIGHTS.mix.widget.toFixed(2)}, noHUD=${SBI_SCORE_WEIGHTS.mix.slotNoHud.toFixed(2)}/${SBI_SCORE_WEIGHTS.mix.widgetNoHud.toFixed(2)}`,
+    `- Top1 Margin: ${fmtRaw(top1Score - top2Score)}`,
     '',
     '## Top 10',
     '',
-    '| # | Pack | Total | DS | EP | HL | SK/GC | Slot | Widget | HP | Hun | Arm | Cover | Cert |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| # | Pack | Total | DS | EP | HL | SK/GC | Slot | Widget | HP | Hun | Arm | Cover | Cert | Dist | Shared | AnchorPen |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
   ];
 
   rows.forEach((row, index) => {
@@ -836,7 +887,7 @@ function buildTop10Markdown() {
       ? `${row.displayName} (${row.name})`
       : (row.displayName || row.name);
     lines.push(
-      `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(getDisplayScoreValue(row, info))} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} |`
+      `| ${index + 1} | ${escapeMarkdownCell(packLabel)} | ${fmtRaw(getDisplayScoreValue(row, info))} | ${fmtRaw(getPerTypeScore(info, 'DS'))} | ${fmtRaw(getPerTypeScore(info, 'EP'))} | ${fmtRaw(getPerTypeScore(info, 'HL'))} | ${fmtRaw(getPerTypeScore(info, 'SK/GC'))} | ${fmtRaw(info.slotScore)} | ${fmtRaw(info.widgetScore)} | ${fmtRaw(info.healthScore)} | ${fmtRaw(info.hungerScore)} | ${fmtRaw(info.armorScore)} | ${fmtRaw(info.slotCoverage)} | ${fmtRaw(info.slotCertainty)} | ${fmtRaw(info.distinguishability)} | ${fmtRaw(info.sharedness)} | ${fmtRaw(info.anchorPenaltyApplied || info.anchorPenalty)} |`
     );
   });
 
@@ -3214,12 +3265,20 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
   const bestDS = displayTypeCounts.diamond_sword
     ? scoredRows.reduce((best, row) => Math.max(best, (row.info.perTypeScores && row.info.perTypeScores.DS) || 0), 0)
     : 0;
+  const bestHP = scoredRows.reduce((best, row) => Math.max(best, row.info.healthScore || 0), 0);
+  const bestAnchors = { ds: bestDS, ep: bestEP, hp: bestHP, widget: maxWidgetSim };
   const enableEPGate = bestEP >= 0.58;
   const enableDSGate = bestDS >= 0.50;
   const enableWeakDSDiscriminator = displayTypeCounts.diamond_sword && bestDS >= 0.30 && bestDS < 0.50 && maxWidgetSim >= 0.75;
   for (const row of scoredRows) {
     const info = row.info;
     let gatedRawScore = info.rawScore;
+    const anchorDiagnostics = buildAnchorDiagnostics(info, bestAnchors);
+    info.anchorGaps = anchorDiagnostics.anchorGaps;
+    info.sharedness = anchorDiagnostics.sharedness;
+    info.strongAnchorCount = anchorDiagnostics.strongAnchorCount;
+    info.anchorPenalty = anchorDiagnostics.anchorPenalty;
+    info.distinguishability = anchorDiagnostics.distinguishability;
     if (enableEPGate) {
       const ep = (info.perTypeScores && info.perTypeScores.EP) || 0;
       let cap = null;
@@ -3249,6 +3308,16 @@ function matchPacks(slots, widgetFeatures, hudFeatures) {
         gatedRawScore = Math.max(0, gatedRawScore - penalty);
         info.weakDsPenalty = { bestDS, ds, maxWidgetSim, widget: info.widgetScore || 0, penalty };
       }
+    }
+    if (anchorDiagnostics.anchorPenalty > 0) {
+      const penalty = Math.min(0.035, anchorDiagnostics.anchorPenalty * (0.55 + anchorDiagnostics.sharedness * 0.65));
+      gatedRawScore = Math.max(0, gatedRawScore - penalty);
+      info.anchorPenaltyApplied = penalty;
+    }
+    if (anchorDiagnostics.sharedness >= 0.34 && anchorDiagnostics.strongAnchorCount <= 1) {
+      const penalty = Math.min(0.018, (anchorDiagnostics.sharedness - 0.30) * 0.05);
+      gatedRawScore = Math.max(0, gatedRawScore - penalty);
+      info.sharednessPenalty = penalty;
     }
     info.rawScore = gatedRawScore;
     info.finalScore = gatedRawScore;
@@ -3848,6 +3917,11 @@ window.__sbiTest = {
           armorSim: info.armorScore,
           coverage: info.slotCoverage,
           certainty: info.slotCertainty,
+          distinguishability: info.distinguishability,
+          sharedness: info.sharedness,
+          anchorPenalty: info.anchorPenaltyApplied || info.anchorPenalty,
+          anchorGaps: info.anchorGaps || {},
+          strongAnchorCount: info.strongAnchorCount,
           perTypeScores: info.perTypeScores || {},
           criticalTypeScore: info.criticalTypeScore,
           criticalTypeShortfall: info.criticalTypeShortfall,
